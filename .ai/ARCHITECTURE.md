@@ -2,7 +2,7 @@
 
 ## 1. Architectural Philosophy
 
-The architecture for the Mandala Art Store follows a **clean, modular monolithic approach**. 
+The architecture for the Mandala Art Store follows a **clean, modular monolithic approach**.
 We deliberately avoid over-engineering, microservices, or complex distributed systems. A well-structured modular architecture provides the optimal balance of development velocity, straightforward debugging, low maintenance overhead, and clear scalability for a boutique ecommerce business.
 
 ---

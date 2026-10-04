@@ -12,8 +12,8 @@ This document outlines the core business logic, domain constraints, and calculat
 - **Product Categories**:
   - Initial core categories: `Mandala Art`, `Lippen Art`, `Handmade Paintings`, `Crafts & Decor`.
 - **Product Variants**:
-  - *Current rule*: Each artwork is uniquely listed with specific dimensions and specifications.
-  - *Future consideration*: Support for size variations or frame color variations [To Be Defined].
+  - _Current rule_: Each artwork is uniquely listed with specific dimensions and specifications.
+  - _Future consideration_: Support for size variations or frame color variations [To Be Defined].
 - **Availability Types**:
   - `in_stock`: Ready to pack and ship.
   - `made_to_order`: Available for purchase; requires crafting lead time (e.g., 7–14 days) before dispatch.
@@ -81,6 +81,7 @@ This document outlines the core business logic, domain constraints, and calculat
 ## 6. Undecided Rules ("To Be Defined")
 
 The following areas require explicit business decisions before implementation:
+
 - [TBD] Exact return and refund policy for delicate, handmade artwork (e.g., exchange only for transit damage vs. 7-day return).
 - [TBD] Advance deposit percentage required for custom commissioned artwork.
 - [TBD] Specific courier partner integration (e.g., Shiprocket, Delhivery, India Post).

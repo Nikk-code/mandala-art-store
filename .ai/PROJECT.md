@@ -3,6 +3,7 @@
 ## 1. Business Purpose
 
 The Mandala Art Store is a production-quality ecommerce platform designed for a specialized handmade art business. The business specializes in authentic, artisanal artwork including:
+
 - **Mandala Art**: Intricate spiritual and geometric circular patterns, dot mandalas, and traditional designs.
 - **Lippen Art**: Traditional Gujarati mud and mirror relief art (Lippan Kaam) crafted with clay, mirrors, and detailed embossing.
 - **Handmade Paintings & Canvas Art**: Acrylic, watercolor, and mixed-media traditional and contemporary art pieces.
@@ -24,6 +25,7 @@ The goal is to provide a premium, visually engaging storefront that honors the a
 ## 3. High-Level Customer Experience
 
 The customer storefront will eventually support:
+
 - **Home Page**: Hero banner featuring signature artwork, featured collections, artisan story, customer testimonials, and new arrivals.
 - **Product Browsing & Discovery**: Catalog with category browsing, real-time search, multi-faceted filtering (art type, dimensions, framing status, color palette, price), and sorting (newest, price, popularity).
 - **Product Details Page**: High-resolution zoomable image gallery, dimensions, medium/materials used, framing options, stock availability, pricing, care instructions, and customer reviews.
@@ -39,6 +41,7 @@ The customer storefront will eventually support:
 ## 4. High-Level Admin Experience
 
 The administrative back-office will eventually support:
+
 - **Dashboard**: Overview of key business metrics (sales, revenue, pending orders, low stock items).
 - **Product Management**: Full CRUD for art pieces, title, description, dimensions, medium, framing status, tags, and SEO metadata.
 - **Image & Gallery Management**: Multi-image upload, reordering, thumbnail assignment, and cloud storage integration.

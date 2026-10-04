@@ -4,13 +4,14 @@
 
 The following technology stack represents the evaluated and planned architectural direction for the Mandala Art Store.
 
-> **CRITICAL RULE**: These technologies are *planned direction*, not an authorization to install dependencies upfront. Dependencies must be installed incrementally as features are actively built and verified. Any changes to this stack must be recorded in `DECISIONS.md`.
+> **CRITICAL RULE**: These technologies are _planned direction_, not an authorization to install dependencies upfront. Dependencies must be installed incrementally as features are actively built and verified. Any changes to this stack must be recorded in `DECISIONS.md`.
 
 ---
 
 ## 2. Core Stack Overview
 
 ### Frontend
+
 - **Library**: React 18+ (or latest stable)
 - **Language**: TypeScript (strict mode enabled)
 - **Build Tool**: Vite (modern, fast HMR, optimized production bundling)
@@ -19,6 +20,7 @@ The following technology stack represents the evaluated and planned architectura
 - **State Management**: React Context / Hooks for local/app state; lightweight caching (e.g., TanStack Query) if API caching demands warrant it
 
 ### Backend
+
 - **Runtime**: Node.js (LTS version)
 - **Language**: TypeScript
 - **Framework**: Express.js or Fastify (clean, minimal, standard REST API architecture)
@@ -26,6 +28,7 @@ The following technology stack represents the evaluated and planned architectura
 - **ORM / Query Builder**: Prisma, Drizzle, or Kysely (type-safe database queries and migrations)
 
 ### Database
+
 - **Database Engine**: PostgreSQL (robust relational integrity, native JSON support, ACID compliance)
 - **Hosting / Managed Instance**: Cloud-hosted PostgreSQL (e.g., Neon, Supabase, Render, or Railway)
 
@@ -59,6 +62,7 @@ The following technology stack represents the evaluated and planned architectura
 ## 6. Dependency Addition Criteria
 
 Before adding any new dependency to `package.json`, an AI agent must verify:
+
 1. Can standard JavaScript/TypeScript or built-in platform APIs (e.g., Web Crypto, `fetch`, URLSearchParams) achieve the same result?
 2. Does the project already contain a similar library or helper?
 3. Is the package actively maintained, secure, and light on bundle footprint?

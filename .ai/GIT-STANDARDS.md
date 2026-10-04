@@ -13,6 +13,7 @@ feature/*  |  fix/*  |  refactor/*  |  docs/*
 ```
 
 ### Branch Categories
+
 - **`main`**: Represents the stable, production-ready release state. Only merged via tested pull requests or vetted integration milestones.
 - **`develop`**: The primary integration branch where completed features, fixes, and docs converge.
 - **`feature/<short-description>`**: Dedicated branches for implementing specific features (e.g., `feature/catalog-filters`, `feature/razorpay-checkout`).
@@ -27,6 +28,7 @@ feature/*  |  fix/*  |  refactor/*  |  docs/*
 Commits must follow the **Conventional Commits** specification. Messages should be concise, written in the imperative mood, and lowercase.
 
 ### Format
+
 ```
 <type>: <short summary>
 
@@ -34,18 +36,19 @@ Commits must follow the **Conventional Commits** specification. Messages should 
 ```
 
 ### Allowed Types
+
 - **`feat:`** A new user-facing or system capability.
-  - *Example*: `feat: add product catalog filtering by art category`
+  - _Example_: `feat: add product catalog filtering by art category`
 - **`fix:`** A bug fix or defect resolution.
-  - *Example*: `fix: correct cart subtotal calculation on item removal`
+  - _Example_: `fix: correct cart subtotal calculation on item removal`
 - **`refactor:`** Code changes that neither fix a bug nor add a feature (e.g., extracting components, renaming for clarity).
-  - *Example*: `refactor: extract reusable product card component`
+  - _Example_: `refactor: extract reusable product card component`
 - **`test:`** Adding new tests or correcting existing tests.
-  - *Example*: `test: add unit tests for discount coupon validation`
+  - _Example_: `test: add unit tests for discount coupon validation`
 - **`docs:`** Documentation changes, guides, or `.ai/` updates.
-  - *Example*: `docs: update tech stack and testing standards`
+  - _Example_: `docs: update tech stack and testing standards`
 - **`chore:`** Maintenance tasks, build tool configuration, package updates.
-  - *Example*: `chore: configure vitest and testing-library setup`
+  - _Example_: `chore: configure vitest and testing-library setup`
 
 ---
 

@@ -12,18 +12,18 @@
 
 ## 2. Naming Conventions
 
-| Category | Convention | Examples |
-| :--- | :--- | :--- |
-| **Components** | `PascalCase` | `ProductCard.tsx`, `OrderSummary.tsx` |
-| **Component Files** | `PascalCase` (matching export) | `ProductCard.tsx` |
-| **Hook Files & Names**| `camelCase` (prefixed with `use`) | `useCart.ts`, `useProductFilter.ts` |
-| **Utility / Service Files** | `kebab-case` or `camelCase` | `format-currency.ts`, `api-client.ts` |
-| **Functions & Methods** | `camelCase` (verb + noun) | `calculateTotal()`, `fetchProductById()` |
-| **Variables & Properties** | `camelCase` | `totalAmount`, `isAvailable` |
-| **Booleans** | `camelCase` (is/has/should prefix) | `isLoading`, `hasDiscounts`, `canCheckout` |
-| **Global Constants** | `UPPER_SNAKE_CASE` | `MAX_CART_ITEMS`, `DEFAULT_CURRENCY` |
-| **Types & Interfaces** | `PascalCase` (no `I` prefix) | `Product`, `Order`, `CheckoutPayload` |
-| **Enums / Union Types** | `PascalCase` (keys `UPPER_SNAKE_CASE`) | `OrderStatus.PENDING`, `'in_stock' \| 'out_of_stock'` |
+| Category                    | Convention                             | Examples                                              |
+| :-------------------------- | :------------------------------------- | :---------------------------------------------------- |
+| **Components**              | `PascalCase`                           | `ProductCard.tsx`, `OrderSummary.tsx`                 |
+| **Component Files**         | `PascalCase` (matching export)         | `ProductCard.tsx`                                     |
+| **Hook Files & Names**      | `camelCase` (prefixed with `use`)      | `useCart.ts`, `useProductFilter.ts`                   |
+| **Utility / Service Files** | `kebab-case` or `camelCase`            | `format-currency.ts`, `api-client.ts`                 |
+| **Functions & Methods**     | `camelCase` (verb + noun)              | `calculateTotal()`, `fetchProductById()`              |
+| **Variables & Properties**  | `camelCase`                            | `totalAmount`, `isAvailable`                          |
+| **Booleans**                | `camelCase` (is/has/should prefix)     | `isLoading`, `hasDiscounts`, `canCheckout`            |
+| **Global Constants**        | `UPPER_SNAKE_CASE`                     | `MAX_CART_ITEMS`, `DEFAULT_CURRENCY`                  |
+| **Types & Interfaces**      | `PascalCase` (no `I` prefix)           | `Product`, `Order`, `CheckoutPayload`                 |
+| **Enums / Union Types**     | `PascalCase` (keys `UPPER_SNAKE_CASE`) | `OrderStatus.PENDING`, `'in_stock' \| 'out_of_stock'` |
 
 ---
 
@@ -65,6 +65,7 @@ src/
 ## 5. Import Conventions
 
 Organize imports cleanly in this order, separated by a blank line:
+
 1. Standard library & external framework packages (e.g., `react`, `react-router-dom`)
 2. Third-party utility packages (e.g., `lucide-react`, `date-fns`)
 3. Internal shared modules, services, and hooks (using clean path aliases like `@/components`, `@/utils`)
