@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-04  
-**Current Phase**: `FRONTEND APPLICATION SHELL + DESIGN SYSTEM (Step 7 Complete)`
+**Current Phase**: `REAL HOMEPAGE + CATALOG API INTEGRATION FOUNDATION (Step 8A Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The frontend application shell, design tokens, and reusable UI primitives have been established (Step 7). The frontend design system incorporates the project-approved warm artisanal palette (`art-charcoal`, `art-ochre`, `art-terracotta`, `art-cream`, `art-stone`, `art-sand`), responsive typography (`font-serif` Playfair Display + `font-sans` Inter), mobile-first accessibility landmarks (`<header>`, `<nav>`, `<main>`, `<footer>`, skip-to-content link, $\ge 44\text{px}$ touch targets), and a type-safe generic API client (`apiGet`, `ApiError`). A small, elegant shell preview has been created on `HomePage` to validate the design direction.
+The real ecommerce homepage integrated with the backend public catalog REST API has been established (Step 8A). The homepage consumes live catalog data via a dedicated frontend catalog service (`frontend/src/services/catalog-service.ts`) for active categories (`GET /api/categories`) and featured products (`GET /api/products?featured=true`). Reusable presentation components have been created (`ProductCard` and `CategoryCard` in `frontend/src/components/catalog/`), featuring Indian currency formatting for integer paise (`formatPrice`), friendly availability state badges (`In Stock`, `Made to Order`, `Sold Out`), image fallback handling, and robust loading, error retry, and empty state feedback primitives.
 
-> **CRITICAL NOTE**: Full ecommerce catalog browsing, search execution, product detail, cart state, checkout, authentication, customer orders, reviews, and payment flows are **INTENTIONALLY DEFERRED** to future steps.
+> **CRITICAL NOTE**: Full catalog search/filtering page (`/products`), category detail views (`/categories/:slug`), product detail page (`/products/:slug`), customer cart state, checkout, authentication, customer orders, reviews, and payment flows are **INTENTIONALLY DEFERRED** to subsequent steps.
 
 ---
 
@@ -77,44 +77,46 @@ The frontend application shell, design tokens, and reusable UI primitives have b
 
 ### Phase 7: Frontend Application Shell + Design System (Completed)
 
-- [x] **Design Tokens & Typography**:
-  - Configured Google Fonts (`Playfair Display` serif + `Inter` sans) in `frontend/index.html`.
-  - Extended Tailwind tokens in `frontend/tailwind.config.js` (colors, serif font, shadows, border radii, touch targets).
-- [x] **Reusable UI Primitives (`frontend/src/components/ui/`)**:
-  - `Container`: Configurable max-width wrappers (`sm`, `md`, `lg`, `xl`, `7xl`, `full`).
-  - `Section`: Layout section wrapper supporting background tokens (`cream`, `white`, `stone`, `charcoal`) and vertical spacing.
-  - `Button`: Multi-variant button (`primary`, `secondary`, `outline`, `ghost`, `terracotta`), loading spinner, and $\ge 44\text{px}$ touch targets.
-  - `IconButton`: Accessible icon button requiring explicit `aria-label` and touch target compliance.
-  - `Badge`: Status and craft badges (`default`, `ochre`, `terracotta`, `stone`, `success`, `outline`).
-  - `LoadingState`, `EmptyState`, `ErrorState`: Standardized UI state feedback primitives.
-  - Barrel export in `frontend/src/components/ui/index.ts`.
-- [x] **Application Shell (`frontend/src/components/layout/` & `layouts/`)**:
-  - `Header`: Announcement bar, brand typography, desktop navigation, action placeholders, and accessible mobile drawer with hamburger toggle.
-  - `Footer`: Semantic 4-column artisanal footer with craft heritage story, collection links, and copyright.
-  - `RootLayout`: Integrated header/footer landmarks and skip-to-content accessibility link.
-- [x] **API Client Foundation**:
-  - Implemented generic, type-safe `apiGet<T>` with `VITE_API_URL` handling, URL normalization, and `ApiError` mapping in `frontend/src/services/api-client.ts`.
-- [x] **Design Preview**:
-  - Polished `HomePage` with editorial hero section, geometric art placeholder, craft pillars, and diagnostic connection state.
-- [x] **Testing & Verification**:
-  - 18 frontend unit tests passing (`frontend/tests/`).
-  - 78 backend domain/API tests passing (`backend/tests/`).
-  - Full TypeScript build, ESLint (0 warnings), and Prettier format checks passing.
+- [x] Configured Google Fonts (`Playfair Display` + `Inter`) and Tailwind design tokens.
+- [x] Authored UI primitives (`Container`, `Section`, `Button`, `IconButton`, `Badge`, `LoadingState`, `EmptyState`, `ErrorState`).
+- [x] Authored layout shell (`Header`, `Footer`, `RootLayout` with accessibility skip-to-content link).
+- [x] Pushed milestone commit (`feat(frontend): establish application shell and design system`).
+
+### Phase 8A: Real Homepage + Catalog API Integration Foundation (Completed)
+
+- [x] **Catalog DTO Types (`frontend/src/types/catalog.ts`)**:
+  - `CategoryDto`, `ProductListItemDto`, `ProductDetailDto`, `ProductImageDto`, `PaginatedData<T>`, `PaginationMeta`.
+- [x] **Price & Availability Formatting (`frontend/src/utils/format.ts`)**:
+  - `formatPrice`: integer paise to Indian currency string formatting (`₹1,499`, `₹1,25,000`).
+  - `getAvailabilityInfo`: Maps `IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT` to friendly labels and badge variants.
+- [x] **Catalog API Service (`frontend/src/services/catalog-service.ts`)**:
+  - `fetchCategories()`, `fetchProducts()`, `fetchFeaturedProducts()`, `fetchProductBySlug()`.
+- [x] **Presentation Components (`frontend/src/components/catalog/`)**:
+  - `ProductCard`: Displays primary image with fallback, category tag, title, formatted price, compare-at price, handcrafted badge, and availability status.
+  - `CategoryCard`: Displays active category card with decorative icon or thumbnail and exploration prompt.
+- [x] **Real Homepage (`frontend/src/pages/HomePage.tsx`)**:
+  - Editorial Hero section with brand message and CTA buttons.
+  - Active Categories section consuming `GET /api/categories` with loading, error retry, and empty state handling.
+  - Featured Artworks section consuming `GET /api/products?featured=true` with responsive grid and state handling.
+  - Heritage value proposition pillars (Handcrafted originals, wooden crating, fair trade).
+- [x] **Automated Tests & Quality**:
+  - 32 frontend unit tests passing across 6 test files (`frontend/tests/`).
+  - 78 backend tests passing across 8 test suites (`backend/tests/`).
+  - Clean build, 0 ESLint warnings, 100% Prettier formatting compliance.
 
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 7 is complete and ready for review).
+- _None_ (Step 8A is complete and ready for review).
 
 ---
 
-## 4. Planned Next Work (Step 8: Frontend Catalog Browsing & Product Exploration)
+## 4. Planned Next Work (Step 8B: Catalog Browsing, Filtering & Exploration Experience)
 
-1. Build category filter bar and product grid components in `frontend/src/components/catalog/`.
-2. Implement product listing page with pagination, category filtering, and sorting controls.
-3. Build product detail page with image gallery preview, dimensions, availability badges, and craft descriptions.
-4. Connect frontend catalog components to public REST API endpoints (`GET /api/categories`, `GET /api/products`).
+1. Build catalog listing page with active category filters, availability filters, and sorting controls (`newest`, `price_asc`, `price_desc`).
+2. Implement server-side pagination navigation controls.
+3. Build product detail page (`/products/:slug`) with multi-image gallery preview, dimensions, materials, and artisan story.
 
 ---
 
@@ -129,3 +131,4 @@ The frontend application shell, design tokens, and reusable UI primitives have b
 - Strictly adhere to `AI-RULES.md`.
 - **Do NOT build customer cart checkout or payment processing until public catalog browsing is verified.**
 - Keep `DATABASE_URL` and backend secrets server-only.
+- All monetary amounts from the API are in integer paise and must be formatted using `formatPrice`.

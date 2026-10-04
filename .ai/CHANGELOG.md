@@ -11,8 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 8: Frontend catalog browsing UI and product exploration.
-- Cart and checkout client state integration.
+- Step 8B: Catalog browsing, filtering, sorting, pagination, and product detail exploration.
+- Customer cart state and checkout integration.
+
+---
+
+## [0.10.0] - 2026-10-04
+
+### Added
+
+- **Step 8A: Real Homepage + Catalog API Integration Foundation**:
+  - **Catalog TypeScript Types**: Defined `CategoryDto`, `ProductListItemDto`, `ProductDetailDto`, `ProductImageDto`, `PaginatedData<T>`, and `PaginationMeta` in `frontend/src/types/catalog.ts`.
+  - **Price & Availability Formatting**: Created `formatPrice` in `frontend/src/utils/format.ts` to convert integer paise values into Indian currency notation (e.g. `149900` paise -> `₹1,499`) without floating-point inaccuracy, and `getAvailabilityInfo` mapping availability enums to user-facing labels and badge styles.
+  - **Catalog API Service**: Implemented `frontend/src/services/catalog-service.ts` providing typed helpers `fetchCategories()`, `fetchProducts()`, `fetchFeaturedProducts()`, and `fetchProductBySlug()`.
+  - **Catalog Presentation Components**:
+    - Created `frontend/src/components/catalog/ProductCard.tsx` with primary image loading, error fallback, category tag, product title, formatted price, compare-at price strikethrough, and availability status badge.
+    - Created `frontend/src/components/catalog/CategoryCard.tsx` with category icon/thumbnail and collection explore prompt.
+    - Created barrel export in `frontend/src/components/catalog/index.ts`.
+  - **Real Homepage Integration (`frontend/src/pages/HomePage.tsx`)**:
+    - Connected homepage to backend REST API (`GET /api/categories` and `GET /api/products?featured=true`).
+    - Implemented state handling for loading (`LoadingState`), error retry (`ErrorState`), empty (`EmptyState`), and successful data grids.
+    - Preserved responsive boutique hero, artisan lineage highlights, and craft heritage value pillars.
+  - **Automated Tests**:
+    - Created `frontend/tests/format.test.ts` (8 unit tests for price and availability formatting).
+    - Created `frontend/tests/catalog-components.test.tsx` (3 unit tests for `ProductCard` and `CategoryCard`).
+    - Created `frontend/tests/HomePage.test.tsx` (3 integration tests for API fetching, error retry, and empty state handling).
+    - Updated `frontend/tests/App.test.tsx` (4 tests).
+    - Total frontend automated tests reached 32 passing tests; backend tests maintained 78 passing tests.
 
 ---
 
@@ -38,9 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Implemented generic, type-safe `apiGet<T>` with `VITE_API_URL` handling, URL normalization, and `ApiError` mapping.
   - **Landing/Shell Preview (`frontend/src/pages/HomePage.tsx`)**:
     - Built an editorial preview showcasing the artisanal palette, geometric artwork placeholder, craft pillars, and diagnostic connection state.
-  - **Testing & Quality**:
-    - Added 18 unit tests in `frontend/tests/` covering components, API client, and application shell.
-    - Verified full workspace builds, 0 lint warnings, and Prettier formatting compliance.
 
 ---
 
