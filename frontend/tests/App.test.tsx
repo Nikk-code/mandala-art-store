@@ -19,16 +19,46 @@ vi.stubGlobal(
   )
 );
 
-describe('Frontend Technical Foundation Smoke Test', () => {
-  it('renders application header and title without error', async () => {
+describe('Application Shell & Design System Integration', () => {
+  it('renders application header with brand name and navigation landmarks', async () => {
     render(<App />);
     const heading = await screen.findByRole('link', { name: /Mandala Art Store/i });
     expect(heading).toBeInTheDocument();
+
+    const mainNav = screen.getByRole('navigation', { name: /Main Navigation/i });
+    expect(mainNav).toBeInTheDocument();
+
+    // Ensure async health check has completed
+    await screen.findByText(/API Connected \(test\)/i);
   });
 
-  it('renders foundation status indicator', async () => {
+  it('renders skip-to-content accessibility link', async () => {
     render(<App />);
-    expect(await screen.findByText(/Phase: Technical Foundation/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Backend Connected/i)).toBeInTheDocument();
+    const skipLink = screen.getByRole('link', { name: /Skip to main content/i });
+    expect(skipLink).toBeInTheDocument();
+    expect(skipLink).toHaveAttribute('href', '#main-content');
+
+    await screen.findByText(/API Connected \(test\)/i);
+  });
+
+  it('renders boutique hero section with brand messaging', async () => {
+    render(<App />);
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /Timeless art to bring serenity and harmony into your home/i,
+      })
+    ).toBeInTheDocument();
+
+    await screen.findByText(/API Connected \(test\)/i);
+  });
+
+  it('renders artisanal footer with heritage information and copyright', async () => {
+    render(<App />);
+    const footer = screen.getByRole('contentinfo');
+    expect(footer).toBeInTheDocument();
+    expect(screen.getByText(/Authentic Handmade Certification/i)).toBeInTheDocument();
+
+    await screen.findByText(/API Connected \(test\)/i);
   });
 });

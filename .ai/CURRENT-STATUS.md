@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-04  
-**Current Phase**: `CONTROLLED CATALOG SEED DATA (Step 6B Complete)`
+**Current Phase**: `FRONTEND APPLICATION SHELL + DESIGN SYSTEM (Step 7 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The controlled, repeatable development catalog seed script has been created and validated (Step 6B). Located at `backend/prisma/seed.ts` (runnable via `npm run prisma:seed` in `backend/` or `npx prisma db seed`), it seeds 3 core art categories (`Mandala Art`, `Lippan Art`, `Handmade Paintings`) and 10 realistic Indian handmade-art products exercising all availability states (`IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT`), prices in paise, featured subsets, and multi-image galleries with unique primary images. The seed logic is 100% idempotent via slug/SKU upserts and verified by 78 passing automated tests.
+The frontend application shell, design tokens, and reusable UI primitives have been established (Step 7). The frontend design system incorporates the project-approved warm artisanal palette (`art-charcoal`, `art-ochre`, `art-terracotta`, `art-cream`, `art-stone`, `art-sand`), responsive typography (`font-serif` Playfair Display + `font-sans` Inter), mobile-first accessibility landmarks (`<header>`, `<nav>`, `<main>`, `<footer>`, skip-to-content link, $\ge 44\text{px}$ touch targets), and a type-safe generic API client (`apiGet`, `ApiError`). A small, elegant shell preview has been created on `HomePage` to validate the design direction.
 
-> **CRITICAL NOTE**: Frontend catalog UI components (Step 7+), authentication, customer cart endpoints, and payment processing have **NOT YET BEEN CREATED**. Step 6B was strictly focused on development seeding.
+> **CRITICAL NOTE**: Full ecommerce catalog browsing, search execution, product detail, cart state, checkout, authentication, customer orders, reviews, and payment flows are **INTENTIONALLY DEFERRED** to future steps.
 
 ---
 
@@ -70,36 +70,51 @@ The controlled, repeatable development catalog seed script has been created and 
 
 ### Phase 6B: Controlled Catalog Seed Data (Completed)
 
-- [x] **Seed Script Authoring**:
-  - [x] Created `backend/prisma/seed.ts` with deterministic data fixtures.
-  - [x] Seeded 3 categories (`Mandala Art`, `Lippan Art`, `Handmade Paintings`).
-  - [x] Seeded 10 products (6 `IN_STOCK`, 3 `MADE_TO_ORDER`, 1 `SOLD_OUT`).
-  - [x] Configured multi-image galleries with exact single primary image per product.
-  - [x] Configured `prisma.seed` command in `backend/package.json`.
-- [x] **Idempotency & Safety**:
-  - [x] Implemented upsert strategy by category slug and product SKU.
-  - [x] Deterministic image sync preventing duplicate galleries across repeated runs.
-- [x] **Automated Testing & Quality**:
-  - [x] Authored seed contract & idempotency test suite (`backend/tests/seed.test.ts`).
-  - [x] Verified full workspace test suite (`npm run test` — 78 tests passed across 8 suites).
-  - [x] Verified TypeScript compilation (`npm run build`).
-  - [x] Verified zero lint warnings (`npm run lint`).
-  - [x] Verified Prettier formatting compliance (`npm run format:check`).
+- [x] Authored `backend/prisma/seed.ts` with deterministic data fixtures.
+- [x] Seeded 3 categories and 10 products with multi-image galleries.
+- [x] Verified seed contract and idempotency with automated tests.
+- [x] Pushed milestone commit (`feat(seed): add deterministic catalog seed data for local development`).
+
+### Phase 7: Frontend Application Shell + Design System (Completed)
+
+- [x] **Design Tokens & Typography**:
+  - Configured Google Fonts (`Playfair Display` serif + `Inter` sans) in `frontend/index.html`.
+  - Extended Tailwind tokens in `frontend/tailwind.config.js` (colors, serif font, shadows, border radii, touch targets).
+- [x] **Reusable UI Primitives (`frontend/src/components/ui/`)**:
+  - `Container`: Configurable max-width wrappers (`sm`, `md`, `lg`, `xl`, `7xl`, `full`).
+  - `Section`: Layout section wrapper supporting background tokens (`cream`, `white`, `stone`, `charcoal`) and vertical spacing.
+  - `Button`: Multi-variant button (`primary`, `secondary`, `outline`, `ghost`, `terracotta`), loading spinner, and $\ge 44\text{px}$ touch targets.
+  - `IconButton`: Accessible icon button requiring explicit `aria-label` and touch target compliance.
+  - `Badge`: Status and craft badges (`default`, `ochre`, `terracotta`, `stone`, `success`, `outline`).
+  - `LoadingState`, `EmptyState`, `ErrorState`: Standardized UI state feedback primitives.
+  - Barrel export in `frontend/src/components/ui/index.ts`.
+- [x] **Application Shell (`frontend/src/components/layout/` & `layouts/`)**:
+  - `Header`: Announcement bar, brand typography, desktop navigation, action placeholders, and accessible mobile drawer with hamburger toggle.
+  - `Footer`: Semantic 4-column artisanal footer with craft heritage story, collection links, and copyright.
+  - `RootLayout`: Integrated header/footer landmarks and skip-to-content accessibility link.
+- [x] **API Client Foundation**:
+  - Implemented generic, type-safe `apiGet<T>` with `VITE_API_URL` handling, URL normalization, and `ApiError` mapping in `frontend/src/services/api-client.ts`.
+- [x] **Design Preview**:
+  - Polished `HomePage` with editorial hero section, geometric art placeholder, craft pillars, and diagnostic connection state.
+- [x] **Testing & Verification**:
+  - 18 frontend unit tests passing (`frontend/tests/`).
+  - 78 backend domain/API tests passing (`backend/tests/`).
+  - Full TypeScript build, ESLint (0 warnings), and Prettier format checks passing.
 
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 6B is complete).
+- _None_ (Step 7 is complete and ready for review).
 
 ---
 
-## 4. Planned Next Work (Step 7: Frontend Catalog UI & Browsing Experience)
+## 4. Planned Next Work (Step 8: Frontend Catalog Browsing & Product Exploration)
 
-1. Build responsive frontend category navigation and product grid components in `frontend/src/components/catalog/`.
-2. Implement product listing page with active filters (category, availability, sort) and pagination controls.
-3. Build product detail page with image gallery preview, specifications, and availability indicators.
-4. Integrate frontend API client (`frontend/src/services/api-client.ts`) with public backend catalog REST endpoints.
+1. Build category filter bar and product grid components in `frontend/src/components/catalog/`.
+2. Implement product listing page with pagination, category filtering, and sorting controls.
+3. Build product detail page with image gallery preview, dimensions, availability badges, and craft descriptions.
+4. Connect frontend catalog components to public REST API endpoints (`GET /api/categories`, `GET /api/products`).
 
 ---
 
@@ -113,5 +128,4 @@ The controlled, repeatable development catalog seed script has been created and 
 
 - Strictly adhere to `AI-RULES.md`.
 - **Do NOT build customer cart checkout or payment processing until public catalog browsing is verified.**
-- Execute seed data via `npm run prisma:seed` in `backend/` workspace.
-- Keep `DATABASE_URL` server-only.
+- Keep `DATABASE_URL` and backend secrets server-only.

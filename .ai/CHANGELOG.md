@@ -11,8 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 7: Frontend catalog browsing UI and store components.
+- Step 8: Frontend catalog browsing UI and product exploration.
 - Cart and checkout client state integration.
+
+---
+
+## [0.9.0] - 2026-10-04
+
+### Added
+
+- **Step 7: Frontend Application Shell + Design System**:
+  - **Design System & Typography**: Configured Google Fonts (`Playfair Display` serif + `Inter` sans) in `frontend/index.html` and extended Tailwind tokens in `frontend/tailwind.config.js` with project-approved art palette (`art-charcoal`, `art-ochre`, `art-terracotta`, `art-cream`, `art-stone`, `art-sand`), custom shadows, and touch target tokens.
+  - **Reusable UI Primitives (`frontend/src/components/ui/`)**:
+    - `Container`: Responsive max-width wrapper (`sm`, `md`, `lg`, `xl`, `7xl`, `full`).
+    - `Section`: Page section wrapper with palette backgrounds and spacing tokens.
+    - `Button`: Multi-variant accessible button (`primary`, `secondary`, `outline`, `ghost`, `terracotta`) with loading spinner and $\ge 44\text{px}$ touch targets.
+    - `IconButton`: Accessible icon button requiring explicit `aria-label`.
+    - `Badge`: Status and category pill tags.
+    - `LoadingState`, `EmptyState`, `ErrorState`: Standardized state feedback primitives.
+    - Barrel export in `frontend/src/components/ui/index.ts`.
+  - **Application Shell (`frontend/src/components/layout/` & `layouts/`)**:
+    - `Header`: Announcement bar, editorial brand typography, desktop navigation, action placeholders, and accessible mobile drawer with hamburger toggle.
+    - `Footer`: Semantic 4-column artisanal footer with heritage story, quick links, and copyright.
+    - `RootLayout`: Integrated header/footer landmarks and skip-to-content accessibility link.
+  - **API Client Foundation (`frontend/src/services/api-client.ts`)**:
+    - Implemented generic, type-safe `apiGet<T>` with `VITE_API_URL` handling, URL normalization, and `ApiError` mapping.
+  - **Landing/Shell Preview (`frontend/src/pages/HomePage.tsx`)**:
+    - Built an editorial preview showcasing the artisanal palette, geometric artwork placeholder, craft pillars, and diagnostic connection state.
+  - **Testing & Quality**:
+    - Added 18 unit tests in `frontend/tests/` covering components, API client, and application shell.
+    - Verified full workspace builds, 0 lint warnings, and Prettier formatting compliance.
 
 ---
 
