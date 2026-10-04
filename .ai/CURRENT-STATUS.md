@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-04  
-**Current Phase**: `CATALOG REST API FOUNDATION (Step 6A Complete)`
+**Current Phase**: `CONTROLLED CATALOG SEED DATA (Step 6B Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The public customer-facing Catalog REST API endpoints have been established (Step 6A). Public read endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`) are fully implemented following the `Controller → Service → Repository → Prisma` layered pattern. Server-side pagination, parameter validation, whitelist-based sorting (`newest`, `price_asc`, `price_desc`), category slug filtering, and sanitized public DTOs (protecting raw stock quantities and internal fields) are in place, validated with 70 passing automated tests across the workspace test suite.
+The controlled, repeatable development catalog seed script has been created and validated (Step 6B). Located at `backend/prisma/seed.ts` (runnable via `npm run prisma:seed` in `backend/` or `npx prisma db seed`), it seeds 3 core art categories (`Mandala Art`, `Lippan Art`, `Handmade Paintings`) and 10 realistic Indian handmade-art products exercising all availability states (`IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT`), prices in paise, featured subsets, and multi-image galleries with unique primary images. The seed logic is 100% idempotent via slug/SKU upserts and verified by 78 passing automated tests.
 
-> **CRITICAL NOTE**: Database seeding scripts (Step 6B), frontend catalog UI components (Step 7+), authentication, customer cart endpoints, and payment processing have **NOT YET BEEN CREATED**. Step 6A was strictly focused on public catalog read endpoints.
+> **CRITICAL NOTE**: Frontend catalog UI components (Step 7+), authentication, customer cart endpoints, and payment processing have **NOT YET BEEN CREATED**. Step 6B was strictly focused on development seeding.
 
 ---
 
@@ -62,37 +62,44 @@ The public customer-facing Catalog REST API endpoints have been established (Ste
 
 ### Phase 6A: Catalog REST API Foundation (Completed)
 
-- [x] **Public Catalog Endpoints**:
-  - [x] `GET /api/categories`: Returns active categories ordered by `displayOrder`.
-  - [x] `GET /api/products`: Paginated public catalog with query filters (`page`, `pageSize`, `category`, `availability`, `featured`, `sort`).
-  - [x] `GET /api/products/:slug`: Public product detail view with category and image metadata.
-- [x] **Controller & Route Layer**:
-  - [x] Created `backend/src/controllers/catalog.controller.ts` with thin request handling and DTO mapping.
-  - [x] Created `backend/src/routes/catalog.routes.ts` and mounted in `backend/src/routes/index.ts`.
-- [x] **Data Protection & DTOs**:
-  - [x] Created `backend/src/types/catalog.ts` (`PublicCategoryDto`, `PublicProductListItemDto`, `PublicProductDetailDto`, `PaginatedData`).
-  - [x] Withheld internal raw `stockQuantity` and metadata from public responses.
-- [x] **Architecture Record**:
-  - [x] Accepted ADR-013 in `.ai/DECISIONS.md`.
+- [x] Public catalog endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`).
+- [x] Server-side pagination, sorting whitelist, and category slug filtering.
+- [x] Protected public DTOs withholding internal raw `stockQuantity`.
+- [x] Recorded ADR-013 in `.ai/DECISIONS.md`.
+- [x] Pushed milestone commit (`feat(api): implement public catalog REST API endpoints and pagination`).
+
+### Phase 6B: Controlled Catalog Seed Data (Completed)
+
+- [x] **Seed Script Authoring**:
+  - [x] Created `backend/prisma/seed.ts` with deterministic data fixtures.
+  - [x] Seeded 3 categories (`Mandala Art`, `Lippan Art`, `Handmade Paintings`).
+  - [x] Seeded 10 products (6 `IN_STOCK`, 3 `MADE_TO_ORDER`, 1 `SOLD_OUT`).
+  - [x] Configured multi-image galleries with exact single primary image per product.
+  - [x] Configured `prisma.seed` command in `backend/package.json`.
+- [x] **Idempotency & Safety**:
+  - [x] Implemented upsert strategy by category slug and product SKU.
+  - [x] Deterministic image sync preventing duplicate galleries across repeated runs.
 - [x] **Automated Testing & Quality**:
-  - [x] Authored supertest integration suite (`backend/tests/catalog.api.test.ts`).
-  - [x] Verified full test suite execution (`npm run test` — 70 tests passed across 7 test suites).
-  - [x] Verified clean TypeScript build (`npm run build`).
+  - [x] Authored seed contract & idempotency test suite (`backend/tests/seed.test.ts`).
+  - [x] Verified full workspace test suite (`npm run test` — 78 tests passed across 8 suites).
+  - [x] Verified TypeScript compilation (`npm run build`).
   - [x] Verified zero lint warnings (`npm run lint`).
-  - [x] Verified code formatting (`npm run format:check`).
+  - [x] Verified Prettier formatting compliance (`npm run format:check`).
 
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 6A is complete).
+- _None_ (Step 6B is complete).
 
 ---
 
-## 4. Planned Next Work (Step 6B: Database Seeding Script)
+## 4. Planned Next Work (Step 7: Frontend Catalog UI & Browsing Experience)
 
-1. Author deterministic seed script (`backend/prisma/seed.ts`) with authentic art categories (Mandala Art, Lippan Art, Paintings) and sample artworks with images.
-2. Verify seed execution against local PostgreSQL container.
+1. Build responsive frontend category navigation and product grid components in `frontend/src/components/catalog/`.
+2. Implement product listing page with active filters (category, availability, sort) and pagination controls.
+3. Build product detail page with image gallery preview, specifications, and availability indicators.
+4. Integrate frontend API client (`frontend/src/services/api-client.ts`) with public backend catalog REST endpoints.
 
 ---
 
@@ -105,6 +112,6 @@ The public customer-facing Catalog REST API endpoints have been established (Ste
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- **Do NOT build authentication or payment processing until catalog browsing is verified.**
-- Use `productService` and `categoryService` for domain logic; controllers remain thin.
+- **Do NOT build customer cart checkout or payment processing until public catalog browsing is verified.**
+- Execute seed data via `npm run prisma:seed` in `backend/` workspace.
 - Keep `DATABASE_URL` server-only.

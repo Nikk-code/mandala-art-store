@@ -11,8 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 6B: Deterministic database seeding script (`backend/prisma/seed.ts`).
 - Step 7: Frontend catalog browsing UI and store components.
+- Cart and checkout client state integration.
+
+---
+
+## [0.8.0] - 2026-10-04
+
+### Added
+
+- **Step 6B: Controlled Catalog Seed Data**:
+  - **Seed Script**: Authored `backend/prisma/seed.ts` providing deterministic, idempotent catalog seed data for local development.
+  - **Seed Categories**: Created 3 authentic art categories (`Mandala Art`, `Lippan Art`, `Handmade Paintings`) with descriptions, display orders, and cover image URLs.
+  - **Seed Products**: Created 10 realistic Indian handmade-art products with prices in paise, availability distributions (6 `IN_STOCK`, 3 `MADE_TO_ORDER`, 1 `SOLD_OUT`), dimensions, materials, and SEO metadata.
+  - **Image Galleries**: Populated deterministic multi-image galleries with strictly one primary image per artwork.
+  - **Idempotency**: Implemented category slug and product SKU upserts and deterministic image replacements ensuring repeated seed execution does not create duplicates.
+  - **Testing**: Added `backend/tests/seed.test.ts` validating data rules, pricing bounds, and seed contract idempotency. Total automated tests reached 78 passing tests.
+  - Configured `npm run prisma:seed` in `backend/package.json`.
 
 ---
 
