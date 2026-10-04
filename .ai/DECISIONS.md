@@ -11,6 +11,13 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-003: Core Planned Technology Stack](#adr-003-core-planned-technology-stack)
 - [ADR-004: Progressive Implementation & No Premature Scaffolding](#adr-004-progressive-implementation--no-premature-scaffolding)
 - [ADR-005: NPM Workspaces Monorepo Scaffolding & Unified Tooling](#adr-005-npm-workspaces-monorepo-scaffolding--unified-tooling)
+- [ADR-006: Prisma ORM for Database Access](#adr-006-prisma-orm-for-database-access)
+- [ADR-007: Money as Integer Paise](#adr-007-money-as-integer-paise)
+- [ADR-008: Order Item Price Snapshots](#adr-008-order-item-price-snapshots)
+- [ADR-009: Soft Delete for Products, Categories & Users](#adr-009-soft-delete-for-products-categories--users)
+- [ADR-010: Cloud Object Storage for Images](#adr-010-cloud-object-storage-for-images)
+- [ADR-011: Defer Product Variants](#adr-011-defer-product-variants)
+- [ADR-012: Guest Checkout Support with Contact Snapshots & Client Cart Merging](#adr-012-guest-checkout-support-with-contact-snapshots--client-cart-merging)
 
 ---
 
@@ -75,3 +82,93 @@ This document tracks significant architectural, technical, and governance decisi
   - _Separate repositories_: Introduces friction in coordinating full-stack changes, synchronized testing, and shared types.
   - _Lerna / Turborepo / Nx_: Overkill for a two-workspace boutique ecommerce application. Standard npm workspaces are built into Node without additional CLI dependencies.
 - **Consequences**: Streamlined local development, unified commands (`npm run build`, `npm run test`, `npm run lint`), shared `.env.example`, and isolated package boundaries.
+
+---
+
+### ADR-006: Prisma ORM for Database Access
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: The project needs a type-safe, migration-capable database access layer for PostgreSQL. The tech stack document lists Prisma, Drizzle, and Kysely as candidates.
+- **Decision**: Use **Prisma ORM** as the primary database access tool. The declarative `.prisma` schema file serves as a single source of truth that generates TypeScript types, migration SQL, and a query client.
+- **Alternatives Considered**:
+  - _Drizzle_: Strong type safety with schema-as-TypeScript-code. Growing rapidly but smaller ecosystem. Closer to SQL which is powerful but provides less abstraction for common CRUD patterns.
+  - _Raw node-postgres (pg)_: Full SQL control but requires manual type definitions, manual migration scripts, and hand-written query builders. High maintenance burden for a CRUD-heavy ecommerce application.
+- **Consequences**: Auto-generated TypeScript types eliminate manual type duplication. Declarative schema is highly readable by AI agents. Built-in migration versioning. Minor tradeoff: Prisma adds a query engine binary, slightly increasing deployment footprint.
+
+---
+
+### ADR-007: Money as Integer Paise
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: The application handles financial values (product prices, discounts, shipping fees, order totals). JavaScript's floating-point arithmetic produces rounding errors (e.g., `0.1 + 0.2 ≠ 0.3`) that are unacceptable for invoicing and payment reconciliation.
+- **Decision**: Store all monetary values as **integers representing paise** (INR minor units). ₹1,499.00 = `149900` paise. Use INTEGER column type with `CHECK >= 0` constraints. Frontend converts for display via `formatPrice(amountInPaise)`.
+- **Alternatives Considered**:
+  - _DECIMAL(10,2)_: Correct and common in traditional databases. However, integer paise are simpler in TypeScript, trivially JSON-serializable, and naturally align with Razorpay's API which accepts amounts in paise.
+  - _FLOAT/DOUBLE_: Rejected due to inherent floating-point rounding errors in financial calculations.
+- **Consequences**: Zero rounding risk in arithmetic, natural alignment with Indian payment gateway APIs, database-level non-negative enforcement, trivial display conversion.
+
+---
+
+### ADR-008: Order Item Price Snapshots
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: Product prices may change after a customer places an order. Historical order records must reflect the exact price the customer was charged, not the current catalog price.
+- **Decision**: Each `OrderItem` stores snapshot fields: `product_name`, `product_sku`, `unit_price`, and `quantity`. The `product_id` FK is retained for traceability but is not used for price display on historical orders. Shipping address is similarly embedded directly into the Order record.
+- **Alternatives Considered**:
+  - _Reference-only (always JOIN to Product)_: Breaks historical accuracy when products are re-priced or renamed.
+  - _Separate immutable snapshot table_: Adds unnecessary complexity for this scale. Embedding is simpler and equally correct.
+- **Consequences**: Orders are fully self-contained for invoicing and customer display. Product re-pricing does not affect historical records.
+
+---
+
+### ADR-009: Soft Delete for Products, Categories & Users
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: Products, categories, and users are referenced by orders and other records. Physical deletion would break referential integrity and destroy historical data.
+- **Decision**: Use `is_active = false` soft-deactivation for Products, Categories, and Users. Orders, OrderItems, and Payments are never deleted. Cart, CartItem, and Address rows can be hard-deleted as they have no historical value.
+- **Alternatives Considered**:
+  - _Universal soft delete (every table)_: Adds unnecessary complexity to Cart, CartItem, and Address queries.
+  - _Physical deletion with cascading_: Destroys historical order data and violates financial record-keeping integrity.
+- **Consequences**: Storefront queries filter by `is_active = true`. Admin views can optionally show inactive records. Historical order integrity is guaranteed.
+
+---
+
+### ADR-010: Cloud Object Storage for Images
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: The art business is image-heavy, with multiple high-resolution images per product. Storing binary image data in PostgreSQL is impractical for performance, CDN delivery, and responsive image transformation.
+- **Decision**: Store image binary files in cloud object storage (primary candidate: **Cloudinary** for built-in responsive transformations and CDN). PostgreSQL stores only image metadata: URL, alt text, display order, and primary flag in a `ProductImage` table.
+- **Alternatives Considered**:
+  - _PostgreSQL BYTEA columns_: Bloats the database, no CDN caching, no responsive image transformation, slow queries.
+  - _Self-hosted file storage_: Requires managing disk, backups, CDN configuration, and image resizing infrastructure.
+- **Consequences**: Lean database, fast catalog queries, global CDN delivery, automatic responsive image sizes, and offloaded storage scaling.
+
+---
+
+### ADR-011: Defer Product Variants
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: The current business model lists each artwork as a unique piece with specific dimensions and materials. Some businesses need a variant system (size × material matrix), but this business currently treats a "12×12 Mandala" and "18×18 Mandala" as separate product listings.
+- **Decision**: Do not implement a product variant system in the initial schema. Each product is a single listing with its own SKU, price, and stock. Revisit when the business explicitly needs standardized size/material options across many products.
+- **Alternatives Considered**:
+  - _Build generic variant engine now_: Premature complexity in product creation UI, cart logic, order snapshots, and inventory tracking for a feature the business does not currently use.
+- **Consequences**: Simpler product CRUD, simpler cart and checkout logic, simpler order items. If variants are needed later, a `ProductVariant` table can be introduced with FK references from CartItem and OrderItem.
+
+---
+
+### ADR-012: Guest Checkout Support with Contact Snapshots & Client Cart Merging
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: Forcing mandatory customer account registration before purchase creates friction and increases cart abandonment rates for a boutique art store. At the same time, we need secure, traceable order records and seamless cart transitions.
+- **Decision**: Fully support **Guest Checkout**. Unauthenticated visitors maintain a client-side cart in `localStorage`. During checkout, guest orders are created with `Order.user_id = NULL`, capturing `customer_email`, `customer_phone`, and full shipping address snapshots directly on the `Order` record. When a guest later registers or logs in, client-side cart items are merged into their authenticated server cart via `/api/cart/merge`.
+- **Alternatives Considered**:
+  - _Mandatory account creation_: High checkout friction and lower conversion rate for first-time art buyers.
+  - _Anonymous user database rows for guests_: Bloats the `User` table with abandoned guest accounts and complicates authentication.
+- **Consequences**: Optimal conversion rate with frictionless checkout; clean database with no phantom guest users; full contact & address immutability on orders; clean upgrade path when guests register later.

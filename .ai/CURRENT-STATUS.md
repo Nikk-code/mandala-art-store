@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-04  
-**Current Phase**: `TECHNICAL FOUNDATION`
+**Current Phase**: `DATABASE MIGRATION & REPOSITORY FOUNDATION (Step 4C Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The technical foundation for both the frontend and backend applications has been established using clean npm workspaces. Both applications compile under strict TypeScript configurations, pass linting and formatting validation, and have running unit/component and API integration tests.
+The initial PostgreSQL migration SQL and baseline repository layer have been established (Step 4C). The initial migration (`20261004153500_init_ecommerce_schema`) translates all 12 domain entities, 6 enums, constraints, and indexes into version-controlled SQL. A centralized `PrismaClient` singleton and initial domain repositories (`ProductRepository`, `CategoryRepository`, `UserRepository`) have been implemented with unit and integration tests passing.
 
-> **CRITICAL NOTE**: Domain ecommerce capabilities (product catalog, cart, checkout, customer accounts, payment gateway execution, and admin CRUD) are **NOT YET BUILT**. This phase was strictly dedicated to establishing the application runtimes, directory structures, routing, configuration, and testing infrastructure.
+> **CRITICAL NOTE**: Seed data, application services, REST controllers, API endpoints, authentication, and frontend integration have **NOT YET BEEN CREATED**. Step 4C was strictly focused on migration authoring, Prisma client initialization, and the data access repository foundation. Seed data and API development will occur in subsequent phases.
 
 ---
 
@@ -22,43 +22,64 @@ The technical foundation for both the frontend and backend applications has been
 
 ### Phase 2: Technical Foundation (Completed)
 
-- [x] **Repository Structure**:
-  - [x] Established npm workspaces separating `frontend/` and `backend/`.
-  - [x] Configured root `.gitignore`, `.env.example`, `.prettierrc`, and `README.md`.
-- [x] **Frontend Foundation** (`frontend/`):
-  - [x] Initialized React 18 + Vite + TypeScript (strict mode).
-  - [x] Integrated Tailwind CSS with custom art palette tokens (`art-cream`, `art-charcoal`, `art-ochre`, `art-terracotta`).
-  - [x] Configured React Router with semantic `RootLayout` and initial `HomePage` status view.
-  - [x] Implemented typed API service client (`api-client.ts`) and health check hook (`useHealthCheck.ts`).
-  - [x] Setup Vitest + React Testing Library with passing smoke tests.
-- [x] **Backend Foundation** (`backend/`):
-  - [x] Initialized Node.js + Express + TypeScript runtime.
-  - [x] Implemented typed configuration parser (`env.ts`) with fallback defaults.
-  - [x] Implemented standardized error-handling middleware and 404 handler (`CODING-STANDARDS.md` contract).
-  - [x] Implemented health check endpoint (`GET /api/health`) with controller and router separation.
-  - [x] Setup Vitest + Supertest with passing endpoint tests.
-- [x] **Testing & E2E Foundation**:
-  - [x] Playwright configuration initialized (`playwright.config.ts`) with desktop and mobile viewport configurations.
-  - [x] E2E smoke test created (`e2e/smoke.spec.ts`).
-- [x] **Code Quality & Tooling**:
-  - [x] Unified npm scripts (`npm run build`, `npm run test`, `npm run lint`, `npm run format:check`).
-  - [x] Zero lint warnings across all workspaces.
-  - [x] Verified live `/api/health` connectivity.
+- [x] Established npm workspaces separating `frontend/` and `backend/`.
+- [x] Frontend foundation: React 18 + Vite + TypeScript + Tailwind CSS + Router + Vitest.
+- [x] Backend foundation: Node.js + Express + TypeScript + Vitest.
+- [x] Tooling & Quality: Playwright E2E smoke tests, ESLint, Prettier.
+
+### Phase 3: Domain & Database Design (Completed)
+
+- [x] Authoritative domain model and database architecture documented in `.ai/DATABASE.md`.
+- [x] Concrete business and financial rules documented in `.ai/BUSINESS-RULES.md`.
+- [x] 12 ADRs accepted in `.ai/DECISIONS.md`.
+- [x] Architecture review and consistency fixes completed.
+
+### Phase 4A: PostgreSQL + Prisma Technical Foundation (Completed)
+
+- [x] Created root `docker-compose.yml` (`postgres:16-alpine`, volume persistence, configurable parameters).
+- [x] Installed `@prisma/client` and `prisma` CLI (v5.22.0) in `backend/` workspace.
+- [x] Configured backend-only `DATABASE_URL` in `.env.example` and `backend/src/config/env.ts`.
+
+### Phase 4B: Prisma Ecommerce Domain Schema (Completed)
+
+- [x] Authored all 12 domain models in `backend/prisma/schema.prisma`.
+- [x] Configured 6 domain enums, referential actions, composite unique constraints, and performance indexes.
+- [x] Generated typed `@prisma/client` (v5.22.0).
+
+### Phase 4C: Database Migration & Repository Foundation (Completed)
+
+- [x] **Initial Database Migration**:
+  - [x] Generated and locked migration `20261004153500_init_ecommerce_schema` via Prisma Migrate.
+  - [x] Defined all 12 tables, 6 enums, foreign keys, and indexes in version-controlled SQL.
+  - [x] Created `backend/prisma/migrations/migration_lock.toml`.
+- [x] **Database Client Singleton**:
+  - [x] Created `backend/src/db/prisma.ts` with global single-instance pattern and environment awareness.
+- [x] **Repository Layer Foundation**:
+  - [x] Created `ProductRepository` (`backend/src/repositories/product.repository.ts`).
+  - [x] Created `CategoryRepository` (`backend/src/repositories/category.repository.ts`).
+  - [x] Created `UserRepository` (`backend/src/repositories/user.repository.ts`).
+  - [x] Created index barrel exports (`backend/src/repositories/index.ts`).
+- [x] **Testing & Verification**:
+  - [x] Authored database connection test (`backend/tests/db.test.ts`).
+  - [x] Authored repository contract and query integration tests (`backend/tests/repositories.test.ts`).
+  - [x] Verified full test suite execution (`npm run test` — 10 tests passed).
+  - [x] Verified TypeScript compilation (`npm run build`).
+  - [x] Verified zero lint warnings (`npm run lint`).
+  - [x] Verified code formatting (`npm run format:check`).
 
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Technical Foundation phase complete).
+- _None_ (Step 4C is complete).
 
 ---
 
-## 4. Planned Next Work (Step 3: Database & Domain Modeling)
+## 4. Planned Next Work (Step 5: Database Seeding & Catalog Domain Services)
 
-1. Introduce PostgreSQL schema modeling and type-safe database migrations (e.g. Prisma or Drizzle).
-2. Model core entities: `Product`, `Category`, `ProductImage`, and `Inventory`.
-3. Create database seed scripts with initial Mandala Art and Lippan Art catalog entries.
-4. Establish repository layer in backend for data access.
+1. Author deterministic seed script (`backend/prisma/seed.ts`) with initial art categories (Mandala Art, Lippan Art, Paintings) and sample artworks.
+2. Establish domain service layer for catalog querying and category browsing (`ProductService`, `CategoryService`).
+3. Build and test catalog REST API endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`).
 
 ---
 
@@ -71,6 +92,6 @@ The technical foundation for both the frontend and backend applications has been
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- Follow the 11-step execution workflow before proposing code changes.
-- **Do not install unnecessary UI component libraries or global state managers prematurely.**
-- Update this file after completing significant milestones.
+- **Do NOT build authentication or payment processing until catalog browsing is verified.**
+- Use `productRepository`, `categoryRepository`, and `userRepository` from `backend/src/repositories/` for domain database access.
+- Keep `DATABASE_URL` server-only.

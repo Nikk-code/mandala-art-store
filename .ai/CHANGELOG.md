@@ -11,9 +11,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Database layer setup (PostgreSQL schema & type-safe migrations).
+- Step 4C: PostgreSQL migration execution and repository layer implementation.
 - Product catalog data models and initial seed data.
 - Catalog browsing and filter API endpoints.
+
+---
+
+## [0.4.0] - 2026-10-04
+
+### Added
+
+- **Step 4B: Prisma Ecommerce Domain Schema**:
+  - Authored all 12 domain models in `backend/prisma/schema.prisma` (`User`, `Category`, `Product`, `ProductImage`, `Address`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Payment`, `Review`, `Coupon`).
+  - Configured 6 domain enums (`UserRole`, `ProductAvailability`, `OrderStatus`, `PaymentStatus`, `ReviewStatus`, `DiscountType`).
+  - Configured explicit referential integrity actions (`onDelete: Cascade`, `Restrict`, `SetNull`).
+  - Established composite unique constraints (`CartItem(cart_id, product_id)`, `Review(product_id, user_id)`).
+  - Added query optimization indexes for foreign keys, order status, created dates, and product availability.
+  - Verified `prisma format`, `prisma validate`, and generated typed `@prisma/client`.
+  - Maintained full TypeScript compilation, zero lint warnings, and passing tests across workspaces.
+
+---
+
+## [0.3.0] - 2026-10-04
+
+### Added
+
+- **Step 4A: PostgreSQL & Prisma Technical Foundation**:
+  - Configured minimal, reproducible local PostgreSQL environment via `docker-compose.yml` (`postgres:16-alpine`, volume persistence, configurable credentials).
+  - Installed `@prisma/client` and `prisma` CLI (v5.22.0) in `backend/` workspace.
+  - Created minimal `backend/prisma/schema.prisma` foundation pointing to `postgresql` datasource and `env("DATABASE_URL")` (no ecommerce models defined yet).
+  - Configured `DATABASE_URL` and PostgreSQL variables in `.env.example` with strict backend-only exposure.
+  - Extended backend `AppConfig` (`src/config/env.ts`) to handle `databaseUrl`.
+  - Added `prisma:validate` and `prisma:generate` scripts in `backend/package.json`.
+  - Verified Prisma schema validation, TypeScript compilation, linting, and existing test suite.
+- **Step 3: Domain & Database Design**:
+  - Authored authoritative domain model and database architecture in `.ai/DATABASE.md`.
+  - Defined 12 core entities, money representation (paise), atomic inventory reservation/compensation lifecycle, and guest checkout support.
+  - Recorded ADR-006 through ADR-012 in `.ai/DECISIONS.md`.
 
 ---
 

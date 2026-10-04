@@ -5,11 +5,16 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config();
 
+process.env.DATABASE_URL =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres:postgres@localhost:5432/mandala_store?schema=public';
+
 export interface AppConfig {
   nodeEnv: string;
   port: number;
   corsOrigin: string;
   isProduction: boolean;
+  databaseUrl?: string;
 }
 
 export const config: AppConfig = {
@@ -17,4 +22,5 @@ export const config: AppConfig = {
   port: parseInt(process.env.PORT || '5000', 10),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   isProduction: (process.env.NODE_ENV || 'development') === 'production',
+  databaseUrl: process.env.DATABASE_URL,
 };
