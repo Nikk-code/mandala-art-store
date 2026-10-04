@@ -18,6 +18,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-010: Cloud Object Storage for Images](#adr-010-cloud-object-storage-for-images)
 - [ADR-011: Defer Product Variants](#adr-011-defer-product-variants)
 - [ADR-012: Guest Checkout Support with Contact Snapshots & Client Cart Merging](#adr-012-guest-checkout-support-with-contact-snapshots--client-cart-merging)
+- [ADR-013: Public Catalog REST API Design, Server-Side Pagination & Information Protection](#adr-013-public-catalog-rest-api-design-server-side-pagination--information-protection)
 
 ---
 
@@ -158,7 +159,7 @@ This document tracks significant architectural, technical, and governance decisi
 - **Decision**: Do not implement a product variant system in the initial schema. Each product is a single listing with its own SKU, price, and stock. Revisit when the business explicitly needs standardized size/material options across many products.
 - **Alternatives Considered**:
   - _Build generic variant engine now_: Premature complexity in product creation UI, cart logic, order snapshots, and inventory tracking for a feature the business does not currently use.
-- **Consequences**: Simpler product CRUD, simpler cart and checkout logic, simpler order items. If variants are needed later, a `ProductVariant` table can be introduced with FK references from CartItem and OrderItem.
+  - _Consequences_: Simpler product CRUD, simpler cart and checkout logic, simpler order items. If variants are needed later, a `ProductVariant` table can be introduced with FK references from CartItem and OrderItem.
 
 ---
 
@@ -172,3 +173,17 @@ This document tracks significant architectural, technical, and governance decisi
   - _Mandatory account creation_: High checkout friction and lower conversion rate for first-time art buyers.
   - _Anonymous user database rows for guests_: Bloats the `User` table with abandoned guest accounts and complicates authentication.
 - **Consequences**: Optimal conversion rate with frictionless checkout; clean database with no phantom guest users; full contact & address immutability on orders; clean upgrade path when guests register later.
+
+---
+
+### ADR-013: Public Catalog REST API Design, Server-Side Pagination & Information Protection
+
+- **Date**: 2026-10-04
+- **Status**: Accepted
+- **Context**: The storefront requires read-only public endpoints to browse categories, list products with filters, and view artwork details. We need safe query parameters, predictable response formats, and privacy for internal data (such as exact raw stock counts).
+- **Decision**: Implement clean REST endpoints under `/api`: `GET /api/categories`, `GET /api/products`, and `GET /api/products/:slug`. Implement standard server-side pagination with safe bounds (`page >= 1`, `pageSize` between 1 and 100, default 20), whitelist-validated sorting (`newest`, `price_asc`, `price_desc`), and category slug filtering. Map responses to explicit public DTOs, exposing qualitative availability (`IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT`) while withholding raw `stockQuantity` from public endpoints.
+- **Alternatives Considered**:
+  - _Exposing raw stock numbers publicly_: May expose business volume or inventory levels to competitors.
+  - _Client-side pagination / unconstrained result sets_: Vulnerable to denial-of-service and high database memory load as catalog grows.
+  - _GraphQL or complex query filters_: Overkill for initial boutique store needs; standard REST keeps client lightweight and easily cacheable.
+- **Consequences**: Fast, secure, cacheable public API responses; zero database leaks; clean contract ready for React frontend integration.

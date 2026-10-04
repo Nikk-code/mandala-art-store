@@ -66,6 +66,25 @@ export interface UpdateProductInput {
   metaDescription?: string | null;
 }
 
+export interface ListProductsQuery {
+  page?: number;
+  pageSize?: number;
+  category?: string; // category slug
+  availability?: ProductAvailability;
+  featured?: boolean;
+  sort?: 'newest' | 'price_asc' | 'price_desc';
+}
+
+export interface PaginatedProductsResult {
+  items: ProductWithDetails[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
 export class ProductService {
   constructor(
     private readonly repo: ProductRepository = productRepository,
@@ -206,6 +225,65 @@ export class ProductService {
     }
 
     return this.repo.findActiveProducts(filter);
+  }
+
+  async listActiveProductsPaginated(query: ListProductsQuery): Promise<PaginatedProductsResult> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+
+    if (!Number.isInteger(page) || page < 1) {
+      throw new ValidationError('Page must be a positive integer greater than or equal to 1');
+    }
+
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+      throw new ValidationError('Page size must be a positive integer between 1 and 100');
+    }
+
+    let categoryId: string | undefined;
+    if (query.category) {
+      const validCategorySlug = validateSlug(query.category, 120);
+      const category = await this.categoryRepo.findBySlug(validCategorySlug);
+      if (!category || !category.isActive) {
+        throw new NotFoundError(`Active category not found with slug: ${validCategorySlug}`);
+      }
+      categoryId = category.id;
+    }
+
+    let availability: ProductAvailability | undefined;
+    if (query.availability) {
+      availability = validateAvailability(query.availability);
+    }
+
+    if (query.sort !== undefined && !['newest', 'price_asc', 'price_desc'].includes(query.sort)) {
+      throw new ValidationError(
+        'Invalid sort option. Must be one of: newest, price_asc, price_desc'
+      );
+    }
+
+    const { items, totalItems } = await this.repo.findActiveProductsPaginated({
+      filter: {
+        categoryId,
+        availability,
+        isFeatured: query.featured,
+      },
+      pagination: {
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      },
+      sort: query.sort,
+    });
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return {
+      items,
+      pagination: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+      },
+    };
   }
 
   async updateProduct(id: string, input: UpdateProductInput): Promise<ProductWithDetails> {

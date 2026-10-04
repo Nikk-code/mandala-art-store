@@ -11,8 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 6: Catalog REST API endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`) & database seeding script.
-- Seed data fixtures for Mandala, Lippan, and handmade paintings.
+- Step 6B: Deterministic database seeding script (`backend/prisma/seed.ts`).
+- Step 7: Frontend catalog browsing UI and store components.
+
+---
+
+## [0.7.0] - 2026-10-04
+
+### Added
+
+- **Step 6A: Catalog REST API Foundation**:
+  - **Public Endpoints**:
+    - `GET /api/categories`: Returns active categories ordered by `displayOrder`.
+    - `GET /api/products`: Paginated public catalog supporting `page`, `pageSize`, `category` (by slug), `availability`, `featured`, and `sort` (`newest`, `price_asc`, `price_desc`).
+    - `GET /api/products/:slug`: Public product detail view with category and image metadata.
+  - **Controller & Routing**:
+    - Created `backend/src/controllers/catalog.controller.ts` with thin controller logic, request normalization, and public DTO mapping.
+    - Created `backend/src/routes/catalog.routes.ts` mounted under `/api` in `backend/src/routes/index.ts`.
+  - **Data Protection & DTOs**:
+    - Created `backend/src/types/catalog.ts` withholding raw `stockQuantity` and internal database fields from public storefront responses.
+  - **Architecture Decision**:
+    - Recorded ADR-013 (Public Catalog REST API Design, Server-Side Pagination & Information Protection) in `.ai/DECISIONS.md`.
+  - **Automated Integration Tests**:
+    - Created `backend/tests/catalog.api.test.ts` covering success responses, query validation (400), not-found handling (404), and error containment. Total test count increased to 70 passing tests.
+  - Verified clean TypeScript build, ESLint, Prettier format check, and Prisma schema validation.
 
 ---
 
@@ -99,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Playwright configuration (`playwright.config.ts`) and smoke test (`e2e/smoke.spec.ts`).
   - Strict ESLint and Prettier configurations.
   - Comprehensive `.env.example` and root `README.md`.
-- **Architecture Decisions**: Recorded ADR-005 (Workspace Monorepo Scaffolding & Tooling).
+  - Recorded ADR-005 (Workspace Monorepo Scaffolding & Tooling).
 
 ---
 

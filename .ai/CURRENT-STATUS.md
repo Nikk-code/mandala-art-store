@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-04  
-**Current Phase**: `PRODUCT CATALOG DOMAIN & SERVICE FOUNDATION (Step 5 Complete)`
+**Current Phase**: `CATALOG REST API FOUNDATION (Step 6A Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The backend product catalog domain services and validation foundation have been established (Step 5). Reusable domain services (`ProductService`, `CategoryService`), validation utilities (`validateSku`, `validateSlug`, `generateSlug`, `validatePriceInPaise`, `validateStockQuantity`, `validateAvailability`), custom domain errors (`AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError`), and product image management operations have been implemented and validated with 57 automated tests across the workspace suite.
+The public customer-facing Catalog REST API endpoints have been established (Step 6A). Public read endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`) are fully implemented following the `Controller → Service → Repository → Prisma` layered pattern. Server-side pagination, parameter validation, whitelist-based sorting (`newest`, `price_asc`, `price_desc`), category slug filtering, and sanitized public DTOs (protecting raw stock quantities and internal fields) are in place, validated with 70 passing automated tests across the workspace test suite.
 
-> **CRITICAL NOTE**: REST API controllers/routes, seed data scripts, authentication, customer/admin UI, cart services, and Razorpay payment integrations have **NOT YET BEEN CREATED**. Step 5 was strictly focused on domain business rules and service-layer logic.
+> **CRITICAL NOTE**: Database seeding scripts (Step 6B), frontend catalog UI components (Step 7+), authentication, customer cart endpoints, and payment processing have **NOT YET BEEN CREATED**. Step 6A was strictly focused on public catalog read endpoints.
 
 ---
 
@@ -55,23 +55,29 @@ The backend product catalog domain services and validation foundation have been 
 
 ### Phase 5: Product Catalog Domain & Service Foundation (Completed)
 
-- [x] **Domain Error Hierarchy**:
-  - [x] Created `AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError` in `backend/src/errors/`.
-- [x] **Catalog Validation Utilities**:
-  - [x] Created `generateSlug`, `validateSlug`, `validateSku`, `validatePriceInPaise`, `validateStockQuantity`, `validateAvailability`, `validateCategoryName`, `validateProductName` in `backend/src/utils/catalog-validation.ts`.
-- [x] **Repository Extensions**:
-  - [x] Extended `ProductRepository` with typed `ProductWithDetails` payload, image management (`addImage`, `removeImage`, `findImageById`, `setPrimaryImage`).
-  - [x] Extended `CategoryRepository` with `findByName`.
-- [x] **Catalog Domain Services**:
-  - [x] Created `CategoryService` (`backend/src/services/category.service.ts`) with slug generation, duplicate detection, and active filtering.
-  - [x] Created `ProductService` (`backend/src/services/product.service.ts`) with price validation in paise, SKU normalization, availability rules, active category verification, and product image management.
-  - [x] Created services index barrel (`backend/src/services/index.ts`).
-- [x] **Automated Testing & Validation**:
-  - [x] Created catalog validation tests (`backend/tests/catalog-validation.test.ts`).
-  - [x] Created CategoryService domain unit tests (`backend/tests/category.service.test.ts`).
-  - [x] Created ProductService domain unit tests (`backend/tests/product.service.test.ts`).
-  - [x] Executed full test suite (`npm run test` — 57 tests passed across all 6 test suites).
-  - [x] Verified full TypeScript compilation (`npm run build`).
+- [x] Domain error hierarchy (`AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError`).
+- [x] Catalog validation utilities (`validateSku`, `validateSlug`, `validatePriceInPaise`, `validateStockQuantity`, etc.).
+- [x] `CategoryService` and `ProductService` domain logic with image management.
+- [x] Pushed milestone commit (`feat(catalog): implement product catalog domain services and validation foundation`).
+
+### Phase 6A: Catalog REST API Foundation (Completed)
+
+- [x] **Public Catalog Endpoints**:
+  - [x] `GET /api/categories`: Returns active categories ordered by `displayOrder`.
+  - [x] `GET /api/products`: Paginated public catalog with query filters (`page`, `pageSize`, `category`, `availability`, `featured`, `sort`).
+  - [x] `GET /api/products/:slug`: Public product detail view with category and image metadata.
+- [x] **Controller & Route Layer**:
+  - [x] Created `backend/src/controllers/catalog.controller.ts` with thin request handling and DTO mapping.
+  - [x] Created `backend/src/routes/catalog.routes.ts` and mounted in `backend/src/routes/index.ts`.
+- [x] **Data Protection & DTOs**:
+  - [x] Created `backend/src/types/catalog.ts` (`PublicCategoryDto`, `PublicProductListItemDto`, `PublicProductDetailDto`, `PaginatedData`).
+  - [x] Withheld internal raw `stockQuantity` and metadata from public responses.
+- [x] **Architecture Record**:
+  - [x] Accepted ADR-013 in `.ai/DECISIONS.md`.
+- [x] **Automated Testing & Quality**:
+  - [x] Authored supertest integration suite (`backend/tests/catalog.api.test.ts`).
+  - [x] Verified full test suite execution (`npm run test` — 70 tests passed across 7 test suites).
+  - [x] Verified clean TypeScript build (`npm run build`).
   - [x] Verified zero lint warnings (`npm run lint`).
   - [x] Verified code formatting (`npm run format:check`).
 
@@ -79,15 +85,14 @@ The backend product catalog domain services and validation foundation have been 
 
 ## 3. In-Progress Work
 
-- _None_ (Step 5 is complete).
+- _None_ (Step 6A is complete).
 
 ---
 
-## 4. Planned Next Work (Step 6: Catalog REST APIs & Seeding)
+## 4. Planned Next Work (Step 6B: Database Seeding Script)
 
-1. Author deterministic seed script (`backend/prisma/seed.ts`) with art categories (Mandala Art, Lippan Art, Paintings) and sample artworks with images.
-2. Create REST controllers and routes for catalog browsing (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`).
-3. Add integration tests for catalog API endpoints using supertest.
+1. Author deterministic seed script (`backend/prisma/seed.ts`) with authentic art categories (Mandala Art, Lippan Art, Paintings) and sample artworks with images.
+2. Verify seed execution against local PostgreSQL container.
 
 ---
 
@@ -101,5 +106,5 @@ The backend product catalog domain services and validation foundation have been 
 
 - Strictly adhere to `AI-RULES.md`.
 - **Do NOT build authentication or payment processing until catalog browsing is verified.**
-- Use `productService` and `categoryService` from `backend/src/services/` for catalog domain operations.
+- Use `productService` and `categoryService` for domain logic; controllers remain thin.
 - Keep `DATABASE_URL` server-only.

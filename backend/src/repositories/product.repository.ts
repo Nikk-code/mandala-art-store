@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma';
-import type { Prisma, Product, ProductImage } from '@prisma/client';
+import type { Prisma, Product, ProductImage, ProductAvailability } from '@prisma/client';
 
 export type ProductWithDetails = Prisma.ProductGetPayload<{
   include: {
@@ -7,6 +7,19 @@ export type ProductWithDetails = Prisma.ProductGetPayload<{
     images: true;
   };
 }>;
+
+export interface FindActiveProductsPaginatedParams {
+  filter?: {
+    categoryId?: string;
+    availability?: ProductAvailability;
+    isFeatured?: boolean;
+  };
+  pagination?: {
+    skip: number;
+    take: number;
+  };
+  sort?: 'newest' | 'price_asc' | 'price_desc';
+}
 
 export class ProductRepository {
   async findById(id: string): Promise<ProductWithDetails | null> {
@@ -63,6 +76,49 @@ export class ProductRepository {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findActiveProductsPaginated(
+    params: FindActiveProductsPaginatedParams
+  ): Promise<{ items: ProductWithDetails[]; totalItems: number }> {
+    const where: Prisma.ProductWhereInput = {
+      isActive: true,
+      ...(params.filter?.categoryId ? { categoryId: params.filter.categoryId } : {}),
+      ...(params.filter?.availability ? { availability: params.filter.availability } : {}),
+      ...(params.filter?.isFeatured !== undefined ? { isFeatured: params.filter.isFeatured } : {}),
+    };
+
+    let orderBy: Prisma.ProductOrderByWithRelationInput;
+    switch (params.sort) {
+      case 'price_asc':
+        orderBy = { price: 'asc' };
+        break;
+      case 'price_desc':
+        orderBy = { price: 'desc' };
+        break;
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' };
+        break;
+    }
+
+    const [items, totalItems] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: true,
+          images: {
+            orderBy: { displayOrder: 'asc' },
+          },
+        },
+        orderBy,
+        skip: params.pagination?.skip,
+        take: params.pagination?.take,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return { items, totalItems };
   }
 
   async create(data: Prisma.ProductCreateInput): Promise<ProductWithDetails> {
