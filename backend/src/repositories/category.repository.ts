@@ -14,6 +14,12 @@ export class CategoryRepository {
     });
   }
 
+  async findByName(name: string): Promise<Category | null> {
+    return prisma.category.findUnique({
+      where: { name },
+    });
+  }
+
   async findActiveCategories(): Promise<Category[]> {
     return prisma.category.findMany({
       where: { isActive: true },

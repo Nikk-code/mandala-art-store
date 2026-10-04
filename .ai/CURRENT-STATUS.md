@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-04  
-**Current Phase**: `DATABASE MIGRATION & REPOSITORY FOUNDATION (Step 4C Complete)`
+**Current Phase**: `PRODUCT CATALOG DOMAIN & SERVICE FOUNDATION (Step 5 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The initial PostgreSQL migration SQL and baseline repository layer have been established (Step 4C). The initial migration (`20261004153500_init_ecommerce_schema`) translates all 12 domain entities, 6 enums, constraints, and indexes into version-controlled SQL. A centralized `PrismaClient` singleton and initial domain repositories (`ProductRepository`, `CategoryRepository`, `UserRepository`) have been implemented with unit and integration tests passing.
+The backend product catalog domain services and validation foundation have been established (Step 5). Reusable domain services (`ProductService`, `CategoryService`), validation utilities (`validateSku`, `validateSlug`, `generateSlug`, `validatePriceInPaise`, `validateStockQuantity`, `validateAvailability`), custom domain errors (`AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError`), and product image management operations have been implemented and validated with 57 automated tests across the workspace suite.
 
-> **CRITICAL NOTE**: Seed data, application services, REST controllers, API endpoints, authentication, and frontend integration have **NOT YET BEEN CREATED**. Step 4C was strictly focused on migration authoring, Prisma client initialization, and the data access repository foundation. Seed data and API development will occur in subsequent phases.
+> **CRITICAL NOTE**: REST API controllers/routes, seed data scripts, authentication, customer/admin UI, cart services, and Razorpay payment integrations have **NOT YET BEEN CREATED**. Step 5 was strictly focused on domain business rules and service-layer logic.
 
 ---
 
@@ -48,22 +48,30 @@ The initial PostgreSQL migration SQL and baseline repository layer have been est
 
 ### Phase 4C: Database Migration & Repository Foundation (Completed)
 
-- [x] **Initial Database Migration**:
-  - [x] Generated and locked migration `20261004153500_init_ecommerce_schema` via Prisma Migrate.
-  - [x] Defined all 12 tables, 6 enums, foreign keys, and indexes in version-controlled SQL.
-  - [x] Created `backend/prisma/migrations/migration_lock.toml`.
-- [x] **Database Client Singleton**:
-  - [x] Created `backend/src/db/prisma.ts` with global single-instance pattern and environment awareness.
-- [x] **Repository Layer Foundation**:
-  - [x] Created `ProductRepository` (`backend/src/repositories/product.repository.ts`).
-  - [x] Created `CategoryRepository` (`backend/src/repositories/category.repository.ts`).
-  - [x] Created `UserRepository` (`backend/src/repositories/user.repository.ts`).
-  - [x] Created index barrel exports (`backend/src/repositories/index.ts`).
-- [x] **Testing & Verification**:
-  - [x] Authored database connection test (`backend/tests/db.test.ts`).
-  - [x] Authored repository contract and query integration tests (`backend/tests/repositories.test.ts`).
-  - [x] Verified full test suite execution (`npm run test` — 10 tests passed).
-  - [x] Verified TypeScript compilation (`npm run build`).
+- [x] Created initial database migration (`20261004153500_init_ecommerce_schema`) and migration lock.
+- [x] Created `backend/src/db/prisma.ts` with global single-instance pattern.
+- [x] Created `ProductRepository`, `CategoryRepository`, `UserRepository`, and barrel exports.
+- [x] Milestone commit created (`feat: add ecommerce database foundation`).
+
+### Phase 5: Product Catalog Domain & Service Foundation (Completed)
+
+- [x] **Domain Error Hierarchy**:
+  - [x] Created `AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError` in `backend/src/errors/`.
+- [x] **Catalog Validation Utilities**:
+  - [x] Created `generateSlug`, `validateSlug`, `validateSku`, `validatePriceInPaise`, `validateStockQuantity`, `validateAvailability`, `validateCategoryName`, `validateProductName` in `backend/src/utils/catalog-validation.ts`.
+- [x] **Repository Extensions**:
+  - [x] Extended `ProductRepository` with typed `ProductWithDetails` payload, image management (`addImage`, `removeImage`, `findImageById`, `setPrimaryImage`).
+  - [x] Extended `CategoryRepository` with `findByName`.
+- [x] **Catalog Domain Services**:
+  - [x] Created `CategoryService` (`backend/src/services/category.service.ts`) with slug generation, duplicate detection, and active filtering.
+  - [x] Created `ProductService` (`backend/src/services/product.service.ts`) with price validation in paise, SKU normalization, availability rules, active category verification, and product image management.
+  - [x] Created services index barrel (`backend/src/services/index.ts`).
+- [x] **Automated Testing & Validation**:
+  - [x] Created catalog validation tests (`backend/tests/catalog-validation.test.ts`).
+  - [x] Created CategoryService domain unit tests (`backend/tests/category.service.test.ts`).
+  - [x] Created ProductService domain unit tests (`backend/tests/product.service.test.ts`).
+  - [x] Executed full test suite (`npm run test` — 57 tests passed across all 6 test suites).
+  - [x] Verified full TypeScript compilation (`npm run build`).
   - [x] Verified zero lint warnings (`npm run lint`).
   - [x] Verified code formatting (`npm run format:check`).
 
@@ -71,15 +79,15 @@ The initial PostgreSQL migration SQL and baseline repository layer have been est
 
 ## 3. In-Progress Work
 
-- _None_ (Step 4C is complete).
+- _None_ (Step 5 is complete).
 
 ---
 
-## 4. Planned Next Work (Step 5: Database Seeding & Catalog Domain Services)
+## 4. Planned Next Work (Step 6: Catalog REST APIs & Seeding)
 
-1. Author deterministic seed script (`backend/prisma/seed.ts`) with initial art categories (Mandala Art, Lippan Art, Paintings) and sample artworks.
-2. Establish domain service layer for catalog querying and category browsing (`ProductService`, `CategoryService`).
-3. Build and test catalog REST API endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`).
+1. Author deterministic seed script (`backend/prisma/seed.ts`) with art categories (Mandala Art, Lippan Art, Paintings) and sample artworks with images.
+2. Create REST controllers and routes for catalog browsing (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`).
+3. Add integration tests for catalog API endpoints using supertest.
 
 ---
 
@@ -93,5 +101,5 @@ The initial PostgreSQL migration SQL and baseline repository layer have been est
 
 - Strictly adhere to `AI-RULES.md`.
 - **Do NOT build authentication or payment processing until catalog browsing is verified.**
-- Use `productRepository`, `categoryRepository`, and `userRepository` from `backend/src/repositories/` for domain database access.
+- Use `productService` and `categoryService` from `backend/src/services/` for catalog domain operations.
 - Keep `DATABASE_URL` server-only.

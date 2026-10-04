@@ -11,9 +11,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 4C: PostgreSQL migration execution and repository layer implementation.
-- Product catalog data models and initial seed data.
-- Catalog browsing and filter API endpoints.
+- Step 6: Catalog REST API endpoints (`GET /api/categories`, `GET /api/products`, `GET /api/products/:slug`) & database seeding script.
+- Seed data fixtures for Mandala, Lippan, and handmade paintings.
+
+---
+
+## [0.6.0] - 2026-10-04
+
+### Added
+
+- **Step 5: Product Catalog Domain & Service Foundation**:
+  - **Catalog Validation Utilities**: Implemented `generateSlug`, `validateSlug`, `validateSku`, `validatePriceInPaise`, `validateStockQuantity`, `validateAvailability`, `validateCategoryName`, `validateProductName` in `backend/src/utils/catalog-validation.ts`.
+  - **Domain Error Hierarchy**: Created `AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError` in `backend/src/errors/`.
+  - **Category Service**: Implemented `CategoryService` with slug generation, duplicate detection, and active status filtering in `backend/src/services/category.service.ts`.
+  - **Product Service**: Implemented `ProductService` with pricing in paise, SKU format validation, availability rules (IN_STOCK, MADE_TO_ORDER, SOLD_OUT), active category verification, and product image management in `backend/src/services/product.service.ts`.
+  - **Repository Extensions**: Added `findByName` to `CategoryRepository`; added `ProductWithDetails` type, `addImage`, `removeImage`, `findImageById`, `setPrimaryImage` to `ProductRepository`.
+  - **Automated Tests**: Created 35 new domain and validation unit tests across 3 test suites (`catalog-validation.test.ts`, `category.service.test.ts`, `product.service.test.ts`), bringing total automated test count to 57 passing tests.
+  - Verified 100% clean TypeScript build, ESLint, Prettier formatting, and Prisma schema validation.
+
+---
+
+## [0.5.0] - 2026-10-04
+
+### Added
+
+- **Step 4C: Database Migration & Repository Foundation**:
+  - Generated initial version-controlled Prisma database migration (`20261004153500_init_ecommerce_schema`) with all 12 tables, 6 enums, constraints, and performance indexes.
+  - Implemented centralized `PrismaClient` singleton with hot-reload safety in `backend/src/db/prisma.ts`.
+  - Built domain repository modules (`ProductRepository`, `CategoryRepository`, `UserRepository`) in `backend/src/repositories/`.
+  - Added database connectivity tests and repository contract integration tests.
 
 ---
 
@@ -82,18 +108,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initialized clean Git repository with remote origin configured.
-- Established `.ai/` AI knowledge system and development governance:
-  - `AI-RULES.md`: Core operating rules, AI workflow, and reuse principles.
-  - `PROJECT.md`: Business purpose, target users, and customer/admin capabilities.
-  - `ARCHITECTURE.md`: High-level modular architecture and layer separation of concerns.
-  - `TECH-STACK.md`: Planned technologies, evaluation criteria, and dependency rules.
-  - `CODING-STANDARDS.md`: TypeScript, naming conventions, and file organization standards.
-  - `COMPONENT-STANDARDS.md`: UI component lifecycle, state handling, and promotion rules.
-  - `BUSINESS-RULES.md`: Catalog, pricing authority, and order lifecycle rules.
-  - `TESTING-STANDARDS.md`: Test pyramid, quality guidelines, and critical E2E flows.
-  - `SECURITY-STANDARDS.md`: Zero-trust client principles, secret management, and input sanitization.
-  - `RESPONSIVE-DESIGN.md`: Breakpoints, touch standards, and layout guidelines.
-  - `GIT-STANDARDS.md`: Branching strategy and conventional commit conventions.
-  - `DECISIONS.md`: Initial Architecture Decision Records (ADR-001 through ADR-004).
-  - `CURRENT-STATUS.md`: Live tracking document.
-  - `CHANGELOG.md`: Structured history of project milestones.
+- Established `.ai/` AI knowledge system and development governance.
