@@ -11,10 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Customer authentication and guest checkout architecture.
-- Payment gateway integration (Razorpay).
+- Payment gateway integration (Razorpay, backend order creation API, webhook verification).
+- Customer authentication and account order history.
 
 ---
+
+## [0.14.0] - 2026-10-05
+
+### Added
+
+- **Step 11: Checkout Foundation**:
+  - **Checkout Route & App Shell Integration**:
+    - Created `frontend/src/pages/CheckoutPage.tsx` and registered `/checkout` route in `frontend/src/App.tsx`.
+    - Updated `frontend/src/components/cart/CartSummary.tsx` "Proceed to Checkout" action to navigate directly to `/checkout`.
+  - **Checkout Form Architecture & Reusable Input**:
+    - Created accessible `frontend/src/components/ui/Input.tsx` with associated labels, error states (`role="alert"`), `aria-invalid`, `aria-describedby`, and required asterisks.
+    - Created `frontend/src/components/checkout/ContactInfoSection.tsx` collecting recipient Full Name, Email, and 10-digit Indian Phone number.
+    - Created `frontend/src/components/checkout/ShippingAddressSection.tsx` capturing Street Address, optional Landmark/Suite, City, State, 6-digit Indian PIN Code, and Country (defaulted to India).
+  - **Order Summary Preview & Review Transition**:
+    - Created `frontend/src/components/checkout/CheckoutOrderSummary.tsx` rendering cart item thumbnails, quantities, unit prices, line totals, integer-paise subtotal, artisan guarantees, and "Continue to Payment" action (shipping and GST/tax calculations are explicitly deferred).
+    - Added controlled review state displaying verified customer contact and delivery destination snapshots with an informative milestone banner explaining that Step 12 will handle live Razorpay payments.
+    - Integrated empty-cart protection rendering `EmptyState` when `/checkout` is accessed without items.
+  - **Pure Validation Utilities**:
+    - Authored `frontend/src/utils/checkout-validation.ts` with explicit validators for full names, email addresses, 10-digit Indian phone numbers (+91 prefix handling), street addresses, cities, states, and 6-digit Indian postal PIN codes.
+  - **Automated Tests**:
+    - Added `frontend/tests/checkout-validation.test.ts` with 8 comprehensive unit test suites for all field validation rules and edge cases.
+    - Added `frontend/tests/CheckoutPage.test.tsx` with 6 integration tests covering empty cart state, rendering items/subtotal, field-level validation errors, inline error clearing, review state transition, and back-to-edit action.
 
 ## [0.13.0] - 2026-10-05
 

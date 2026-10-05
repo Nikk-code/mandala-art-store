@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `SHOPPING CART FOUNDATION (Step 10 Complete)`
+**Current Phase**: `CHECKOUT FOUNDATION (Step 11 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The shopping cart foundation (Step 10) has been established with a client-side guest cart, centralized React Context state (`useReducer`), namespaced `localStorage` persistence (`mandala_art_store_cart_v1`), safe error recovery from malformed storage data, an active Header cart indicator with item count badges, an accessible Product Detail Page "Add to Cart" interaction with visual feedback and Sold Out protection, and a dedicated Cart Page (`/cart`) with quantity stepper controls, item removal, and real-time subtotal previews computed strictly in integer paise (`₹`).
+The checkout foundation (Step 11) has been established with a responsive and accessible guest checkout flow (`/checkout`) directly consuming `CartContext`. The checkout experience features customer contact collection (Full Name, Email, Indian 10-digit Phone), shipping address capture (Street Address, optional Landmark/Suite, City, State, 6-digit Indian PIN code, Country defaulted to India), comprehensive input validation with clear inline error messaging, an accessible reusable `Input` component with ARIA error associations, dynamic cart order summary with integer-paise calculations, a controlled transition to a verified review state, empty-cart guardrails, and seamless transition from `/cart`.
 
-> **CRITICAL NOTE**: Checkout, order management, payment processing (Razorpay), customer authentication/login, coupons/discounts, shipping calculations, tax/GST calculations, reviews, wishlist, and admin functionality remain **INTENTIONALLY DEFERRED** to subsequent steps.
+> **CRITICAL NOTE**: Payment gateway processing (Razorpay integration, webhook verification, capture), backend order creation APIs, customer authentication/login, coupons/discounts, shipping calculation (deferred), and tax/GST calculation (deferred) remain **INTENTIONALLY DEFERRED** to subsequent steps. No shipping or tax calculations are implemented in Step 11.
 
 ---
 
@@ -136,11 +136,29 @@ The shopping cart foundation (Step 10) has been established with a client-side g
   - Created `CartItemRow.tsx` featuring artwork thumbnail, title, category, dimensions, handmade badge, unit price, quantity stepper ($\ge 1$), line total in integer paise, and accessible remove button.
   - Created `CartSummary.tsx` with order preview, subtotal, artisan guarantees, and "Continue Shopping" CTA.
   - Created empty cart state using `EmptyState` component with direct CTA back to `/products`.
+- [x] Pushed milestone commit (`feat(frontend): implement shopping cart foundation and guest persistence`).
+
+### Phase 11: Checkout Foundation (Completed)
+
+- [x] **Checkout Types & Routing**:
+  - Authored domain types in `frontend/src/types/checkout.ts` (`CheckoutCustomer`, `CheckoutShippingAddress`, `CheckoutFormData`, `CheckoutFormErrors`, `CheckoutData`).
+  - Registered `/checkout` route in `App.tsx` mapped to `CheckoutPage`.
+  - Updated `CartSummary.tsx` "Proceed to Checkout" button to navigate to `/checkout` when cart is not empty.
+- [x] **Form UI & Input Components**:
+  - Created reusable accessible `Input` component (`frontend/src/components/ui/Input.tsx`) with associated labels, error states (`role="alert"`), `aria-invalid`, `aria-describedby`, and required asterisks.
+  - Created `ContactInfoSection.tsx` for recipient Full Name, Email, and 10-digit Indian Phone number.
+  - Created `ShippingAddressSection.tsx` for Street Address, optional Landmark/Apartment, City, State, 6-digit Indian PIN Code, and Country (India).
+- [x] **Checkout Order Summary & Review Transition**:
+  - Created `CheckoutOrderSummary.tsx` displaying cart item thumbnails, quantities, line totals, integer-paise subtotal, artisan guarantees, and "Continue to Payment" action.
+  - Implemented controlled review state showing verified customer and shipping address snapshots, clear milestone placeholder informing that Step 12 brings Razorpay payment integration, and "Edit Shipping Details" back-action.
+  - Built empty cart protection rendering `EmptyState` when `/checkout` is accessed with zero items.
+- [x] **Validation, Security & Scope Control**:
+  - Created pure validation utilities in `frontend/src/utils/checkout-validation.ts` (`validateFullName`, `validateEmail`, `validatePhone`, `validateAddressLine1`, `validateCity`, `validateState`, `validatePostalCode`, `validateCheckoutForm`).
+  - Zero sensitive data (card details, CVV, passwords, tokens) collected or stored in localStorage.
+  - Shipping calculation is deferred; GST/tax calculation is deferred; no shipping or tax calculations implemented.
 - [x] **Automated Tests & Quality**:
-  - 18 new unit and UI tests across `tests/cart-context.test.tsx` and `tests/CartPage.test.tsx`.
-  - 75 frontend automated tests passing across 12 test files.
-  - 78 backend automated tests passing across 8 test files.
-  - Clean build across all workspaces (`tsc -b && vite build` and `tsc`).
+  - 14 frontend automated test suites passing with 101 tests (`frontend/tests/`).
+  - 8 backend test suites passing with 78 tests (`backend/tests/`).
   - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
@@ -149,13 +167,13 @@ The shopping cart foundation (Step 10) has been established with a client-side g
 
 ## 3. In-Progress Work
 
-- _None_ (Step 10 is complete and awaiting review).
+- _None_ (Step 11 is complete and awaiting review).
 
 ---
 
 ## 4. Planned Next Work
 
-- Customer Authentication / Guest Checkout architecture.
+- Payment Gateway Integration (Razorpay, backend order creation API, webhook verification).
 
 ---
 
@@ -168,6 +186,6 @@ The shopping cart foundation (Step 10) has been established with a client-side g
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- **Do NOT build checkout, payment processing (Razorpay), or order placement until authorized.**
+- **Do NOT implement Razorpay payments, backend order creation APIs, or webhook capture until authorized in Step 12.**
 - Keep `DATABASE_URL` and backend secrets server-only.
-- All monetary amounts in the frontend cart subtotal are calculated in integer paise and formatted using `formatPrice`.
+- All monetary amounts in the frontend checkout order summary are calculated in integer paise and formatted using `formatPrice`.

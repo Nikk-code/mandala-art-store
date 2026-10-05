@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui';
 import { formatPrice } from '@/utils';
 
 export interface CartSummaryProps {
@@ -47,18 +46,22 @@ export function CartSummary({
 
       {/* Checkout Preview & CTAs */}
       <div className="space-y-3 pt-2">
-        <Button
-          variant="primary"
-          size="lg"
-          className="w-full justify-center opacity-90 cursor-default"
-          disabled
-          aria-label="Proceed to Checkout - Available in upcoming milestone"
+        <Link
+          to={itemCount > 0 ? '/checkout' : '#'}
+          aria-disabled={itemCount === 0}
+          tabIndex={itemCount === 0 ? -1 : undefined}
+          className={`w-full inline-flex items-center justify-center min-h-[50px] px-7 py-3 text-base font-semibold rounded-xl tracking-wide transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-art-ochre ${
+            itemCount > 0
+              ? 'bg-art-charcoal text-white hover:bg-stone-800 active:bg-black'
+              : 'bg-stone-200 text-stone-400 cursor-not-allowed pointer-events-none'
+          }`}
+          aria-label="Proceed to Checkout"
         >
-          Proceed to Checkout — Available in Next Milestone
-        </Button>
+          Proceed to Checkout →
+        </Link>
 
-        <p className="text-[11px] text-center text-stone-600 italic">
-          (Secure Razorpay checkout and address flow arrives in Step 11)
+        <p className="text-[11px] text-center text-stone-500 italic">
+          Bespoke wooden crating & insured delivery across India
         </p>
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-art-stone/40">
