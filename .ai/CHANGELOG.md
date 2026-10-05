@@ -11,8 +11,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Payment verification, signature handling & webhook processing (server signature verification endpoint, HMAC SHA256 webhook handler, idempotent transitions to `PAID` / `CONFIRMED`, payment failure handling).
 - Customer authentication and account order history.
+- Customer order management and tracking.
+
+---
+
+## [0.17.0] - 2026-10-05
+
+### Added
+
+- **Step 14: Razorpay Payment Verification & Webhook Handling**:
+  - **Server-Side Signature Verification Endpoint**:
+    - Implemented `POST /api/checkout/orders/:orderId/payment/verify` in `checkout.routes.ts` and `checkout.controller.ts`.
+    - Added `verifyPayment(orderId, input)` to `PaymentService` verifying HMAC-SHA256 signature against `RAZORPAY_KEY_SECRET`.
+    - Atomically captures payment (`PaymentStatus.CAPTURED`, `providerPaymentId`, `providerSignature`, `paidAt`) and confirms order (`OrderStatus.CONFIRMED`) within a single database transaction.
+    - Idempotently returns confirmed state without duplicate database writes on repeated verification requests.
+  - **Razorpay Webhook Handling & Raw Body Capture**:
+    - Updated Express JSON middleware in `backend/src/app.ts` with `verify` hook to capture raw byte buffer (`rawBody`) for pristine HMAC signature validation.
+    - Created `POST /api/webhooks/razorpay` in `webhook.routes.ts` and `webhook.controller.ts`.
+    - Added `processWebhook(rawBody, signatureHeader, payload)` to `PaymentService` validating `X-Razorpay-Signature`.
+    - Implemented event dispatching for `payment.captured` (atomically confirms order and marks payment as `CAPTURED`) and `payment.failed` (records failure reason on payment without marking order paid and preserving order for retry).
+    - Idempotently ignores duplicate webhook events and gracefully acknowledges unhandled events with HTTP 200.
+  - **Repository State Transition Methods**:
+    - Added `findPaymentByProviderOrderId`, `confirmOrderAndCapturePayment`, and `markPaymentFailed` to `OrderRepository`.
+  - **Frontend Payment Verification Integration**:
+    - Added `verifyCheckoutPayment` to `frontend/src/services/checkout-service.ts`.
+    - Updated `CheckoutPage.tsx` Razorpay modal callback handler to verify payment via backend API before clearing cart and rendering confirmed order success view.
+  - **Automated Tests**:
+    - Added unit tests for payment signature verification, idempotency, bad inputs, and webhook processing in `backend/tests/payment.service.test.ts`.
+    - Added integration tests for verification endpoint in `backend/tests/payment.api.test.ts`.
+    - Created webhook integration tests in `backend/tests/webhook.api.test.ts`.
+    - Added frontend client tests in `frontend/tests/checkout-service.test.ts`.
+  - **Architecture Decision Record**:
+    - Recorded `ADR-016: Server-Side Razorpay Payment Verification, Webhook Handling & Atomic Order Confirmation` in `.ai/DECISIONS.md`.
 
 ---
 

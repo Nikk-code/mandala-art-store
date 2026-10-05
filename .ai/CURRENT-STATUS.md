@@ -1,15 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `RAZORPAY PAYMENT INTEGRATION FOUNDATION (Step 13 Complete)`
+**Current Phase**: `RAZORPAY PAYMENT VERIFICATION & WEBHOOK HANDLING (Step 14 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The Razorpay payment integration foundation (Step 13) has been implemented to safely initiate server-authoritative Razorpay payment orders (`POST /api/checkout/orders/:orderId/payment`) for existing pending ecommerce orders. The backend strictly uses the database order total in integer paise, generates a Razorpay Order (`order_id`) using the official SDK, and persists `Payment.providerOrderId` without exposing `RAZORPAY_KEY_SECRET`. Repeated payment initialization calls for the same order are completely idempotent and reuse the existing `providerOrderId` without creating duplicate Razorpay orders. The frontend loads the official Razorpay Checkout SDK dynamically on demand to open the checkout modal with prefilled customer details.
-
-> **CRITICAL NOTE**: Payment verification (server signature verification, webhook handling, and marking payment as `CAPTURED`/order as `CONFIRMED`) is **INTENTIONALLY DEFERRED** to Step 14. Client-side Razorpay modal callbacks are never trusted as proof of payment.
+The Razorpay payment verification and webhook handling foundation (Step 14) has been implemented to cryptographically verify payment signatures and atomically update Order and Payment states. The backend exposes `POST /api/checkout/orders/:orderId/payment/verify` for synchronous client checkout callback verification using HMAC-SHA256 (`razorpay_order_id + '|' + razorpay_payment_id`) and `POST /api/webhooks/razorpay` with raw byte buffer verification (`X-Razorpay-Signature`) for asynchronous webhook processing (`payment.captured`, `payment.failed`). All verification and webhook operations are strictly idempotent, use single Prisma transactions for atomic transitions (`PaymentStatus.CAPTURED`, `OrderStatus.CONFIRMED`), and never expose `RAZORPAY_KEY_SECRET` or `RAZORPAY_WEBHOOK_SECRET`. The frontend checkout flow securely verifies payments with the backend before clearing the shopping cart and displaying order confirmation.
 
 ---
 
@@ -217,9 +215,30 @@ The Razorpay payment integration foundation (Step 13) has been implemented to sa
   - Added `initializeCheckoutPayment` client service in `frontend/src/services/checkout-service.ts`.
   - Created `loadRazorpayScript` in `frontend/src/utils/razorpay.ts` to dynamically load `https://checkout.razorpay.com/v1/checkout.js` on demand.
   - Updated `CheckoutPage.tsx` and `CheckoutOrderSummary.tsx` to initiate the order, fetch the Razorpay order ID, and trigger the modal with prefilled customer data.
+
+### Phase 14: Razorpay Payment Verification & Webhook Handling (Completed)
+
+- [x] **Server-Side Payment Signature Verification**:
+  - Registered `POST /api/checkout/orders/:orderId/payment/verify` route in `backend/src/routes/checkout.routes.ts`.
+  - Implemented `verifyPayment` controller in `backend/src/controllers/checkout.controller.ts` and service method in `backend/src/services/payment.service.ts`.
+  - Cryptographically verifies HMAC-SHA256 signature (`razorpay_order_id + '|' + razorpay_payment_id`) against `RAZORPAY_KEY_SECRET` using official Razorpay SDK utility.
+  - Atomically transitions `Payment.status = 'CAPTURED'` (with `providerPaymentId`, `providerSignature`, `paidAt`) and `Order.status = 'CONFIRMED'` in a single Prisma transaction.
+  - Fully idempotent: duplicate verification calls immediately return confirmed state without double-updating.
+- [x] **Secure Asynchronous Webhook Processing**:
+  - Configured raw byte buffer capture middleware in `backend/src/app.ts` (`verify` hook on `express.json`).
+  - Created `POST /api/webhooks/razorpay` mounted in `backend/src/routes/webhook.routes.ts`.
+  - Implemented `processWebhook` in `backend/src/services/payment.service.ts` verifying `X-Razorpay-Signature` against raw body buffer and `RAZORPAY_WEBHOOK_SECRET`.
+  - Implemented event handlers for `payment.captured` (atomic confirmation and capture) and `payment.failed` (failure recording without marking order paid and keeping order available for retry).
+  - Idempotently ignores duplicate webhook events and gracefully handles unhandled event types.
+- [x] **Repository Layer Extensions**:
+  - Added `findPaymentByProviderOrderId`, `confirmOrderAndCapturePayment`, and `markPaymentFailed` to `backend/src/repositories/order.repository.ts`.
+- [x] **Frontend Payment Verification Integration**:
+  - Added `verifyCheckoutPayment` in `frontend/src/services/checkout-service.ts`.
+  - Connected Razorpay checkout modal `handler` in `CheckoutPage.tsx` to send payment verification payload to backend.
+  - Cart is cleared and verified order confirmation view is rendered only upon successful server-side verification response.
 - [x] **Automated Tests & Quality**:
-  - 13 backend automated test suites passing with 127 tests (`backend/tests/`).
-  - 15 frontend automated test suites passing with 104 tests (`frontend/tests/`).
+  - 14 backend automated test suites passing with 149 tests (`backend/tests/`).
+  - 15 frontend automated test suites passing with 105 tests (`frontend/tests/`).
   - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
@@ -228,13 +247,13 @@ The Razorpay payment integration foundation (Step 13) has been implemented to sa
 
 ## 3. In-Progress Work
 
-- _None_ (Step 13 is complete and ready for review).
+- _None_ (Step 14 is complete and ready for review).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 14: Payment Verification, Signature Handling & Webhook Processing (Server signature verification endpoint, HMAC SHA256 webhook handler, idempotent transitions to `PAID` / `CONFIRMED`, payment failure handling).
+- Step 15: Customer Authentication & Account Management (Registration, JWT/Cookie Sessions, Password Hashing, Profile & Order History).
 
 ---
 
@@ -247,6 +266,6 @@ The Razorpay payment integration foundation (Step 13) has been implemented to sa
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- **Payment verification (Step 14) is required before transitioning any order from PENDING_PAYMENT to CONFIRMED.**
-- Keep `RAZORPAY_KEY_SECRET` strictly server-side.
-- All monetary amounts in the payment order are calculated in integer paise.
+- Keep `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` strictly server-side.
+- All monetary amounts are handled exclusively in integer paise.
+- Orders must only transition to `CONFIRMED` upon cryptographic payment verification or verified webhook capture.

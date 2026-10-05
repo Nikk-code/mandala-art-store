@@ -17,6 +17,7 @@ export interface AppConfig {
   databaseUrl?: string;
   razorpayKeyId: string;
   razorpayKeySecret?: string;
+  razorpayWebhookSecret?: string;
 }
 
 export const config: AppConfig = {
@@ -26,5 +27,9 @@ export const config: AppConfig = {
   isProduction: (process.env.NODE_ENV || 'development') === 'production',
   databaseUrl: process.env.DATABASE_URL,
   razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder_key_id',
-  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'test_secret_placeholder',
+  razorpayWebhookSecret:
+    process.env.RAZORPAY_WEBHOOK_SECRET ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    'test_secret_placeholder',
 };

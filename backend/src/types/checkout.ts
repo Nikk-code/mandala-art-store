@@ -69,3 +69,60 @@ export interface PaymentInitializationDto {
   amount: number; // in integer paise
   currency: string;
 }
+
+export interface VerifyPaymentRequest {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}
+
+export interface PaymentVerificationResultDto {
+  orderId: string;
+  orderNumber: string;
+  paymentStatus: string;
+  orderStatus: string;
+}
+
+export interface RazorpayWebhookPaymentEntity {
+  id: string;
+  entity: string;
+  amount: number;
+  currency: string;
+  status: string;
+  order_id: string;
+  invoice_id?: string | null;
+  international?: boolean;
+  method?: string;
+  amount_refunded?: number;
+  refund_status?: string | null;
+  captured?: boolean;
+  description?: string;
+  card_id?: string | null;
+  bank?: string | null;
+  wallet?: string | null;
+  vpa?: string | null;
+  email?: string;
+  contact?: string;
+  error_code?: string | null;
+  error_description?: string | null;
+  error_source?: string | null;
+  error_step?: string | null;
+  error_reason?: string | null;
+  created_at?: number;
+}
+
+export interface RazorpayWebhookPayload {
+  entity: string;
+  account_id: string;
+  event: string;
+  contains: string[];
+  payload: {
+    payment?: {
+      entity: RazorpayWebhookPaymentEntity;
+    };
+    order?: {
+      entity: unknown;
+    };
+  };
+  created_at: number;
+}

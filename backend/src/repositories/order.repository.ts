@@ -129,6 +129,83 @@ export class OrderRepository {
       data: { providerOrderId },
     });
   }
+
+  /**
+   * Locates a payment record and its parent order by the Razorpay provider order ID.
+   */
+  async findPaymentByProviderOrderId(
+    providerOrderId: string
+  ): Promise<
+    (Prisma.PaymentGetPayload<Record<string, never>> & { order: OrderWithDetails }) | null
+  > {
+    return prisma.payment.findFirst({
+      where: { providerOrderId },
+      include: {
+        order: {
+          include: {
+            items: true,
+            payments: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Atomically confirms an order and marks its payment as CAPTURED within a single database transaction.
+   */
+  async confirmOrderAndCapturePayment(
+    paymentId: string,
+    orderId: string,
+    providerPaymentId: string,
+    providerSignature?: string
+  ): Promise<{
+    order: OrderWithDetails;
+    payment: Prisma.PaymentGetPayload<Record<string, never>>;
+  }> {
+    return prisma.$transaction(async tx => {
+      const updatedPayment = await tx.payment.update({
+        where: { id: paymentId },
+        data: {
+          status: 'CAPTURED',
+          providerPaymentId,
+          providerSignature: providerSignature ?? null,
+          paidAt: new Date(),
+        },
+      });
+
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: 'CONFIRMED',
+        },
+        include: {
+          items: true,
+          payments: true,
+        },
+      });
+
+      return { order: updatedOrder, payment: updatedPayment };
+    });
+  }
+
+  /**
+   * Updates payment record status to FAILED with reason.
+   */
+  async markPaymentFailed(
+    paymentId: string,
+    failureReason: string,
+    providerPaymentId?: string
+  ): Promise<Prisma.PaymentGetPayload<Record<string, never>>> {
+    return prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: 'FAILED',
+        failureReason,
+        ...(providerPaymentId ? { providerPaymentId } : {}),
+      },
+    });
+  }
 }
 
 export const orderRepository = new OrderRepository();

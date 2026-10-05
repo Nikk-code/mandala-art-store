@@ -8,11 +8,16 @@ import {
 } from '@/components/checkout';
 import { useCart } from '@/context';
 import { validateCheckoutForm, loadRazorpayScript } from '@/utils';
-import { createCheckoutOrder, initializeCheckoutPayment } from '@/services';
-import type { CheckoutFormData, CheckoutFormErrors, PaymentInitializationDto } from '@/types';
+import { createCheckoutOrder, initializeCheckoutPayment, verifyCheckoutPayment } from '@/services';
+import type {
+  CheckoutFormData,
+  CheckoutFormErrors,
+  PaymentInitializationDto,
+  PaymentVerificationResultDto,
+} from '@/types';
 
 export function CheckoutPage(): ReactNode {
-  const { items, itemCount, subtotalPaise } = useCart();
+  const { items, itemCount, subtotalPaise, clearCart } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -32,6 +37,8 @@ export function CheckoutPage(): ReactNode {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentInitiated, setPaymentInitiated] = useState<PaymentInitializationDto | null>(null);
+  const [paymentVerification, setPaymentVerification] =
+    useState<PaymentVerificationResultDto | null>(null);
 
   useEffect(() => {
     document.title = 'Checkout | Mandala Art Store';
@@ -134,6 +141,27 @@ export function CheckoutPage(): ReactNode {
         theme: {
           color: '#B45309', // art-ochre
         },
+        handler: async response => {
+          setIsSubmitting(true);
+          setPaymentError(null);
+          try {
+            const verificationResult = await verifyCheckoutPayment(order.id, {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            setPaymentVerification(verificationResult);
+            clearCart();
+            setIsSubmitting(false);
+          } catch (verifyErr: unknown) {
+            const message =
+              verifyErr instanceof Error
+                ? verifyErr.message
+                : 'Payment verification failed. Please contact support.';
+            setPaymentError(message);
+            setIsSubmitting(false);
+          }
+        },
         modal: {
           ondismiss: () => {
             setIsSubmitting(false);
@@ -149,6 +177,65 @@ export function CheckoutPage(): ReactNode {
       setIsSubmitting(false);
     }
   };
+
+  if (paymentVerification) {
+    return (
+      <div className="pb-20">
+        <Section background="cream" spacing="lg">
+          <Container size="md">
+            <div className="rounded-2xl border border-art-stone bg-white p-8 sm:p-12 text-center shadow-sm space-y-6 animate-fadeIn">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-3xl font-bold">
+                ✓
+              </div>
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
+                  Payment Verified & Confirmed
+                </span>
+                <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal">
+                  Thank You for Your Order!
+                </h1>
+                <p className="text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
+                  Your payment has been securely verified by the server. We are preparing your
+                  bespoke handmade mandala artwork for dispatch.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-stone-50 p-4 border border-art-stone/60 max-w-md mx-auto text-xs space-y-2.5 text-stone-700">
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500">Order Reference:</span>
+                  <span className="font-mono font-bold text-art-charcoal">
+                    {paymentVerification.orderNumber}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500">Order Status:</span>
+                  <Badge variant="success" className="text-xs">
+                    {paymentVerification.orderStatus}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-stone-500">Payment Status:</span>
+                  <Badge variant="success" className="text-xs">
+                    {paymentVerification.paymentStatus}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/products')}
+                  className="inline-flex items-center justify-center rounded-xl bg-art-terracotta px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-art-terracotta/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta"
+                >
+                  Explore Handcrafted Collection
+                </button>
+              </div>
+            </div>
+          </Container>
+        </Section>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-20">

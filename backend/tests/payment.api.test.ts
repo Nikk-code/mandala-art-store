@@ -84,4 +84,68 @@ describe('Payment REST API Endpoints', () => {
       expect(res.body.error.code).toBe('PAYMENT_PROVIDER_ERROR');
     });
   });
+
+  describe('POST /api/checkout/orders/:orderId/payment/verify', () => {
+    const validVerificationBody = {
+      razorpayOrderId: 'order_rzp_mock_12345',
+      razorpayPaymentId: 'pay_rzp_mock_67890',
+      razorpaySignature: 'sig_valid_12345',
+    };
+
+    const sampleVerificationResponse = {
+      orderId: validOrderId,
+      orderNumber: 'MAT-20261005-A1B2C3',
+      paymentStatus: 'CAPTURED',
+      orderStatus: 'CONFIRMED',
+    };
+
+    it('returns 200 with confirmation details upon successful signature verification', async () => {
+      vi.spyOn(paymentService, 'verifyPayment').mockResolvedValue(sampleVerificationResponse);
+
+      const res = await request(app)
+        .post(`/api/checkout/orders/${validOrderId}/payment/verify`)
+        .send(validVerificationBody);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual(sampleVerificationResponse);
+    });
+
+    it('returns 400 when orderId is not a valid UUID', async () => {
+      const res = await request(app)
+        .post('/api/checkout/orders/invalid-uuid/payment/verify')
+        .send(validVerificationBody);
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
+    });
+
+    it('returns 400 when verification parameters are missing', async () => {
+      const res = await request(app)
+        .post(`/api/checkout/orders/${validOrderId}/payment/verify`)
+        .send({
+          razorpayOrderId: 'order_123',
+          // missing razorpayPaymentId and razorpaySignature
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
+    });
+
+    it('returns 404 when order is not found during verification', async () => {
+      vi.spyOn(paymentService, 'verifyPayment').mockRejectedValue(
+        new NotFoundError(`Order with ID "${validOrderId}" was not found.`)
+      );
+
+      const res = await request(app)
+        .post(`/api/checkout/orders/${validOrderId}/payment/verify`)
+        .send(validVerificationBody);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    });
+  });
 });

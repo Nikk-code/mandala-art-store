@@ -109,3 +109,16 @@ export interface PaymentInitializationDto {
   amount: number;
   currency: string;
 }
+
+export interface VerifyPaymentRequest {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}
+
+export interface PaymentVerificationResultDto {
+  orderId: string;
+  orderNumber: string;
+  paymentStatus: string;
+  orderStatus: string;
+}

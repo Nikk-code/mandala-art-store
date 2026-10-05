@@ -1,6 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 import { orderService, paymentService } from '../services';
-import type { ApiSuccessResponse, OrderResponseDto, PaymentInitializationDto } from '../types';
+import type {
+  ApiSuccessResponse,
+  OrderResponseDto,
+  PaymentInitializationDto,
+  PaymentVerificationResultDto,
+} from '../types';
 
 export async function createOrder(
   req: Request,
@@ -35,6 +40,24 @@ export async function initializePayment(
     res.status(200).json({
       success: true,
       data: paymentInfo,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function verifyPayment(
+  req: Request,
+  res: Response<ApiSuccessResponse<PaymentVerificationResultDto>>,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { orderId } = req.params;
+    const verificationResult = await paymentService.verifyPayment(orderId, req.body);
+
+    res.status(200).json({
+      success: true,
+      data: verificationResult,
     });
   } catch (error) {
     next(error);

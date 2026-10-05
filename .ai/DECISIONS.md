@@ -21,6 +21,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-013: Public Catalog REST API Design, Server-Side Pagination & Information Protection](#adr-013-public-catalog-rest-api-design-server-side-pagination--information-protection)
 - [ADR-014: Authoritative Backend Order Creation, Atomic Inventory Reservation & Pending Payment Lifecycle](#adr-014-authoritative-backend-order-creation-atomic-inventory-reservation--pending-payment-lifecycle)
 - [ADR-015: Server-Authoritative Razorpay Payment Order Initialization & Duplicate Safety](#adr-015-server-authoritative-razorpay-payment-order-initialization--duplicate-safety)
+- [ADR-016: Server-Side Razorpay Payment Verification, Webhook Handling & Atomic Order Confirmation](#adr-016-server-side-razorpay-payment-verification-webhook-handling--atomic-order-confirmation)
 
 ---
 
@@ -226,3 +227,32 @@ This document tracks significant architectural, technical, and governance decisi
   - _Creating Razorpay orders directly in the frontend_: Highly insecure; exposes payment secret and allows arbitrary amount tampering.
   - _Marking order paid on frontend callback_: Vulnerable to spoofing; payments must only be verified via cryptographically signed webhook / server verification in Step 14.
 - **Consequences**: Strict financial containment, tamper-proof payment amounts, duplicate-safe retries, zero secret exposure, and clean isolation for payment verification in the next step.
+
+---
+
+### ADR-016: Server-Side Razorpay Payment Verification, Webhook Handling & Atomic Order Confirmation
+
+- **Date**: 2026-10-05
+- **Status**: Accepted
+- **Context**: Frontend checkout modal callbacks (`handler` response containing `razorpay_order_id`, `razorpay_payment_id`, `razorpay_signature`) cannot be trusted alone as proof of payment because client environments can be spoofed, network calls can fail, and browsers can close before the callback completes. Payment verification and transition to confirmed status must be executed securely on the server via cryptographic verification and asynchronous webhook handling.
+- **Decision**:
+  1. **Server-Side Checkout Verification Endpoint (`POST /api/checkout/orders/:orderId/payment/verify`)**:
+     - Validate order UUID, required verification parameters, and order/payment provider relationship.
+     - Validate that `input.razorpayOrderId` matches `Payment.providerOrderId`.
+     - Perform cryptographic signature validation using HMAC-SHA256 (`razorpayOrderId + '|' + razorpayPaymentId`) and server-only `RAZORPAY_KEY_SECRET` via official Razorpay SDK utility.
+     - Atomically update `Payment.status = 'CAPTURED'`, `Payment.providerPaymentId`, `Payment.providerSignature`, `Payment.paidAt = new Date()` and `Order.status = 'CONFIRMED'` inside a single Prisma database transaction.
+     - Support full idempotency: if payment is already `CAPTURED`, return confirmed state immediately without duplicate database operations.
+  2. **Asynchronous Razorpay Webhook Endpoint (`POST /api/webhooks/razorpay`)**:
+     - Configure Express JSON parser middleware with raw buffer capture to preserve pristine request byte payload.
+     - Validate `X-Razorpay-Signature` against the exact raw payload and webhook secret.
+     - Handle `payment.captured` event: locate local payment record by `entity.order_id`, verify non-captured state, and atomically capture payment and confirm order.
+     - Handle `payment.failed` event: locate local payment record by `entity.order_id`, record failure reason and `FAILED` payment status while keeping order available for payment retry without marking it paid.
+     - Gracefully ignore unhandled events with HTTP 200 to acknowledge receipt and avoid unnecessary provider retries.
+  3. **Security & Data Protection**:
+     - `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` remain strictly server-side.
+     - Client-side frontend only displays confirmed state after receiving successful server verification response.
+- **Alternatives Considered**:
+  - _Trusting client callback without server signature verification_: Vulnerable to payment spoofing and fraud.
+  - _Relying only on webhook without client verification endpoint_: Causes UI latency and poor UX waiting for asynchronous webhook delivery while customer is waiting on screen.
+  - _Verifying webhook against re-serialized JSON string_: Vulnerable to signature mismatch due to key re-ordering or whitespace variance; raw byte buffer is strictly required.
+- **Consequences**: Cryptographically robust payment validation, complete resilience against client drop-offs and network latency, zero secret leakage, safe retry and duplicate handling, and transactional database integrity.

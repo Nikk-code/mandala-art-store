@@ -15,7 +15,13 @@ export function createApp(): Application {
       credentials: true,
     })
   );
-  app.use(express.json());
+  app.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        (req as unknown as { rawBody?: Buffer }).rawBody = buf;
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true }));
 
   // API Routes

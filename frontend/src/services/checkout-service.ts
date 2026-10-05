@@ -4,6 +4,8 @@ import type {
   CreateOrderRequest,
   OrderResponseDto,
   PaymentInitializationDto,
+  PaymentVerificationResultDto,
+  VerifyPaymentRequest,
 } from '@/types';
 
 export async function createCheckoutOrder(
@@ -30,6 +32,18 @@ export async function initializeCheckoutPayment(
   const response = await apiPost<ApiSuccessResponse<PaymentInitializationDto>>(
     `checkout/orders/${encodeURIComponent(orderId)}/payment`,
     {}
+  );
+
+  return response.data;
+}
+
+export async function verifyCheckoutPayment(
+  orderId: string,
+  verificationData: VerifyPaymentRequest
+): Promise<PaymentVerificationResultDto> {
+  const response = await apiPost<ApiSuccessResponse<PaymentVerificationResultDto>>(
+    `checkout/orders/${encodeURIComponent(orderId)}/payment/verify`,
+    verificationData
   );
 
   return response.data;
