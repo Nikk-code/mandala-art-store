@@ -14,8 +14,9 @@ export async function createOrder(
 ): Promise<void> {
   try {
     const idempotencyKey = req.headers['idempotency-key'] as string | undefined;
+    const userId = req.user?.id ?? null;
 
-    const order = await orderService.createOrder(req.body, idempotencyKey);
+    const order = await orderService.createOrder(req.body, idempotencyKey, userId);
 
     res.status(201).json({
       success: true,

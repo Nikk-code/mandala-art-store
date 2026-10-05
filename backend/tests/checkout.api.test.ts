@@ -186,7 +186,8 @@ describe('Checkout REST API Endpoints', () => {
       expect(res.status).toBe(201);
       expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({ customer: expect.any(Object) }),
-        'test-key-12345'
+        'test-key-12345',
+        null
       );
     });
   });

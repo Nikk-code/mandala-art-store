@@ -3,3 +3,5 @@ export * from './ProductsPage';
 export * from './ProductDetailPage';
 export * from './CartPage';
 export * from './CheckoutPage';
+export * from './OrderConfirmationPage';
+export * from './OrderHistoryPage';

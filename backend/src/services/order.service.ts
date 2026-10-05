@@ -1,9 +1,20 @@
 import { prisma } from '../db/prisma';
-import { orderRepository, type OrderRepository } from '../repositories/order.repository';
+import {
+  orderRepository,
+  type OrderRepository,
+  type OrderWithDetails,
+} from '../repositories/order.repository';
 import { NotFoundError, BadRequestError, ConflictError } from '../errors';
 import { validateCreateOrderRequest } from '../utils/checkout-validation';
 import { generateOrderNumber } from '../utils/order-number';
-import type { CreateOrderRequest, OrderResponseDto, OrderItemSnapshotDto } from '../types/checkout';
+import type {
+  CreateOrderRequest,
+  OrderResponseDto,
+  OrderDetailsDto,
+  OrderItemSnapshotDto,
+  OrderHistoryResponseDto,
+  OrderHistoryItemDto,
+} from '../types/checkout';
 
 interface IdempotencyEntry {
   response: OrderResponseDto;
@@ -45,7 +56,8 @@ export class OrderService {
    */
   async createOrder(
     rawRequest: CreateOrderRequest,
-    idempotencyKey?: string | null
+    idempotencyKey?: string | null,
+    userId?: string | null
   ): Promise<OrderResponseDto> {
     // 1. Strict Server-Side Validation
     const validatedRequest = validateCreateOrderRequest(rawRequest);
@@ -68,7 +80,7 @@ export class OrderService {
       }
     }
 
-    const orderPromise = this.executeCreateOrderTransaction(validatedRequest);
+    const orderPromise = this.executeCreateOrderTransaction(validatedRequest, userId ?? null);
 
     if (cleanKey) {
       this.inFlightRequests.set(cleanKey, orderPromise);
@@ -91,7 +103,8 @@ export class OrderService {
   }
 
   private async executeCreateOrderTransaction(
-    request: CreateOrderRequest
+    request: CreateOrderRequest,
+    userId: string | null
   ): Promise<OrderResponseDto> {
     const createdOrder = await prisma.$transaction(async tx => {
       let authoritativeSubtotal = 0;
@@ -187,7 +200,7 @@ export class OrderService {
       // Persist Order + OrderItems + Payment inside transaction
       const order = await this.repository.createOrderTransaction(tx, {
         orderNumber,
-        userId: null, // Guest checkout (userId is null)
+        userId,
         customerEmail: request.customer.email,
         customerPhone: request.customer.phone,
         subtotal: authoritativeSubtotal,
@@ -214,8 +227,114 @@ export class OrderService {
       return order;
     });
 
-    // Map to sanitized public DTO
-    const itemsDto: OrderItemSnapshotDto[] = createdOrder.items.map(item => ({
+    return this.mapToOrderResponseDto(createdOrder);
+  }
+
+  /**
+   * Retrieves a single customer order by ID after authenticating user ownership.
+   */
+  async getOrderById(orderId: string, userId: string): Promise<OrderDetailsDto> {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!orderId || typeof orderId !== 'string' || !uuidRegex.test(orderId.trim())) {
+      throw new BadRequestError('Invalid or missing orderId parameter.');
+    }
+
+    if (!userId || typeof userId !== 'string' || !uuidRegex.test(userId.trim())) {
+      throw new BadRequestError('Invalid or missing userId parameter.');
+    }
+
+    const cleanOrderId = orderId.trim();
+    const cleanUserId = userId.trim();
+
+    const order = await this.repository.findById(cleanOrderId);
+    if (!order) {
+      throw new NotFoundError(`Order with ID "${cleanOrderId}" was not found.`);
+    }
+
+    // Strict Authorization: Avoid resource enumeration by returning NotFoundError if order belongs to another customer
+    if (order.userId && order.userId !== cleanUserId) {
+      throw new NotFoundError(`Order with ID "${cleanOrderId}" was not found.`);
+    }
+
+    const baseDto = this.mapToOrderResponseDto(order);
+    const payment = order.payments && order.payments.length > 0 ? order.payments[0] : null;
+    const payments = order.payments?.map(p => ({
+      id: p.id,
+      provider: p.provider,
+      amount: p.amount,
+      currency: p.currency,
+      status: p.status,
+      paidAt: p.paidAt ? p.paidAt.toISOString() : null,
+      failureReason: p.failureReason,
+    }));
+
+    return {
+      ...baseDto,
+      paidAt: payment?.paidAt ? payment.paidAt.toISOString() : null,
+      payments,
+    };
+  }
+
+  /**
+   * Retrieves paginated order history for the authenticated customer.
+   */
+  async getOrderHistory(userId: string, page = 1, pageSize = 10): Promise<OrderHistoryResponseDto> {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!userId || typeof userId !== 'string' || !uuidRegex.test(userId.trim())) {
+      throw new BadRequestError('Invalid or missing userId parameter.');
+    }
+
+    const cleanUserId = userId.trim();
+    const safePage = Number.isInteger(page) && page > 0 ? page : 1;
+    const safePageSize =
+      Number.isInteger(pageSize) && pageSize > 0 && pageSize <= 50 ? pageSize : 10;
+
+    const { orders, total } = await this.repository.findByUserId(cleanUserId, {
+      skip: (safePage - 1) * safePageSize,
+      take: safePageSize,
+    });
+
+    const mappedOrders: OrderHistoryItemDto[] = orders.map(order => {
+      const items: OrderItemSnapshotDto[] = (order.items || []).map(item => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        productSku: item.productSku,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        total: item.total,
+      }));
+
+      const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        paymentStatus: order.payments?.[0]?.status ?? 'PENDING',
+        total: order.total,
+        currency: 'INR',
+        itemCount,
+        items,
+        createdAt: order.createdAt.toISOString(),
+      };
+    });
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / safePageSize);
+
+    return {
+      orders: mappedOrders,
+      pagination: {
+        page: safePage,
+        pageSize: safePageSize,
+        total,
+        totalPages,
+      },
+    };
+  }
+
+  private mapToOrderResponseDto(order: OrderWithDetails): OrderResponseDto {
+    const itemsDto: OrderItemSnapshotDto[] = (order.items || []).map(item => ({
       id: item.id,
       productId: item.productId,
       productName: item.productName,
@@ -226,30 +345,30 @@ export class OrderService {
     }));
 
     return {
-      id: createdOrder.id,
-      orderNumber: createdOrder.orderNumber,
-      status: createdOrder.status,
-      paymentStatus: createdOrder.payments[0]?.status ?? 'PENDING',
-      subtotal: createdOrder.subtotal,
-      discountAmount: createdOrder.discountAmount,
-      shippingFee: createdOrder.shippingFee,
-      taxAmount: createdOrder.taxAmount,
-      total: createdOrder.total,
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      paymentStatus: order.payments?.[0]?.status ?? 'PENDING',
+      subtotal: order.subtotal,
+      discountAmount: order.discountAmount,
+      shippingFee: order.shippingFee,
+      taxAmount: order.taxAmount,
+      total: order.total,
       currency: 'INR',
-      customerEmail: createdOrder.customerEmail,
-      customerPhone: createdOrder.customerPhone,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
       shippingAddress: {
-        recipientName: createdOrder.shippingRecipientName,
-        phone: createdOrder.shippingPhone,
-        addressLine1: createdOrder.shippingAddressLine1,
-        addressLine2: createdOrder.shippingAddressLine2,
-        city: createdOrder.shippingCity,
-        state: createdOrder.shippingState,
-        postalCode: createdOrder.shippingPostalCode,
-        country: createdOrder.shippingCountry,
+        recipientName: order.shippingRecipientName,
+        phone: order.shippingPhone,
+        addressLine1: order.shippingAddressLine1,
+        addressLine2: order.shippingAddressLine2,
+        city: order.shippingCity,
+        state: order.shippingState,
+        postalCode: order.shippingPostalCode,
+        country: order.shippingCountry,
       },
       items: itemsDto,
-      createdAt: createdOrder.createdAt.toISOString(),
+      createdAt: order.createdAt.toISOString(),
     };
   }
 }

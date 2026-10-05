@@ -1,7 +1,15 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { RootLayout } from '@/layouts/RootLayout';
-import { HomePage, ProductsPage, ProductDetailPage, CartPage, CheckoutPage } from '@/pages';
+import {
+  HomePage,
+  ProductsPage,
+  ProductDetailPage,
+  CartPage,
+  CheckoutPage,
+  OrderConfirmationPage,
+  OrderHistoryPage,
+} from '@/pages';
 import { CartProvider } from '@/context';
 
 function NotFoundPage(): ReactNode {
@@ -32,6 +40,9 @@ export function App(): ReactNode {
             <Route path="products/:slug" element={<ProductDetailPage />} />
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="orders" element={<OrderHistoryPage />} />
+            <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
+            <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
@@ -39,4 +50,5 @@ export function App(): ReactNode {
     </CartProvider>
   );
 }
+
 export default App;

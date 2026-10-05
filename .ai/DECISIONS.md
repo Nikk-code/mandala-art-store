@@ -22,6 +22,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-014: Authoritative Backend Order Creation, Atomic Inventory Reservation & Pending Payment Lifecycle](#adr-014-authoritative-backend-order-creation-atomic-inventory-reservation--pending-payment-lifecycle)
 - [ADR-015: Server-Authoritative Razorpay Payment Order Initialization & Duplicate Safety](#adr-015-server-authoritative-razorpay-payment-order-initialization--duplicate-safety)
 - [ADR-016: Server-Side Razorpay Payment Verification, Webhook Handling & Atomic Order Confirmation](#adr-016-server-side-razorpay-payment-verification-webhook-handling--atomic-order-confirmation)
+- [ADR-017: Customer Order Confirmation, Order History & Anti-Enumeration Access Control](#adr-017-customer-order-confirmation-order-history--anti-enumeration-access-control)
 
 ---
 
@@ -256,3 +257,30 @@ This document tracks significant architectural, technical, and governance decisi
   - _Relying only on webhook without client verification endpoint_: Causes UI latency and poor UX waiting for asynchronous webhook delivery while customer is waiting on screen.
   - _Verifying webhook against re-serialized JSON string_: Vulnerable to signature mismatch due to key re-ordering or whitespace variance; raw byte buffer is strictly required.
 - **Consequences**: Cryptographically robust payment validation, complete resilience against client drop-offs and network latency, zero secret leakage, safe retry and duplicate handling, and transactional database integrity.
+
+---
+
+### ADR-017: Customer Order Confirmation, Order History & Anti-Enumeration Access Control
+
+- **Date**: 2026-10-05
+- **Status**: Accepted
+- **Context**: Customers need to review their confirmed order immediately following payment and revisit past orders through an Order History view. Simply exposing `/api/orders/:orderId` without strict ownership checks or returning standard 403 Forbidden errors when an order exists but belongs to someone else creates a critical resource enumeration and privacy vulnerability. Furthermore, relying purely on React routing state for order confirmation leads to blank screens or broken flows upon browser page reloads.
+- **Decision**:
+  1. **Strict Server-Side Authorization & Anti-Enumeration**:
+     - Enforce authentication on all customer order endpoints (`GET /api/orders/:orderId` and `GET /api/orders`) via `requireAuth` middleware.
+     - Validate that `authenticatedUser.id === order.userId`.
+     - When an authenticated user requests an order ID belonging to another user, return `404 Not Found` (rather than `403 Forbidden`) with a generic message to prevent malicious enumeration and probing of valid order UUIDs.
+  2. **Authoritative Backend Order Re-fetching**:
+     - Order Confirmation (`/orders/:orderId`) is a dedicated, fully reload-resilient route that retrieves authoritative order state, status badges, line items, and delivery addresses from `GET /api/orders/:orderId` on mount.
+     - Ephemeral React state is not relied upon as the single source of truth.
+  3. **Customer Order History with Sensible Pagination**:
+     - Expose `GET /api/orders` with query parameters `page` and `pageSize` (defaulting to 10, max 50), sorted newest first (`createdAt: 'desc'`).
+     - Return total counts and total pages alongside the sanitized order snapshot summaries.
+  4. **Post-Payment Reliability & Cart Clearing**:
+     - The shopping cart is only cleared after server-side payment verification succeeds.
+     - Navigation proceeds to `/orders/:orderId` only upon verified confirmation, maintaining customer cart contents if payment verification encounters recoverable errors.
+- **Alternatives Considered**:
+  - _Passing entire order object through React Router navigation state_: Fragile on browser reload; causes broken confirmation screens.
+  - _Returning 403 Forbidden for another customer's order_: Leaks the existence of valid order IDs across the customer base (resource enumeration).
+  - _Deriving order ownership from client-provided headers or query parameters_: Vulnerable to IDOR (Insecure Direct Object Reference). Ownership is strictly derived from verified server session/token.
+- **Consequences**: Rock-solid post-payment reliability, full reload safety, zero exposure of internal database fields or payment secrets, and airtight customer data isolation.

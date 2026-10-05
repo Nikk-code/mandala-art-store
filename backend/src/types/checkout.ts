@@ -59,6 +59,44 @@ export interface OrderResponseDto {
   };
   items: OrderItemSnapshotDto[];
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface OrderPaymentDto {
+  id: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paidAt: string | null;
+  failureReason: string | null;
+}
+
+export interface OrderDetailsDto extends OrderResponseDto {
+  paidAt?: string | null;
+  payments?: OrderPaymentDto[];
+}
+
+export interface OrderHistoryItemDto {
+  id: string;
+  orderNumber: string;
+  status: string;
+  paymentStatus: string;
+  total: number;
+  currency: string;
+  itemCount: number;
+  items?: OrderItemSnapshotDto[];
+  createdAt: string;
+}
+
+export interface OrderHistoryResponseDto {
+  orders: OrderHistoryItemDto[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface PaymentInitializationDto {

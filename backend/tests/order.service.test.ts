@@ -450,4 +450,196 @@ describe('OrderService Domain Logic', () => {
     expect(order1.id).toBe(order2.id);
     expect(repoCalls).toBe(1); // Only one actual DB transaction executed
   });
+
+  describe('getOrderById', () => {
+    const validOrderId = '33333333-3333-4333-8333-333333333333';
+    const customerId = '11111111-1111-4111-8111-111111111111';
+    const otherCustomerId = '22222222-2222-4222-8222-222222222222';
+
+    const mockDbOrder = {
+      id: validOrderId,
+      orderNumber: 'MAT-20261005-7F2A9C',
+      userId: customerId,
+      customerEmail: 'priya@example.com',
+      customerPhone: '9876543210',
+      status: OrderStatus.CONFIRMED,
+      subtotal: 149900,
+      discountAmount: 0,
+      shippingFee: 0,
+      taxAmount: 0,
+      total: 149900,
+      couponId: null,
+      couponCode: null,
+      shippingRecipientName: 'Priya Sharma',
+      shippingPhone: '9876543210',
+      shippingAddressLine1: 'Flat 101, Lotus Apts, MG Road',
+      shippingAddressLine2: 'Near Central Park',
+      shippingCity: 'Bengaluru',
+      shippingState: 'Karnataka',
+      shippingPostalCode: '560001',
+      shippingCountry: 'India',
+      trackingNumber: null,
+      courierName: null,
+      customerNotes: null,
+      createdAt: new Date('2026-10-05T12:00:00Z'),
+      updatedAt: new Date('2026-10-05T12:05:00Z'),
+      items: [
+        {
+          id: 'item-1',
+          orderId: validOrderId,
+          productId: validProductId1,
+          productName: 'Sacred Lotus Mandala',
+          productSku: 'MND-LOTUS-01',
+          unitPrice: 149900,
+          quantity: 1,
+          total: 149900,
+          createdAt: new Date('2026-10-05T12:00:00Z'),
+        },
+      ],
+      payments: [
+        {
+          id: 'pay-1',
+          orderId: validOrderId,
+          provider: 'razorpay',
+          providerOrderId: 'order_rzp_123',
+          providerPaymentId: 'pay_rzp_123',
+          providerSignature: null,
+          amount: 149900,
+          currency: 'INR',
+          status: PaymentStatus.CAPTURED,
+          failureReason: null,
+          paidAt: new Date('2026-10-05T12:05:00Z'),
+          createdAt: new Date('2026-10-05T12:00:00Z'),
+          updatedAt: new Date('2026-10-05T12:05:00Z'),
+        },
+      ],
+    };
+
+    it('returns formatted order details when order exists and belongs to user', async () => {
+      vi.spyOn(mockOrderRepo, 'findById').mockResolvedValue(mockDbOrder);
+
+      const result = await service.getOrderById(validOrderId, customerId);
+
+      expect(result.id).toBe(validOrderId);
+      expect(result.orderNumber).toBe('MAT-20261005-7F2A9C');
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(result.paymentStatus).toBe(PaymentStatus.CAPTURED);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].productName).toBe('Sacred Lotus Mandala');
+      expect(result.payments).toHaveLength(1);
+      expect(result.payments[0].status).toBe(PaymentStatus.CAPTURED);
+    });
+
+    it('throws NotFoundError when order does not exist', async () => {
+      vi.spyOn(mockOrderRepo, 'findById').mockResolvedValue(null);
+
+      await expect(service.getOrderById(validOrderId, customerId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('throws NotFoundError (security anti-enumeration) when order belongs to different user', async () => {
+      vi.spyOn(mockOrderRepo, 'findById').mockResolvedValue(mockDbOrder);
+
+      await expect(service.getOrderById(validOrderId, otherCustomerId)).rejects.toThrow(
+        NotFoundError
+      );
+    });
+  });
+
+  describe('getOrderHistory', () => {
+    const customerId = '11111111-1111-4111-8111-111111111111';
+
+    it('returns paginated orders list sorted newest first', async () => {
+      vi.spyOn(mockOrderRepo, 'findByUserId').mockResolvedValue({
+        orders: [
+          {
+            id: 'order-1',
+            orderNumber: 'MAT-20261005-7F2A9C',
+            userId: customerId,
+            customerEmail: 'priya@example.com',
+            customerPhone: '9876543210',
+            status: OrderStatus.CONFIRMED,
+            subtotal: 149900,
+            discountAmount: 0,
+            shippingFee: 0,
+            taxAmount: 0,
+            total: 149900,
+            couponId: null,
+            couponCode: null,
+            shippingRecipientName: 'Priya Sharma',
+            shippingPhone: '9876543210',
+            shippingAddressLine1: 'Flat 101, Lotus Apts, MG Road',
+            shippingAddressLine2: null,
+            shippingCity: 'Bengaluru',
+            shippingState: 'Karnataka',
+            shippingPostalCode: '560001',
+            shippingCountry: 'India',
+            trackingNumber: null,
+            courierName: null,
+            customerNotes: null,
+            createdAt: new Date('2026-10-05T12:00:00Z'),
+            updatedAt: new Date('2026-10-05T12:05:00Z'),
+            items: [
+              {
+                id: 'item-1',
+                orderId: 'order-1',
+                productId: validProductId1,
+                productName: 'Sacred Lotus Mandala',
+                productSku: 'MND-LOTUS-01',
+                unitPrice: 149900,
+                quantity: 1,
+                total: 149900,
+                createdAt: new Date('2026-10-05T12:00:00Z'),
+              },
+            ],
+            payments: [
+              {
+                id: 'pay-1',
+                orderId: 'order-1',
+                provider: 'razorpay',
+                providerOrderId: 'order_rzp_123',
+                providerPaymentId: 'pay_rzp_123',
+                providerSignature: null,
+                amount: 149900,
+                currency: 'INR',
+                status: PaymentStatus.CAPTURED,
+                failureReason: null,
+                paidAt: new Date('2026-10-05T12:05:00Z'),
+                createdAt: new Date('2026-10-05T12:00:00Z'),
+                updatedAt: new Date('2026-10-05T12:05:00Z'),
+              },
+            ],
+          },
+        ],
+        total: 1,
+      });
+
+      const result = await service.getOrderHistory(customerId, 1, 10);
+
+      expect(result.orders).toHaveLength(1);
+      expect(result.orders[0].id).toBe('order-1');
+      expect(result.orders[0].orderNumber).toBe('MAT-20261005-7F2A9C');
+      expect(result.orders[0].status).toBe(OrderStatus.CONFIRMED);
+      expect(result.orders[0].paymentStatus).toBe(PaymentStatus.CAPTURED);
+      expect(result.orders[0].itemCount).toBe(1);
+      expect(result.pagination).toEqual({
+        page: 1,
+        pageSize: 10,
+        total: 1,
+        totalPages: 1,
+      });
+    });
+
+    it('returns empty list when user has no orders', async () => {
+      vi.spyOn(mockOrderRepo, 'findByUserId').mockResolvedValue({
+        orders: [],
+        total: 0,
+      });
+
+      const result = await service.getOrderHistory(customerId, 1, 10);
+
+      expect(result.orders).toEqual([]);
+      expect(result.pagination.total).toBe(0);
+      expect(result.pagination.totalPages).toBe(0);
+    });
+  });
 });

@@ -15,6 +15,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
   { name: 'Mandala Art', href: '/products?category=mandala-art' },
   { name: 'Lippan Kaam', href: '/products?category=lippan-art' },
   { name: 'Paintings', href: '/products?category=handmade-paintings' },
+  { name: 'My Orders', href: '/orders' },
 ];
 
 export function Header(): ReactNode {

@@ -11,8 +11,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Customer authentication and account order history.
-- Customer order management and tracking.
+- Customer authentication system (registration, password hashing, session/cookie tokens).
+
+---
+
+## [0.18.0] - 2026-10-05
+
+### Added
+
+- **Step 15: Order Confirmation, Order History & Post-Payment Reliability**:
+  - **Backend Authentication & Authorization Middleware**:
+    - Implemented `requireAuth` and `optionalAuth` in `backend/src/middleware/auth.ts` parsing `Authorization: Bearer <uuid>` or `x-user-id` header into `req.user = { id }`.
+    - Added `UnauthorizedError` (401) and `ForbiddenError` (403) to `backend/src/errors/app-error.ts`.
+  - **Order Confirmation & Details Endpoint**:
+    - Created `GET /api/orders/:orderId` in `backend/src/routes/order.routes.ts` and `order.controller.ts`.
+    - Added `getOrderById(orderId, userId)` to `OrderService` with anti-enumeration protection (returns `404 Not Found` if the order does not exist or belongs to another user).
+    - Returns sanitized `OrderDetailsDto` with snapshot items, customer contact, delivery destination, and authoritative payment status.
+  - **Customer Order History API & Pagination**:
+    - Created `GET /api/orders` in `order.routes.ts` and `order.controller.ts`.
+    - Added `findByUserId(userId, { skip, take })` to `OrderRepository` sorting by `createdAt: 'desc'`.
+    - Added `getOrderHistory(userId, page, pageSize)` to `OrderService` returning `OrderHistoryResponseDto` with pagination metadata.
+  - **Frontend Order Confirmation & Details Experience**:
+    - Created `OrderConfirmationPage.tsx` (`/orders/:orderId` and `/order-confirmation/:orderId`) with authoritative backend state re-fetching, status badges, delivery details, and artisan guarantees.
+    - Full page reload and browser refresh safety.
+  - **Frontend Customer Order History Experience**:
+    - Created `OrderHistoryPage.tsx` (`/orders`) featuring responsive order cards, badge status indicators, order summaries, and view action links.
+    - Updated `Header.tsx` desktop navbar and mobile drawer with "My Orders" navigation link.
+  - **Post-Payment Reliability & Cart Safety**:
+    - Updated `CheckoutPage.tsx` Razorpay modal callback handler to verify payment on the backend, clear the shopping cart only after successful verification, and navigate directly to `/orders/:orderId`.
+  - **Automated Tests**:
+    - Added `backend/tests/order.api.test.ts` (API endpoint tests for order retrieval, security isolation, unauthenticated rejection, and pagination).
+    - Added unit tests for `getOrderById` and `getOrderHistory` in `backend/tests/order.service.test.ts`.
+    - Created `frontend/tests/order-service.test.ts`, `frontend/tests/OrderConfirmationPage.test.tsx`, and `frontend/tests/OrderHistoryPage.test.tsx`.
+  - **Architecture Decision Record**:
+    - Recorded `ADR-017: Customer Order Confirmation, Order History & Anti-Enumeration Access Control` in `.ai/DECISIONS.md`.
 
 ---
 

@@ -63,6 +63,32 @@ export class OrderRepository {
   }
 
   /**
+   * Retrieves paginated orders for a specific user ID sorted newest first.
+   */
+  async findByUserId(
+    userId: string,
+    options: { skip: number; take: number }
+  ): Promise<{ orders: OrderWithDetails[]; total: number }> {
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where: { userId },
+        include: {
+          items: true,
+          payments: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: options.skip,
+        take: options.take,
+      }),
+      prisma.order.count({
+        where: { userId },
+      }),
+    ]);
+
+    return { orders, total };
+  }
+
+  /**
    * Creates an order, its snapshot line items, and a pending payment record atomically within a transaction.
    */
   async createOrderTransaction(

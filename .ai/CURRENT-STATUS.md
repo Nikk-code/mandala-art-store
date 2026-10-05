@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `RAZORPAY PAYMENT VERIFICATION & WEBHOOK HANDLING (Step 14 Complete)`
+**Current Phase**: `ORDER CONFIRMATION, ORDER HISTORY & POST-PAYMENT RELIABILITY (Step 15 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The Razorpay payment verification and webhook handling foundation (Step 14) has been implemented to cryptographically verify payment signatures and atomically update Order and Payment states. The backend exposes `POST /api/checkout/orders/:orderId/payment/verify` for synchronous client checkout callback verification using HMAC-SHA256 (`razorpay_order_id + '|' + razorpay_payment_id`) and `POST /api/webhooks/razorpay` with raw byte buffer verification (`X-Razorpay-Signature`) for asynchronous webhook processing (`payment.captured`, `payment.failed`). All verification and webhook operations are strictly idempotent, use single Prisma transactions for atomic transitions (`PaymentStatus.CAPTURED`, `OrderStatus.CONFIRMED`), and never expose `RAZORPAY_KEY_SECRET` or `RAZORPAY_WEBHOOK_SECRET`. The frontend checkout flow securely verifies payments with the backend before clearing the shopping cart and displaying order confirmation.
+The customer order confirmation, order history, and post-payment reliability foundation (Step 15) has been implemented with strict server-side authorization and anti-enumeration protection. The backend exposes `GET /api/orders/:orderId` (requiring authentication, verifying `authenticatedUser.id === order.userId`, and returning `404 Not Found` if the order belongs to another customer to prevent ID enumeration) and `GET /api/orders` (returning paginated customer orders sorted newest first). The frontend provides a reload-safe, authoritative `OrderConfirmationPage` (`/orders/:orderId`) and a dedicated `OrderHistoryPage` (`/orders`) with status badges, line item breakdowns, and direct order navigation. Following Razorpay payment verification in `CheckoutPage`, the cart is reliably cleared and the customer is seamlessly routed to the confirmed order. All 279 backend and frontend tests pass cleanly with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -236,9 +236,30 @@ The Razorpay payment verification and webhook handling foundation (Step 14) has 
   - Added `verifyCheckoutPayment` in `frontend/src/services/checkout-service.ts`.
   - Connected Razorpay checkout modal `handler` in `CheckoutPage.tsx` to send payment verification payload to backend.
   - Cart is cleared and verified order confirmation view is rendered only upon successful server-side verification response.
+
+### Phase 15: Order Confirmation, Order History & Post-Payment Reliability (Completed)
+
+- [x] **Secure Backend Order Retrieval & Anti-Enumeration Authorization**:
+  - Created authentication middleware (`backend/src/middleware/auth.ts`) supporting `requireAuth` and `optionalAuth` extracting verified user tokens (`Authorization: Bearer <uuid>` or `x-user-id`).
+  - Created `GET /api/orders/:orderId` route in `backend/src/routes/order.routes.ts` with strict ownership validation (`authenticatedUser.id === order.userId`).
+  - Protected against resource enumeration by throwing `404 Not Found` if the requested order belongs to another customer.
+  - Returns customer-safe `OrderDetailsDto` including line items, shipping destination, order totals, and authoritative payment status without exposing database internals or secrets.
+- [x] **Customer Order History API**:
+  - Implemented `GET /api/orders` in `backend/src/routes/order.routes.ts` and `backend/src/controllers/order.controller.ts`.
+  - Implemented `OrderRepository.findByUserId` and `OrderService.getOrderHistory` with server-side pagination (`page`, `pageSize`, `total`, `totalPages`) and descending chronological ordering (`createdAt: 'desc'`).
+- [x] **Order Confirmation & Order Details Frontend Experience**:
+  - Created `OrderConfirmationPage` (`/orders/:orderId`) displaying order reference, placed date, delivery destination snapshot, ordered artworks list, line prices, tax/shipping notes, and verified order/payment status badges.
+  - Full reload/refresh resilience: page fetches authoritative order status directly from backend on mount rather than relying solely on ephemeral React navigation state.
+- [x] **Customer Order History Frontend Experience**:
+  - Created `OrderHistoryPage` (`/orders`) featuring paginated order cards, order numbers, placement dates, total amounts, status badges, included artwork summaries, and direct links to full order details.
+  - Handled loading (`LoadingState`), empty order history (`EmptyState`), and server/network retry states (`ErrorState`).
+  - Added "My Orders" navigation link to desktop navbar and mobile drawer in `Header.tsx`.
+- [x] **Checkout Flow Post-Payment Reliability**:
+  - Updated `CheckoutPage.tsx` Razorpay modal handler to verify signature on backend, clear cart upon verification success, and navigate directly to `/orders/:orderId`.
+  - Cart is never cleared on unverified callbacks or verification failures, preserving customer intent and preventing order duplication on reload.
 - [x] **Automated Tests & Quality**:
-  - 14 backend automated test suites passing with 149 tests (`backend/tests/`).
-  - 15 frontend automated test suites passing with 105 tests (`frontend/tests/`).
+  - 15 backend automated test suites passing with 163 tests (`backend/tests/`).
+  - 18 frontend automated test suites passing with 116 tests (`frontend/tests/`).
   - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
@@ -247,13 +268,13 @@ The Razorpay payment verification and webhook handling foundation (Step 14) has 
 
 ## 3. In-Progress Work
 
-- _None_ (Step 14 is complete and ready for review).
+- _None_ (Step 15 is complete and ready for review).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 15: Customer Authentication & Account Management (Registration, JWT/Cookie Sessions, Password Hashing, Profile & Order History).
+- Step 16: Customer Authentication System (Full Registration, Login, Session Management & Password Recovery).
 
 ---
 

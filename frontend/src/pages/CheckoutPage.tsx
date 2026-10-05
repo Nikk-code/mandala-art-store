@@ -153,6 +153,7 @@ export function CheckoutPage(): ReactNode {
             setPaymentVerification(verificationResult);
             clearCart();
             setIsSubmitting(false);
+            navigate(`/orders/${order.id}`);
           } catch (verifyErr: unknown) {
             const message =
               verifyErr instanceof Error
