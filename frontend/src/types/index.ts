@@ -15,3 +15,4 @@ export interface ApiErrorResponse {
 }
 
 export * from './catalog';
+export * from './cart';

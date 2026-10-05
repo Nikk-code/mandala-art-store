@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { APP_NAME } from '@/constants';
 import { IconButton } from '@/components/ui';
+import { useCart } from '@/context';
 
 interface NavItem {
   name: string;
@@ -18,6 +19,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
 
 export function Header(): ReactNode {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { itemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-art-stone/80 bg-white/95 backdrop-blur-md transition-shadow duration-200 shadow-sm">
@@ -142,33 +144,40 @@ export function Header(): ReactNode {
             }
           />
 
-          {/* Cart Icon Placeholder */}
-          <div className="relative">
-            <IconButton
-              aria-label="Shopping bag"
-              title="Shopping bag (Coming soon)"
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                  />
-                </svg>
-              }
-            />
-            <span
+          {/* Cart Icon Link */}
+          <Link
+            to="/cart"
+            className="relative inline-flex items-center justify-center rounded-lg p-2 text-art-charcoal hover:bg-art-cream hover:text-art-ochre transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px] min-w-[44px]"
+            aria-label={`Shopping cart with ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
               aria-hidden="true"
-              className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-art-ochre ring-2 ring-white"
-            />
-          </div>
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+              />
+            </svg>
+            {itemCount > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute top-1 right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-art-ochre px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
+              >
+                {itemCount}
+              </span>
+            ) : (
+              <span
+                aria-hidden="true"
+                className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-stone-300 ring-2 ring-white"
+              />
+            )}
+          </Link>
         </div>
       </div>
 

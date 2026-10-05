@@ -4,6 +4,8 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import type { ProductDetailDto } from '@/types';
 
+import { CartProvider } from '@/context';
+
 describe('ProductDetailPage Integration & State Handling', () => {
   const mockProductDetail: ProductDetailDto = {
     id: 'prod-1',
@@ -49,17 +51,21 @@ describe('ProductDetailPage Integration & State Handling', () => {
   };
 
   beforeEach(() => {
+    localStorage.clear();
     vi.restoreAllMocks();
   });
 
   const renderWithRouter = (initialEntries = ['/products/sacred-sri-yantra-mandala']) => {
     return render(
-      <MemoryRouter initialEntries={initialEntries}>
-        <Routes>
-          <Route path="/products/:slug" element={<ProductDetailPage />} />
-          <Route path="/products" element={<div>Catalog Listing Page</div>} />
-        </Routes>
-      </MemoryRouter>
+      <CartProvider>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route path="/products/:slug" element={<ProductDetailPage />} />
+            <Route path="/products" element={<div>Catalog Listing Page</div>} />
+            <Route path="/cart" element={<div>Shopping Cart Page</div>} />
+          </Routes>
+        </MemoryRouter>
+      </CartProvider>
     );
   };
 
@@ -214,5 +220,33 @@ describe('ProductDetailPage Integration & State Handling', () => {
       expect(screen.queryByText('Material & Medium')).not.toBeInTheDocument();
       expect(screen.queryByText('Weight')).not.toBeInTheDocument();
     });
+  });
+
+  it('adds item to cart and displays confirmation with View Cart link', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ success: true, data: mockProductDetail }),
+        } as Response)
+      )
+    );
+
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Add Sacred Sri Yantra Mandala to cart' })
+      ).toBeInTheDocument();
+    });
+
+    const addBtn = screen.getByRole('button', {
+      name: 'Add Sacred Sri Yantra Mandala to cart',
+    });
+    fireEvent.click(addBtn);
+
+    expect(screen.getByText('Added to your cart!')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View Cart →' })).toBeInTheDocument();
   });
 });

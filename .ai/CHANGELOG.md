@@ -11,10 +11,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 10: Cart state foundation, slide-over cart drawer, and shopping flow.
-- Customer checkout and payment integration.
+- Customer authentication and guest checkout architecture.
+- Payment gateway integration (Razorpay).
 
 ---
+
+## [0.13.0] - 2026-10-05
+
+### Added
+
+- **Step 10: Shopping Cart Foundation**:
+  - **Cart State & Guest Persistence Architecture**:
+    - Created explicit TypeScript types in `frontend/src/types/cart.ts` (`CartItem`, `AddCartItemInput`, `CartState`, `CartContextValue`).
+    - Implemented centralized React `useReducer` cart provider in `frontend/src/context/CartProvider.tsx` and `useCart()` hook in `frontend/src/context/CartContext.ts`.
+    - Added `CART_STORAGE_KEY = 'mandala_art_store_cart_v1'` constant and safe localStorage synchronization with corrupted/malformed JSON error recovery and item structure validation.
+  - **Add to Cart & Product Detail Integration**:
+    - Replaced purchase preview button in `frontend/src/pages/ProductDetailPage.tsx` with a live "Add to Cart" button.
+    - Added visual confirmation ("Added to Cart") and "View Cart →" link upon adding artwork to cart.
+    - Enforced `SOLD_OUT` protection in both UI and reducer, while permitting `IN_STOCK` and `MADE_TO_ORDER` items.
+  - **Header Cart Indicator**:
+    - Updated `frontend/src/components/layout/Header.tsx` to read dynamic `itemCount` from `useCart()` and link directly to `/cart`.
+    - Added live badge counter with smooth transitions.
+  - **Dedicated Cart Page (`/cart`)**:
+    - Created `frontend/src/pages/CartPage.tsx` registered in `App.tsx` router.
+    - Created `frontend/src/components/cart/CartItemRow.tsx` displaying artwork thumbnail, title, category, dimensions, unit price, quantity stepper ($\ge 1$), line total in integer paise, and accessible remove button.
+    - Created `frontend/src/components/cart/CartSummary.tsx` showing order subtotal preview calculated in integer paise, artisan value pillars, and "Continue Shopping" CTA.
+    - Created empty cart view using `EmptyState` component directing customers to explore the catalog (`/products`).
+  - **Automated Tests**:
+    - Added `frontend/tests/cart-context.test.tsx` (12 unit tests covering initial state, adding items, quantity increments, Sold Out rejections, Made to Order support, quantity clamping $\ge 1$, removal, clearing, persistence, hydration, and malformed JSON recovery).
+    - Added `frontend/tests/CartPage.test.tsx` (6 UI tests covering empty state, rendering item details, quantity adjustments, disabling decrement at quantity 1, line removal, and cart clear).
+    - Updated `frontend/tests/ProductDetailPage.test.tsx` with Add to Cart integration tests.
 
 ## [0.12.0] - 2026-10-05
 

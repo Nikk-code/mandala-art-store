@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { RootLayout } from '@/layouts/RootLayout';
-import { HomePage, ProductsPage, ProductDetailPage } from '@/pages';
+import { HomePage, ProductsPage, ProductDetailPage, CartPage } from '@/pages';
+import { CartProvider } from '@/context';
 
 function NotFoundPage(): ReactNode {
   return (
@@ -22,16 +23,19 @@ function NotFoundPage(): ReactNode {
 
 export function App(): ReactNode {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<RootLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="products/:slug" element={<ProductDetailPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<RootLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="products/:slug" element={<ProductDetailPage />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   );
 }
 export default App;

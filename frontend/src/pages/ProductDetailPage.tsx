@@ -12,16 +12,19 @@ import {
 import { ProductImageGallery } from '@/components/catalog';
 import { fetchProductBySlug } from '@/services';
 import { formatPrice, formatWeight, getAvailabilityInfo } from '@/utils';
+import { useCart } from '@/context';
 import type { ProductDetailDto } from '@/types';
 
 export function ProductDetailPage(): ReactNode {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { addItem } = useCart();
 
   const [product, setProduct] = useState<ProductDetailDto | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
+  const [addedToCart, setAddedToCart] = useState<boolean>(false);
 
   const loadProduct = useCallback(() => {
     if (!slug) {
@@ -242,22 +245,103 @@ export function ProductDetailPage(): ReactNode {
                     '✕ This unique artwork has found a patron. Browse other pieces from the artist.'}
                 </p>
 
-                {/* Purchase Action Preview (Clearly Non-functional / Informative for Step 9) */}
+                {/* Real Add to Cart Action */}
                 <div className="pt-2 space-y-2">
-                  <Button
-                    variant={availability.isAvailable ? 'primary' : 'secondary'}
-                    size="lg"
-                    className="w-full justify-center opacity-90 cursor-default"
-                    disabled
-                    aria-label={`${availability.label} - Cart and ordering available in upcoming milestone`}
-                  >
-                    {availability.isAvailable
-                      ? 'Add to Cart — Available in Next Milestone'
-                      : 'Artwork Sold Out'}
-                  </Button>
-                  <p className="text-[11px] text-center text-stone-600 italic">
-                    (Online checkout & ordering integration arrives in Step 10)
-                  </p>
+                  {product.availability === 'SOLD_OUT' ? (
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="w-full justify-center opacity-70 cursor-not-allowed"
+                      disabled
+                      aria-label="Artwork Sold Out"
+                    >
+                      Artwork Sold Out
+                    </Button>
+                  ) : addedToCart ? (
+                    <div className="space-y-2 animate-fadeIn">
+                      <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 py-3 text-xs sm:text-sm font-semibold text-emerald-800">
+                        <svg
+                          className="h-5 w-5 text-emerald-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Added to your cart!</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="primary"
+                          size="md"
+                          className="flex-1 justify-center"
+                          onClick={() => {
+                            const primaryImage =
+                              product.images.find(img => img.isPrimary) || product.images[0];
+                            addItem({
+                              productId: product.id,
+                              slug: product.slug,
+                              name: product.name,
+                              sku: product.sku,
+                              price: product.price,
+                              compareAtPrice: product.compareAtPrice,
+                              availability: product.availability,
+                              imageUrl: primaryImage?.url || null,
+                              imageAlt: primaryImage?.altText || product.name,
+                              categoryName: product.category.name,
+                              categorySlug: product.category.slug,
+                              dimensions: product.dimensions,
+                              isHandmade: product.isHandmade,
+                              quantity: 1,
+                            });
+                          }}
+                        >
+                          Add Another
+                        </Button>
+                        <Link
+                          to="/cart"
+                          className="flex-1 inline-flex items-center justify-center rounded-xl bg-art-charcoal px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-stone-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+                        >
+                          View Cart →
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="w-full justify-center"
+                      onClick={() => {
+                        const primaryImage =
+                          product.images.find(img => img.isPrimary) || product.images[0];
+                        const success = addItem({
+                          productId: product.id,
+                          slug: product.slug,
+                          name: product.name,
+                          sku: product.sku,
+                          price: product.price,
+                          compareAtPrice: product.compareAtPrice,
+                          availability: product.availability,
+                          imageUrl: primaryImage?.url || null,
+                          imageAlt: primaryImage?.altText || product.name,
+                          categoryName: product.category.name,
+                          categorySlug: product.category.slug,
+                          dimensions: product.dimensions,
+                          isHandmade: product.isHandmade,
+                          quantity: 1,
+                        });
+                        if (success) {
+                          setAddedToCart(true);
+                        }
+                      }}
+                      aria-label={`Add ${product.name} to cart`}
+                    >
+                      {product.availability === 'MADE_TO_ORDER'
+                        ? 'Add to Cart — Made to Order'
+                        : 'Add to Cart'}
+                    </Button>
+                  )}
                 </div>
               </div>
 

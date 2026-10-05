@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `PRODUCT DETAIL PAGE (Step 9 Complete)`
+**Current Phase**: `SHOPPING CART FOUNDATION (Step 10 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The real Product Detail Page (`/products/:slug`) integrated with the backend public catalog REST API has been established (Step 9). Customers can explore full artwork details, multi-image photography galleries with responsive thumbnail selection and an accessible fullscreen lightbox image viewer (`ProductImageGallery`), dynamic breadcrumb navigation, formatted pricing with compare-at savings, availability notes (`In Stock`, `Made to Order`, `Sold Out`), structured artwork specifications (Dimensions, Material, Weight, SKU, Handcrafted Authenticity), full artisan story, and heritage trust pillars. The page gracefully handles loading feedback (`LoadingState`), server error recovery with retry (`ErrorState`), and 404 Not Found feedback (`EmptyState`) with direct navigation back to the catalog.
+The shopping cart foundation (Step 10) has been established with a client-side guest cart, centralized React Context state (`useReducer`), namespaced `localStorage` persistence (`mandala_art_store_cart_v1`), safe error recovery from malformed storage data, an active Header cart indicator with item count badges, an accessible Product Detail Page "Add to Cart" interaction with visual feedback and Sold Out protection, and a dedicated Cart Page (`/cart`) with quantity stepper controls, item removal, and real-time subtotal previews computed strictly in integer paise (`₹`).
 
-> **CRITICAL NOTE**: Cart state, add-to-cart operations, checkout, payment processing (Razorpay), customer authentication, wishlist, orders, reviews, and admin management remain **INTENTIONALLY DEFERRED** to subsequent steps.
+> **CRITICAL NOTE**: Checkout, order management, payment processing (Razorpay), customer authentication/login, coupons/discounts, shipping calculations, tax/GST calculations, reviews, wishlist, and admin functionality remain **INTENTIONALLY DEFERRED** to subsequent steps.
 
 ---
 
@@ -116,26 +116,46 @@ The real Product Detail Page (`/products/:slug`) integrated with the backend pub
   - Folk art heritage guarantees (Handcrafted, Wooden crating, Insured transit).
 - [x] **State Handling**:
   - Loading state (`LoadingState`), Error retry state (`ErrorState`), and 404 Not Found state (`EmptyState`) with direct catalog return CTA.
+- [x] Pushed milestone commit (`feat(frontend): implement product detail page and image gallery`).
+
+### Phase 10: Shopping Cart Foundation (Completed)
+
+- [x] **Guest Cart Types & State Architecture**:
+  - Authored types in `frontend/src/types/cart.ts` (`CartItem`, `AddCartItemInput`, `CartState`, `CartContextValue`).
+  - Created centralized `CartContext` and `CartProvider` using React `useReducer` and `useContext` hook (`useCart`).
+  - Implemented `mandala_art_store_cart_v1` `localStorage` persistence with safe parsing, sanitization, and corrupted data recovery.
+- [x] **Add to Cart & Product Detail Integration**:
+  - Replaced disabled preview button on `ProductDetailPage` with real "Add to Cart" action.
+  - Added visual confirmation ("Added to Cart") and direct "View Cart →" link.
+  - Enforced `SOLD_OUT` protection in both UI and reducer; allowed `IN_STOCK` and `MADE_TO_ORDER` items.
+- [x] **Header Cart Indicator**:
+  - Updated `Header.tsx` to read dynamic `itemCount` from `useCart()`.
+  - Displayed live badge count and linked directly to `/cart`.
+- [x] **Dedicated Cart Page (`/cart`)**:
+  - Created `CartPage.tsx` with responsive multi-column layout.
+  - Created `CartItemRow.tsx` featuring artwork thumbnail, title, category, dimensions, handmade badge, unit price, quantity stepper ($\ge 1$), line total in integer paise, and accessible remove button.
+  - Created `CartSummary.tsx` with order preview, subtotal, artisan guarantees, and "Continue Shopping" CTA.
+  - Created empty cart state using `EmptyState` component with direct CTA back to `/products`.
 - [x] **Automated Tests & Quality**:
-  - 56 frontend automated tests passing across 10 test files (`frontend/tests/`).
-  - 78 backend tests passing across 8 test suites (`backend/tests/`).
+  - 18 new unit and UI tests across `tests/cart-context.test.tsx` and `tests/CartPage.test.tsx`.
+  - 75 frontend automated tests passing across 12 test files.
+  - 78 backend automated tests passing across 8 test files.
   - Clean build across all workspaces (`tsc -b && vite build` and `tsc`).
-  - 0 ESLint warnings across all workspaces.
+  - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
+  - Prisma schema validation verified.
 
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 9 is complete and awaiting review).
+- _None_ (Step 10 is complete and awaiting review).
 
 ---
 
-## 4. Planned Next Work (Step 10: Cart State Foundation & Shopping Flow)
+## 4. Planned Next Work
 
-1. Design and build local customer cart state management and persistence.
-2. Implement Add to Cart interactions from Product Detail and Catalog pages.
-3. Build responsive slide-over Cart drawer and standalone Cart summary page.
+- Customer Authentication / Guest Checkout architecture.
 
 ---
 
@@ -148,6 +168,6 @@ The real Product Detail Page (`/products/:slug`) integrated with the backend pub
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- **Do NOT build checkout or payment processing until cart foundation is verified.**
+- **Do NOT build checkout, payment processing (Razorpay), or order placement until authorized.**
 - Keep `DATABASE_URL` and backend secrets server-only.
-- All monetary amounts from the API are in integer paise and must be formatted using `formatPrice`.
+- All monetary amounts in the frontend cart subtotal are calculated in integer paise and formatted using `formatPrice`.
