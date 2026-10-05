@@ -116,6 +116,19 @@ export class OrderRepository {
 
     return order;
   }
+
+  /**
+   * Updates the provider order ID on an existing payment record.
+   */
+  async updatePaymentProviderOrderId(
+    paymentId: string,
+    providerOrderId: string
+  ): Promise<Prisma.PaymentGetPayload<Record<string, never>>> {
+    return prisma.payment.update({
+      where: { id: paymentId },
+      data: { providerOrderId },
+    });
+  }
 }
 
 export const orderRepository = new OrderRepository();

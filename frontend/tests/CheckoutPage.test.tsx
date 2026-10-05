@@ -195,11 +195,11 @@ describe('CheckoutPage UI & Checkout Flow', () => {
     expect(screen.getByText('402, Lotus Heritage, MG Road')).toBeInTheDocument();
     expect(screen.getByText(/Ahmedabad, Gujarat — 380015/)).toBeInTheDocument();
 
-    // Next step banner
+    // Payment gateway card
     expect(
       screen.getByRole('heading', {
         level: 3,
-        name: 'Payment Gateway Integration (Coming in Step 12)',
+        name: 'Secure Razorpay Payment Gateway',
       })
     ).toBeInTheDocument();
 

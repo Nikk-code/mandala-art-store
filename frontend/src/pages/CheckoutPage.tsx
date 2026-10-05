@@ -7,8 +7,9 @@ import {
   CheckoutOrderSummary,
 } from '@/components/checkout';
 import { useCart } from '@/context';
-import { validateCheckoutForm } from '@/utils';
-import type { CheckoutFormData, CheckoutFormErrors } from '@/types';
+import { validateCheckoutForm, loadRazorpayScript } from '@/utils';
+import { createCheckoutOrder, initializeCheckoutPayment } from '@/services';
+import type { CheckoutFormData, CheckoutFormErrors, PaymentInitializationDto } from '@/types';
 
 export function CheckoutPage(): ReactNode {
   const { items, itemCount, subtotalPaise } = useCart();
@@ -29,6 +30,8 @@ export function CheckoutPage(): ReactNode {
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentInitiated, setPaymentInitiated] = useState<PaymentInitializationDto | null>(null);
 
   useEffect(() => {
     document.title = 'Checkout | Mandala Art Store';
@@ -73,6 +76,77 @@ export function CheckoutPage(): ReactNode {
       } catch {
         // Fallback for test environments
       }
+    }
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (items.length === 0) return;
+
+    setIsSubmitting(true);
+    setPaymentError(null);
+
+    try {
+      // 1. Create the authoritative backend ecommerce order
+      const order = await createCheckoutOrder({
+        customer: {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+        },
+        shippingAddress: {
+          addressLine1: formData.addressLine1.trim(),
+          addressLine2: formData.addressLine2 ? formData.addressLine2.trim() : undefined,
+          city: formData.city.trim(),
+          state: formData.state.trim(),
+          postalCode: formData.postalCode.trim(),
+          country: formData.country,
+        },
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      });
+
+      // 2. Initialize Razorpay Payment Order on backend
+      const paymentInfo = await initializeCheckoutPayment(order.id);
+      setPaymentInitiated(paymentInfo);
+
+      // 3. Load Razorpay Checkout browser script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || !window.Razorpay) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 4. Open Razorpay Checkout Modal
+      const rzp = new window.Razorpay({
+        key: paymentInfo.razorpayKeyId,
+        amount: paymentInfo.amount,
+        currency: paymentInfo.currency,
+        name: 'Mandala Art Store',
+        description: `Order ${paymentInfo.orderNumber}`,
+        order_id: paymentInfo.razorpayOrderId,
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#B45309', // art-ochre
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false);
+          },
+        },
+      });
+
+      rzp.open();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to initiate payment. Please try again.';
+      setPaymentError(message);
+      setIsSubmitting(false);
     }
   };
 
@@ -169,6 +243,17 @@ export function CheckoutPage(): ReactNode {
                   </form>
                 ) : (
                   <div className="space-y-6 animate-fadeIn">
+                    {/* Error Banner */}
+                    {paymentError && (
+                      <div
+                        role="alert"
+                        className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs text-red-700 space-y-1"
+                      >
+                        <p className="font-bold">Payment Initialization Error</p>
+                        <p>{paymentError}</p>
+                      </div>
+                    )}
+
                     {/* Verified Customer & Shipping Card */}
                     <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-5">
                       <div className="flex items-center justify-between border-b border-art-stone/60 pb-3">
@@ -213,21 +298,39 @@ export function CheckoutPage(): ReactNode {
                       </div>
                     </div>
 
-                    {/* Step 12 Next Milestone Banner */}
-                    <div className="rounded-2xl border border-art-ochre/40 bg-art-cream/80 p-6 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">💳</span>
+                    {/* Payment Gateway Information */}
+                    <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-art-cream text-art-ochre font-bold text-sm">
+                          💳
+                        </span>
                         <div>
-                          <h3 className="font-serif text-base font-bold text-art-charcoal">
-                            Payment Gateway Integration (Coming in Step 12)
+                          <h3 className="font-serif text-sm font-bold text-art-charcoal">
+                            Secure Razorpay Payment Gateway
                           </h3>
-                          <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                            Checkout information has been validated according to Indian ecommerce
-                            standards. The next step will integrate the backend order snapshot and
-                            Razorpay payment capture with instant webhook verification.
+                          <p className="text-xs text-stone-500 mt-0.5">
+                            Supports UPI (Google Pay, PhonePe, Paytm), Net Banking, Credit/Debit
+                            Cards, and Wallets.
                           </p>
                         </div>
                       </div>
+
+                      {paymentInitiated && (
+                        <div className="rounded-xl bg-stone-50 p-3.5 border border-art-stone/60 text-xs text-stone-600 space-y-1">
+                          <p>
+                            <span className="font-semibold text-art-charcoal">
+                              Order Reference:
+                            </span>{' '}
+                            <span className="font-mono">{paymentInitiated.orderNumber}</span>
+                          </p>
+                          <p>
+                            <span className="font-semibold text-art-charcoal">
+                              Razorpay Order ID:
+                            </span>{' '}
+                            <span className="font-mono">{paymentInitiated.razorpayOrderId}</span>
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -240,7 +343,7 @@ export function CheckoutPage(): ReactNode {
                   itemCount={itemCount}
                   subtotalPaise={subtotalPaise}
                   isSubmitting={isSubmitting}
-                  onSubmit={handleFormSubmit}
+                  onSubmit={isReviewMode ? handlePaymentSubmit : handleFormSubmit}
                   isReviewMode={isReviewMode}
                   onEditAddress={() => setIsReviewMode(false)}
                 />

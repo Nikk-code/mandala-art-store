@@ -11,8 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Razorpay payment gateway integration (SDK setup, Razorpay order creation, frontend payment modal, signature verification, webhook processing, payment capture).
+- Payment verification, signature handling & webhook processing (server signature verification endpoint, HMAC SHA256 webhook handler, idempotent transitions to `PAID` / `CONFIRMED`, payment failure handling).
 - Customer authentication and account order history.
+
+---
+
+## [0.16.0] - 2026-10-05
+
+### Added
+
+- **Step 13: Razorpay Payment Integration Foundation**:
+  - **SDK Installation & Environment Setup**:
+    - Installed official `razorpay` Node.js SDK in backend workspace.
+    - Updated `backend/src/config/env.ts` with `razorpayKeyId` and `razorpayKeySecret` (server-side only).
+  - **Payment Service & Authoritative Order Creation**:
+    - Created `backend/src/services/payment.service.ts` with dependency-injectable `IRazorpayClient`.
+    - Implemented `initializePayment(orderId)` validating order existence, `PENDING_PAYMENT` status, and `PENDING` payment status.
+    - Authoritative calculation of order total in integer paise from database (`amount = order.total`, `currency = 'INR'`, `receipt = order.orderNumber`).
+  - **Duplicate / Retry Safety**:
+    - Re-uses existing `Payment.providerOrderId` when present without creating duplicate Razorpay orders.
+    - Persists new Razorpay order IDs to database via `orderRepository.updatePaymentProviderOrderId`.
+  - **API Endpoint & Controller**:
+    - Registered `POST /api/checkout/orders/:orderId/payment` route in `backend/src/routes/checkout.routes.ts`.
+    - Implemented `initializePayment` controller in `backend/src/controllers/checkout.controller.ts` returning sanitized `PaymentInitializationDto`.
+  - **Frontend Client & Dynamic Script Loading**:
+    - Added `PaymentInitializationDto` and global Razorpay window declarations in `frontend/src/vite-env.d.ts` and `frontend/src/types/checkout.ts`.
+    - Added `initializeCheckoutPayment` client service in `frontend/src/services/checkout-service.ts`.
+    - Implemented `loadRazorpayScript` in `frontend/src/utils/razorpay.ts` for on-demand script loading.
+    - Connected `CheckoutPage.tsx` and `CheckoutOrderSummary.tsx` to initiate order, fetch Razorpay order ID, and trigger checkout modal.
+  - **Automated Tests**:
+    - Added `backend/tests/payment.service.test.ts` (unit tests for domain rules, provider order generation, retry safety, 502 provider error handling, and secret isolation).
+    - Added `backend/tests/payment.api.test.ts` (API endpoint tests for `POST /api/checkout/orders/:orderId/payment`).
+    - Added `frontend/tests/checkout-service.test.ts` (unit tests for client payment call and script loader).
 
 ---
 

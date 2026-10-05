@@ -15,6 +15,8 @@ export interface AppConfig {
   corsOrigin: string;
   isProduction: boolean;
   databaseUrl?: string;
+  razorpayKeyId: string;
+  razorpayKeySecret?: string;
 }
 
 export const config: AppConfig = {
@@ -23,4 +25,6 @@ export const config: AppConfig = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   isProduction: (process.env.NODE_ENV || 'development') === 'production',
   databaseUrl: process.env.DATABASE_URL,
+  razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder_key_id',
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
 };

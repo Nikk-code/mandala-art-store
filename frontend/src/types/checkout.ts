@@ -100,3 +100,12 @@ export interface OrderResponseDto {
   items: OrderItemSnapshotDto[];
   createdAt: string;
 }
+
+export interface PaymentInitializationDto {
+  orderId: string;
+  orderNumber: string;
+  razorpayOrderId: string;
+  razorpayKeyId: string;
+  amount: number;
+  currency: string;
+}

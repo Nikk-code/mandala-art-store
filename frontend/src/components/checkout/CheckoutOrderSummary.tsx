@@ -147,13 +147,14 @@ export function CheckoutOrderSummary({
         ) : (
           <div className="space-y-2">
             <Button
-              variant="terracotta"
+              variant="primary"
               size="lg"
-              className="w-full justify-center opacity-90 cursor-default"
-              disabled
-              aria-label="Payment Gateway - Arrives in Step 12"
+              className="w-full justify-center bg-art-terracotta hover:bg-art-terracotta/90"
+              isLoading={isSubmitting}
+              onClick={onSubmit}
+              aria-label="Pay via Razorpay"
             >
-              Pay {formatPrice(subtotalPaise)} via Razorpay (Step 12)
+              Pay {formatPrice(subtotalPaise)} via Razorpay
             </Button>
 
             {onEditAddress && (
@@ -161,6 +162,7 @@ export function CheckoutOrderSummary({
                 variant="outline"
                 size="md"
                 className="w-full justify-center"
+                disabled={isSubmitting}
                 onClick={onEditAddress}
               >
                 ← Edit Contact & Shipping Details

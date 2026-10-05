@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `BACKEND ORDER CREATION + CHECKOUT API FOUNDATION (Step 12 Complete)`
+**Current Phase**: `RAZORPAY PAYMENT INTEGRATION FOUNDATION (Step 13 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The backend order creation and checkout API foundation (Step 12) has been implemented to safely transform customer checkout details and guest cart items into authoritative pending-payment order records (`POST /api/checkout/orders`). The backend serves as the single source of truth for pricing, availability, and financial totals: client-submitted prices and totals are completely ignored, monetary values are calculated in integer paise, and `IN_STOCK` items undergo atomic conditional stock decrements inside a PostgreSQL Prisma transaction to eliminate race-condition overselling. Newly created orders enter the `PENDING_PAYMENT` lifecycle state alongside an initial `Payment` record in `PENDING` status (`amount = total`, `currency = 'INR'`, `provider = 'razorpay'`), while storing immutable product snapshots (name, SKU, unit price, line total) and full shipping address snapshots. Support for duplicate submission protection via optional `Idempotency-Key` headers is integrated.
+The Razorpay payment integration foundation (Step 13) has been implemented to safely initiate server-authoritative Razorpay payment orders (`POST /api/checkout/orders/:orderId/payment`) for existing pending ecommerce orders. The backend strictly uses the database order total in integer paise, generates a Razorpay Order (`order_id`) using the official SDK, and persists `Payment.providerOrderId` without exposing `RAZORPAY_KEY_SECRET`. Repeated payment initialization calls for the same order are completely idempotent and reuse the existing `providerOrderId` without creating duplicate Razorpay orders. The frontend loads the official Razorpay Checkout SDK dynamically on demand to open the checkout modal with prefilled customer details.
 
-> **CRITICAL NOTE**: Payment gateway API calls (Razorpay order creation, payment capture, webhook handling, signature verification) and customer account authentication remain **INTENTIONALLY DEFERRED** to subsequent steps. No payment gateway API requests are executed in Step 12.
+> **CRITICAL NOTE**: Payment verification (server signature verification, webhook handling, and marking payment as `CAPTURED`/order as `CONFIRMED`) is **INTENTIONALLY DEFERRED** to Step 14. Client-side Razorpay modal callbacks are never trusted as proof of payment.
 
 ---
 
@@ -195,6 +195,32 @@ The backend order creation and checkout API foundation (Step 12) has been implem
   - 11 backend automated test suites passing with 112 tests (`backend/tests/`).
   - 14 frontend automated test suites passing with 102 tests (`frontend/tests/`).
   - 0 ESLint warnings and errors across all workspaces.
+
+### Phase 13: Razorpay Payment Integration Foundation (Completed)
+
+- [x] **SDK & Server Configuration**:
+  - Installed official `razorpay` Node.js SDK in backend workspace.
+  - Added `razorpayKeyId` and `razorpayKeySecret` to backend `AppConfig` in `backend/src/config/env.ts` (secrets remain strictly server-only).
+- [x] **Payment Service Architecture**:
+  - Created `PaymentService` in `backend/src/services/payment.service.ts` with dependency-injectable `IRazorpayClient`.
+  - Authoritative validation of order existence, `PENDING_PAYMENT` order status, and `PENDING` payment status.
+  - Authoritative calculation of integer-paise order total from database record (`amount = order.total`, `currency = 'INR'`, `receipt = order.orderNumber`).
+- [x] **Duplicate / Retry Safety**:
+  - Idempotently re-uses existing `Payment.providerOrderId` when present, preventing duplicate Razorpay orders on retries or double clicks.
+  - Persists new Razorpay order IDs via `orderRepository.updatePaymentProviderOrderId`.
+- [x] **API Endpoint & Security**:
+  - Registered `POST /api/checkout/orders/:orderId/payment` route in `backend/src/routes/checkout.routes.ts`.
+  - Created `initializePayment` controller in `backend/src/controllers/checkout.controller.ts`.
+  - Response exposes only safe public DTO (`orderId`, `orderNumber`, `razorpayOrderId`, `razorpayKeyId`, `amount`, `currency`). `RAZORPAY_KEY_SECRET` is never returned or leaked.
+- [x] **Frontend Payment Trigger & Dynamic Script Loader**:
+  - Added `PaymentInitializationDto` to `frontend/src/types/checkout.ts` and global types to `frontend/src/vite-env.d.ts`.
+  - Added `initializeCheckoutPayment` client service in `frontend/src/services/checkout-service.ts`.
+  - Created `loadRazorpayScript` in `frontend/src/utils/razorpay.ts` to dynamically load `https://checkout.razorpay.com/v1/checkout.js` on demand.
+  - Updated `CheckoutPage.tsx` and `CheckoutOrderSummary.tsx` to initiate the order, fetch the Razorpay order ID, and trigger the modal with prefilled customer data.
+- [x] **Automated Tests & Quality**:
+  - 13 backend automated test suites passing with 127 tests (`backend/tests/`).
+  - 15 frontend automated test suites passing with 104 tests (`frontend/tests/`).
+  - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
 
@@ -202,13 +228,13 @@ The backend order creation and checkout API foundation (Step 12) has been implem
 
 ## 3. In-Progress Work
 
-- _None_ (Step 12 is complete and ready for review).
+- _None_ (Step 13 is complete and ready for review).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 13: Razorpay Payment Gateway Integration (SDK setup, Razorpay order creation, frontend payment modal, signature verification, webhook processing, payment capture).
+- Step 14: Payment Verification, Signature Handling & Webhook Processing (Server signature verification endpoint, HMAC SHA256 webhook handler, idempotent transitions to `PAID` / `CONFIRMED`, payment failure handling).
 
 ---
 
@@ -221,6 +247,6 @@ The backend order creation and checkout API foundation (Step 12) has been implem
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- **Do NOT implement Razorpay payments, backend order creation APIs, or webhook capture until authorized in Step 12.**
-- Keep `DATABASE_URL` and backend secrets server-only.
-- All monetary amounts in the frontend checkout order summary are calculated in integer paise and formatted using `formatPrice`.
+- **Payment verification (Step 14) is required before transitioning any order from PENDING_PAYMENT to CONFIRMED.**
+- Keep `RAZORPAY_KEY_SECRET` strictly server-side.
+- All monetary amounts in the payment order are calculated in integer paise.

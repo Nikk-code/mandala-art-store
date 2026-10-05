@@ -1,5 +1,10 @@
 import { apiPost } from './api-client';
-import type { ApiSuccessResponse, CreateOrderRequest, OrderResponseDto } from '@/types';
+import type {
+  ApiSuccessResponse,
+  CreateOrderRequest,
+  OrderResponseDto,
+  PaymentInitializationDto,
+} from '@/types';
 
 export async function createCheckoutOrder(
   request: CreateOrderRequest,
@@ -17,4 +22,15 @@ export async function createCheckoutOrder(
   );
 
   return response.data.order;
+}
+
+export async function initializeCheckoutPayment(
+  orderId: string
+): Promise<PaymentInitializationDto> {
+  const response = await apiPost<ApiSuccessResponse<PaymentInitializationDto>>(
+    `checkout/orders/${encodeURIComponent(orderId)}/payment`,
+    {}
+  );
+
+  return response.data;
 }

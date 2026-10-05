@@ -20,6 +20,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-012: Guest Checkout Support with Contact Snapshots & Client Cart Merging](#adr-012-guest-checkout-support-with-contact-snapshots--client-cart-merging)
 - [ADR-013: Public Catalog REST API Design, Server-Side Pagination & Information Protection](#adr-013-public-catalog-rest-api-design-server-side-pagination--information-protection)
 - [ADR-014: Authoritative Backend Order Creation, Atomic Inventory Reservation & Pending Payment Lifecycle](#adr-014-authoritative-backend-order-creation-atomic-inventory-reservation--pending-payment-lifecycle)
+- [ADR-015: Server-Authoritative Razorpay Payment Order Initialization & Duplicate Safety](#adr-015-server-authoritative-razorpay-payment-order-initialization--duplicate-safety)
 
 ---
 
@@ -207,3 +208,21 @@ This document tracks significant architectural, technical, and governance decisi
   - _Decrementing inventory after payment confirmation_: Risks inventory overselling where multiple customers pay for a single unique artwork simultaneously.
   - _Separate non-transactional database calls_: Susceptible to orphaned orders or partial stock decrements upon failures.
 - **Consequences**: High financial integrity, zero race-condition overselling, transaction-safe rollback on any failure, immutable audit trail for order items, and clean preparation for payment gateway integration (Razorpay) in subsequent steps.
+
+---
+
+### ADR-015: Server-Authoritative Razorpay Payment Order Initialization & Duplicate Safety
+
+- **Date**: 2026-10-05
+- **Status**: Accepted
+- **Context**: Initiating online payment via Razorpay requires generating a server-side Razorpay Order (`order_id`) linked to an existing pending ecommerce order. The client must not decide financial amounts or currency. Repeated calls (e.g. user retrying or double-clicking) must not create duplicate provider orders. Client-side payment callbacks must not be treated as proof of capture.
+- **Decision**:
+  1. **Endpoint**: Implement `POST /api/checkout/orders/:orderId/payment` requiring only the existing ecommerce order ID parameter (zero client financial inputs accepted).
+  2. **Authoritative Loading**: Verify that the order exists in `PENDING_PAYMENT` status and has an associated `Payment` in `PENDING` status.
+  3. **Duplicate / Retry Safety**: If `Payment.providerOrderId` is already stored, return the existing provider order data immediately without invoking the Razorpay SDK again.
+  4. **Razorpay Order Creation**: If `providerOrderId` is null, create a Razorpay order via the official Node.js SDK using the authoritative database total in integer paise (`amount = order.total`, `currency = 'INR'`, `receipt = order.orderNumber`).
+  5. **State & Secrets Containment**: Persist `providerOrderId` in the database. `Order` remains `PENDING_PAYMENT` and `Payment` remains `PENDING`. Only public `razorpayKeyId` is exposed to the frontend; `RAZORPAY_KEY_SECRET` remains strictly backend-only. Client-side modal callback is treated as unverified pending step until Step 14 server signature verification/webhooks.
+- **Alternatives Considered**:
+  - _Creating Razorpay orders directly in the frontend_: Highly insecure; exposes payment secret and allows arbitrary amount tampering.
+  - _Marking order paid on frontend callback_: Vulnerable to spoofing; payments must only be verified via cryptographically signed webhook / server verification in Step 14.
+- **Consequences**: Strict financial containment, tamper-proof payment amounts, duplicate-safe retries, zero secret exposure, and clean isolation for payment verification in the next step.
