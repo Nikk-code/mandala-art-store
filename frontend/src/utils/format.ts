@@ -60,3 +60,21 @@ export function getAvailabilityInfo(availability: ProductAvailability | string):
       };
   }
 }
+/**
+ * Format weight in grams to user-friendly string (e.g. 1200 -> '1.2 kg', 800 -> '800 g')
+ */
+export function formatWeight(weightGrams: number | null | undefined): string | null {
+  if (
+    weightGrams === null ||
+    weightGrams === undefined ||
+    !Number.isFinite(weightGrams) ||
+    weightGrams <= 0
+  ) {
+    return null;
+  }
+  if (weightGrams >= 1000) {
+    const kg = weightGrams / 1000;
+    return `${Number.isInteger(kg) ? kg : kg.toFixed(1)} kg`;
+  }
+  return `${weightGrams} g`;
+}

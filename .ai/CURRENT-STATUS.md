@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `CATALOG BROWSING EXPERIENCE (Step 8B Complete)`
+**Current Phase**: `PRODUCT DETAIL PAGE (Step 9 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The real catalog browsing page (`/products`) integrated with the backend public catalog REST API has been established (Step 8B). Customers can explore the artisan catalog with URL-driven state (`?category=slug&availability=IN_STOCK&sort=price_asc&page=1`), server-side filtering by category and availability, server-side sorting (`newest`, `price_asc`, `price_desc`), server-side pagination with accessible touch-friendly controls (`Pagination`), responsive desktop filter sidebar, accessible mobile filter drawer (`MobileFilterDrawer`), and active filter summary tags (`ActiveFilterChips`). The catalog consumes the authoritative backend REST API (`GET /api/products` and `GET /api/categories`) without local client-side sorting, filtering, or pagination duplication.
+The real Product Detail Page (`/products/:slug`) integrated with the backend public catalog REST API has been established (Step 9). Customers can explore full artwork details, multi-image photography galleries with responsive thumbnail selection and an accessible fullscreen lightbox image viewer (`ProductImageGallery`), dynamic breadcrumb navigation, formatted pricing with compare-at savings, availability notes (`In Stock`, `Made to Order`, `Sold Out`), structured artwork specifications (Dimensions, Material, Weight, SKU, Handcrafted Authenticity), full artisan story, and heritage trust pillars. The page gracefully handles loading feedback (`LoadingState`), server error recovery with retry (`ErrorState`), and 404 Not Found feedback (`EmptyState`) with direct navigation back to the catalog.
 
-> **CRITICAL NOTE**: Backend search query parameter is not currently supported by `GET /api/products` and has been intentionally deferred without fake client-side filtering. Product detail view (`/products/:slug`), customer cart state, checkout, authentication, wishlist, orders, reviews, payments, and admin flows remain **INTENTIONALLY DEFERRED** to subsequent steps.
+> **CRITICAL NOTE**: Cart state, add-to-cart operations, checkout, payment processing (Razorpay), customer authentication, wishlist, orders, reviews, and admin management remain **INTENTIONALLY DEFERRED** to subsequent steps.
 
 ---
 
@@ -92,23 +92,32 @@ The real catalog browsing page (`/products`) integrated with the backend public 
 
 ### Phase 8B: Catalog Browsing Experience (Completed)
 
-- [x] **Products Route (`/products`)**:
-  - Registered `/products` route in `App.tsx` mapped to `ProductsPage`.
-  - Linked navigation in `Header.tsx`, `HomePage.tsx`, and `CategoryCard.tsx`.
-- [x] **URL-Driven Catalog State (`useSearchParams`)**:
-  - `category` (category slug parameter, resetting to page 1).
-  - `availability` (`IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT`).
-  - `sort` (`newest`, `price_asc`, `price_desc`).
-  - `page` (1-indexed pagination number).
-- [x] **Reusable UI & Catalog Components**:
-  - `Pagination` (`frontend/src/components/ui/Pagination.tsx`): Touch-friendly ($\ge 44\text{px}$) accessible pagination with previous/next controls, page numbers, ellipsis handling, and active aria states.
-  - `CatalogFilters` (`frontend/src/components/catalog/CatalogFilters.tsx`): Category, availability, and sort filter panel.
-  - `ActiveFilterChips` (`frontend/src/components/catalog/ActiveFilterChips.tsx`): Active filter pill indicators with individual dismissal and clear-all action.
-  - `MobileFilterDrawer` (`frontend/src/components/catalog/MobileFilterDrawer.tsx`): Accessible slide-in drawer with backdrop, close button, and focus trap attributes.
-- [x] **State & Error Feedback**:
-  - Loading state (`LoadingState`), Error retry state (`ErrorState`), and Filter Empty State (`EmptyState`) with "Clear All Filters" button.
+- [x] Products Route (`/products`) with URL-driven filters (`category`, `availability`, `sort`, `page`).
+- [x] Accessible pagination (`Pagination`), filter sidebar (`CatalogFilters`), filter chips (`ActiveFilterChips`), and mobile drawer (`MobileFilterDrawer`).
+- [x] Pushed milestone commit (`feat(frontend): add catalog browsing experience`).
+
+### Phase 9: Product Detail Page (Completed)
+
+- [x] **Product Detail Route (`/products/:slug`)**:
+  - Registered route in `App.tsx` mapped to `ProductDetailPage`.
+  - Connected `ProductCard` to navigate to `/products/:slug` on click.
+- [x] **Interactive Image Gallery & Lightbox Viewer (`ProductImageGallery.tsx`)**:
+  - Responsive primary image with zoom/expand trigger.
+  - Multi-image thumbnail selection with touch-friendly active states.
+  - Overlay previous/next navigation buttons.
+  - Accessible Lightbox modal (`role="dialog"`, `aria-modal="true"`, image counter, close button, and Escape key dismissal).
+- [x] **Product Information & Story Architecture (`ProductDetailPage.tsx`)**:
+  - Dynamic breadcrumbs (`Home` > `Catalog` > `[Category]` > `[Product Name]`).
+  - Integer-paise pricing format (`formatPrice`) with compare-at savings strikethrough.
+  - Availability status pill and descriptive crafting timeline notice.
+  - Informative, non-functional purchase preview button with upcoming milestone note.
+  - Conditional specifications card (Dimensions, Material, Weight via `formatWeight`, SKU, Authenticity).
+  - Artisan lineage and storytelling description area.
+  - Folk art heritage guarantees (Handcrafted, Wooden crating, Insured transit).
+- [x] **State Handling**:
+  - Loading state (`LoadingState`), Error retry state (`ErrorState`), and 404 Not Found state (`EmptyState`) with direct catalog return CTA.
 - [x] **Automated Tests & Quality**:
-  - 46 frontend automated tests passing across 9 test files (`frontend/tests/`).
+  - 56 frontend automated tests passing across 10 test files (`frontend/tests/`).
   - 78 backend tests passing across 8 test suites (`backend/tests/`).
   - Clean build across all workspaces (`tsc -b && vite build` and `tsc`).
   - 0 ESLint warnings across all workspaces.
@@ -118,14 +127,15 @@ The real catalog browsing page (`/products`) integrated with the backend public 
 
 ## 3. In-Progress Work
 
-- _None_ (Step 8B is complete and awaiting review).
+- _None_ (Step 9 is complete and awaiting review).
 
 ---
 
-## 4. Planned Next Work (Step 9: Product Detail Page Experience)
+## 4. Planned Next Work (Step 10: Cart State Foundation & Shopping Flow)
 
-1. Build individual artwork detail page (`/products/:slug`) with multi-image gallery preview, artisan lineage notes, dimensions, and materials.
-2. Prepare artwork detail view for future cart and checkout integration.
+1. Design and build local customer cart state management and persistence.
+2. Implement Add to Cart interactions from Product Detail and Catalog pages.
+3. Build responsive slide-over Cart drawer and standalone Cart summary page.
 
 ---
 
@@ -138,6 +148,6 @@ The real catalog browsing page (`/products`) integrated with the backend public 
 ## 6. Important Notes for Any Working AI Agent
 
 - Strictly adhere to `AI-RULES.md`.
-- **Do NOT build customer cart checkout or payment processing until public catalog browsing is verified.**
+- **Do NOT build checkout or payment processing until cart foundation is verified.**
 - Keep `DATABASE_URL` and backend secrets server-only.
 - All monetary amounts from the API are in integer paise and must be formatted using `formatPrice`.

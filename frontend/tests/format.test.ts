@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPrice, getAvailabilityInfo } from '@/utils/format';
+import { formatPrice, getAvailabilityInfo, formatWeight } from '@/utils/format';
 
 describe('Price and Availability Formatting Utilities', () => {
   describe('formatPrice', () => {
@@ -55,6 +55,26 @@ describe('Price and Availability Formatting Utilities', () => {
       const info = getAvailabilityInfo('BACKORDER');
       expect(info.label).toBe('BACKORDER');
       expect(info.badgeVariant).toBe('stone');
+    });
+  });
+
+  describe('formatWeight', () => {
+    it('formats weights in kilograms when >= 1000 grams', () => {
+      expect(formatWeight(1000)).toBe('1 kg');
+      expect(formatWeight(1200)).toBe('1.2 kg');
+      expect(formatWeight(2500)).toBe('2.5 kg');
+    });
+
+    it('formats weights in grams when < 1000 grams', () => {
+      expect(formatWeight(800)).toBe('800 g');
+      expect(formatWeight(450)).toBe('450 g');
+    });
+
+    it('returns null for null, undefined, 0, or negative weights', () => {
+      expect(formatWeight(null)).toBeNull();
+      expect(formatWeight(undefined)).toBeNull();
+      expect(formatWeight(0)).toBeNull();
+      expect(formatWeight(-100)).toBeNull();
     });
   });
 });

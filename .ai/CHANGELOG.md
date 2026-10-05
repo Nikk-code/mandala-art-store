@@ -11,8 +11,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 9: Product detail page (`/products/:slug`) exploration and multi-image gallery.
-- Customer cart state and checkout integration.
+- Step 10: Cart state foundation, slide-over cart drawer, and shopping flow.
+- Customer checkout and payment integration.
+
+---
+
+## [0.12.0] - 2026-10-05
+
+### Added
+
+- **Step 9: Product Detail Page**:
+  - **Product Detail Route (`/products/:slug`)**:
+    - Created `frontend/src/pages/ProductDetailPage.tsx` consuming `GET /api/products/:slug` via `fetchProductBySlug(slug)`.
+    - Registered `/products/:slug` route in `App.tsx` and exported from `frontend/src/pages/index.ts`.
+    - Updated `ProductCard.tsx` to link to `/products/${product.slug}` on click.
+  - **Interactive Image Gallery & Lightbox Viewer (`frontend/src/components/catalog/ProductImageGallery.tsx`)**:
+    - Primary artwork image with zoom/expand trigger button ($\ge 44\text{px}$ touch target).
+    - Touch-friendly thumbnail gallery with active selection borders and keyboard accessibility.
+    - Accessible fullscreen Lightbox modal with `role="dialog"`, `aria-modal="true"`, image counter, keyboard navigation (ArrowLeft, ArrowRight, Escape), and body scroll locking.
+  - **Artwork Information Architecture**:
+    - Multi-level breadcrumb navigation (`Home` > `Catalog` > `[Category]` > `[Product Name]`).
+    - Integer-paise currency formatting via `formatPrice` and compare-at discount display.
+    - Descriptive availability messaging (`In Stock`, `Made to Order`, `Sold Out`).
+    - Non-functional purchase preview button clearly stating cart and checkout are arriving in Step 10.
+    - Structured specifications card (Dimensions, Material & Medium, Weight via `formatWeight`, SKU, Authenticity) with clean omission of empty fields.
+    - Detailed artisan lineage narrative and storytelling section.
+    - Traditional craft value guarantees (Authentic Indian Folk Art, Specialized Wooden Crating, Insured Transit).
+  - **State Feedback Handling**:
+    - Standardized `LoadingState`, `ErrorState` with retry mechanism, and 404 Not Found `EmptyState` with catalog navigation action.
+  - **Automated Tests**:
+    - Created `frontend/tests/ProductDetailPage.test.tsx` (4 integration tests covering product detail render, 404 Not Found, error retry, and Made to Order / Sold Out states).
+    - Updated `frontend/tests/catalog-components.test.tsx` (6 unit tests covering `ProductCard` link and `ProductImageGallery` thumbnails/lightbox).
+    - Updated `frontend/tests/format.test.ts` (11 unit tests covering `formatPrice`, `getAvailabilityInfo`, and `formatWeight`).
+    - Total frontend automated tests increased to 56 passing tests across 10 test files; backend tests maintained 78 passing tests across 8 test suites.
 
 ---
 

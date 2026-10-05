@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { ProductCard, CategoryCard } from '@/components/catalog';
-import type { ProductListItemDto, CategoryDto } from '@/types';
+import { ProductCard, CategoryCard, ProductImageGallery } from '@/components/catalog';
+import type { ProductListItemDto, CategoryDto, ProductImageDto } from '@/types';
 
 describe('Catalog Presentation Components', () => {
   const mockProduct: ProductListItemDto = {
@@ -33,6 +33,13 @@ describe('Catalog Presentation Components', () => {
         displayOrder: 0,
         isPrimary: true,
       },
+      {
+        id: 'img-2',
+        url: 'https://images.unsplash.com/photo-mandala-angle.jpg',
+        altText: 'Sri Yantra Angle View',
+        displayOrder: 1,
+        isPrimary: false,
+      },
     ],
     createdAt: '2026-10-04T00:00:00.000Z',
   };
@@ -47,8 +54,12 @@ describe('Catalog Presentation Components', () => {
   };
 
   describe('ProductCard', () => {
-    it('renders product details, formatted prices, and availability badge', () => {
-      render(<ProductCard product={mockProduct} />);
+    it('renders product details, formatted prices, and availability badge and links to detail page', () => {
+      render(
+        <MemoryRouter>
+          <ProductCard product={mockProduct} />
+        </MemoryRouter>
+      );
 
       expect(
         screen.getByRole('heading', { name: 'Sacred Sri Yantra Mandala' })
@@ -61,6 +72,9 @@ describe('Catalog Presentation Components', () => {
       expect(screen.getByText(/4,299/)).toBeInTheDocument();
       expect(screen.getByText(/18 x 18 inches/)).toBeInTheDocument();
 
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('href', '/products/sacred-sri-yantra-mandala');
+
       const image = screen.getByRole('img');
       expect(image).toHaveAttribute('src', 'https://images.unsplash.com/photo-mandala.jpg');
       expect(image).toHaveAttribute('alt', 'Sri Yantra Close Up');
@@ -71,7 +85,11 @@ describe('Catalog Presentation Components', () => {
         ...mockProduct,
         images: [],
       };
-      render(<ProductCard product={productNoImage} />);
+      render(
+        <MemoryRouter>
+          <ProductCard product={productNoImage} />
+        </MemoryRouter>
+      );
       expect(screen.getByLabelText('Image placeholder')).toBeInTheDocument();
     });
   });
@@ -89,6 +107,58 @@ describe('Catalog Presentation Components', () => {
         screen.getByText('Centuries-old meditative geometric compositions.')
       ).toBeInTheDocument();
       expect(screen.getByText('Explore Collection')).toBeInTheDocument();
+    });
+  });
+
+  describe('ProductImageGallery', () => {
+    const galleryImages: ProductImageDto[] = [
+      {
+        id: 'img-1',
+        url: 'https://example.com/mandala-1.jpg',
+        altText: 'Mandala Front View',
+        displayOrder: 0,
+        isPrimary: true,
+      },
+      {
+        id: 'img-2',
+        url: 'https://example.com/mandala-2.jpg',
+        altText: 'Mandala Detail View',
+        displayOrder: 1,
+        isPrimary: false,
+      },
+    ];
+
+    it('renders primary image and gallery thumbnails', () => {
+      render(<ProductImageGallery images={galleryImages} productName="Sacred Art" />);
+
+      const images = screen.getAllByRole('img');
+      expect(images.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByAltText('Mandala Front View').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('switches active image when thumbnail is clicked', () => {
+      render(<ProductImageGallery images={galleryImages} productName="Sacred Art" />);
+
+      const thumbnail2 = screen.getByRole('button', { name: 'View image 2 of 2' });
+      fireEvent.click(thumbnail2);
+
+      expect(thumbnail2).toHaveAttribute('aria-current', 'true');
+    });
+
+    it('opens and closes lightbox zoom modal', () => {
+      render(<ProductImageGallery images={galleryImages} productName="Sacred Art" />);
+
+      const zoomBtn = screen.getByRole('button', { name: 'Open fullscreen image viewer' });
+      fireEvent.click(zoomBtn);
+
+      expect(screen.getByRole('dialog', { name: 'Artwork Image Viewer' })).toBeInTheDocument();
+
+      const closeBtn = screen.getByRole('button', { name: 'Close image viewer' });
+      fireEvent.click(closeBtn);
+
+      expect(
+        screen.queryByRole('dialog', { name: 'Artwork Image Viewer' })
+      ).not.toBeInTheDocument();
     });
   });
 });
