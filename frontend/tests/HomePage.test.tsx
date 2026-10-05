@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { HomePage } from '@/pages/HomePage';
 
 describe('HomePage Integration & State Handling', () => {
@@ -48,6 +49,14 @@ describe('HomePage Integration & State Handling', () => {
     vi.restoreAllMocks();
   });
 
+  const renderHomePage = () => {
+    return render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+  };
+
   it('renders loaded categories and featured products from catalog service', async () => {
     vi.stubGlobal(
       'fetch',
@@ -79,7 +88,7 @@ describe('HomePage Integration & State Handling', () => {
       })
     );
 
-    render(<HomePage />);
+    renderHomePage();
 
     expect(screen.getByText(/Loading artisanal categories.../i)).toBeInTheDocument();
     expect(screen.getByText(/Curating featured creations.../i)).toBeInTheDocument();
@@ -131,7 +140,7 @@ describe('HomePage Integration & State Handling', () => {
       })
     );
 
-    render(<HomePage />);
+    renderHomePage();
 
     await waitFor(() => {
       expect(screen.getByText('Unable to load collections')).toBeInTheDocument();
@@ -171,7 +180,7 @@ describe('HomePage Integration & State Handling', () => {
       })
     );
 
-    render(<HomePage />);
+    renderHomePage();
 
     await waitFor(() => {
       expect(screen.getByText('No Categories Available')).toBeInTheDocument();

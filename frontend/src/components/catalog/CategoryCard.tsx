@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import type { CategoryDto } from '@/types';
 
 export interface CategoryCardProps {
@@ -10,11 +11,8 @@ export interface CategoryCardProps {
 export function CategoryCard({ category, className = '', onClick }: CategoryCardProps): ReactNode {
   const [imageError, setImageError] = useState(false);
 
-  return (
-    <div
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone bg-white p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art ${className}`}
-      onClick={onClick}
-    >
+  const content = (
+    <>
       <div className="space-y-3">
         {/* Category Icon / Thumbnail or Artistic Ornament */}
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-art-ochre/10 text-art-ochre border border-art-ochre/20 overflow-hidden">
@@ -60,6 +58,29 @@ export function CategoryCard({ category, className = '', onClick }: CategoryCard
         <span>Explore Collection</span>
         <span aria-hidden="true">→</span>
       </div>
-    </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={e => e.key === 'Enter' && onClick()}
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone bg-white p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art cursor-pointer ${className}`}
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to={`/products?category=${category.slug}`}
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone bg-white p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art ${className}`}
+    >
+      {content}
+    </Link>
   );
 }

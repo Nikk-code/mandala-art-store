@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { ProductCard, CategoryCard } from '@/components/catalog';
 import type { ProductListItemDto, CategoryDto } from '@/types';
 
@@ -77,7 +78,11 @@ describe('Catalog Presentation Components', () => {
 
   describe('CategoryCard', () => {
     it('renders category name and description', () => {
-      render(<CategoryCard category={mockCategory} />);
+      render(
+        <MemoryRouter>
+          <CategoryCard category={mockCategory} />
+        </MemoryRouter>
+      );
 
       expect(screen.getByRole('heading', { name: 'Mandala Art' })).toBeInTheDocument();
       expect(

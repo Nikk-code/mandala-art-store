@@ -6,15 +6,14 @@ import { IconButton } from '@/components/ui';
 interface NavItem {
   name: string;
   href: string;
-  placeholder?: boolean;
 }
 
 const NAVIGATION_ITEMS: NavItem[] = [
   { name: 'Home', href: '/' },
-  { name: 'Mandala Art', href: '/#mandalas', placeholder: true },
-  { name: 'Lippan Kaam', href: '/#lippan', placeholder: true },
-  { name: 'Custom Commissions', href: '/#custom', placeholder: true },
-  { name: 'Artisan Story', href: '/#story', placeholder: true },
+  { name: 'All Artworks', href: '/products' },
+  { name: 'Mandala Art', href: '/products?category=mandala-art' },
+  { name: 'Lippan Kaam', href: '/products?category=lippan-art' },
+  { name: 'Paintings', href: '/products?category=handmade-paintings' },
 ];
 
 export function Header(): ReactNode {
@@ -187,9 +186,6 @@ export function Header(): ReactNode {
               className="block rounded-lg px-3 py-2.5 text-base font-medium text-art-charcoal hover:bg-art-cream hover:text-art-ochre transition-colors"
             >
               {item.name}
-              {item.placeholder && (
-                <span className="ml-2 text-xs font-normal text-stone-400">(Preview)</span>
-              )}
             </Link>
           ))}
         </nav>

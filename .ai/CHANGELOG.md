@@ -11,8 +11,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Step 8B: Catalog browsing, filtering, sorting, pagination, and product detail exploration.
+- Step 9: Product detail page (`/products/:slug`) exploration and multi-image gallery.
 - Customer cart state and checkout integration.
+
+---
+
+## [0.11.0] - 2026-10-05
+
+### Added
+
+- **Step 8B: Catalog Browsing Experience**:
+  - **Products Catalog Route (`/products`)**:
+    - Created `frontend/src/pages/ProductsPage.tsx` with live URL search parameter binding (`useSearchParams`).
+    - Registered `/products` route in `App.tsx` and exported via `frontend/src/pages/index.ts`.
+    - Connected header navigation, homepage CTAs, and category cards to route to `/products` and `/products?category=<slug>`.
+  - **URL-Driven Server-Side Filtering & Sorting**:
+    - Category filtering via category slug parameter (`?category=mandala-art`), fetching only matching products via `GET /api/products?category=<slug>`.
+    - Availability filtering via `?availability=IN_STOCK` (`MADE_TO_ORDER`, `SOLD_OUT`).
+    - Sorting via `?sort=price_asc` (`newest`, `price_asc`, `price_desc`).
+    - Reset of pagination page index to 1 upon filter/sort modifications.
+  - **Reusable Pagination Component (`frontend/src/components/ui/Pagination.tsx`)**:
+    - Built accessible, touch-friendly ($\ge 44\text{px}$) pagination component respecting server-side `PaginationMeta`.
+    - Supported compact page range calculation with ellipses, previous/next controls, disabled boundary states, and `aria-current="page"`.
+    - Exported in `frontend/src/components/ui/index.ts`.
+  - **Catalog Filtering UI Primitives (`frontend/src/components/catalog/`)**:
+    - `CatalogFilters.tsx`: Clean category radio list, availability radio list, and sort dropdown.
+    - `ActiveFilterChips.tsx`: Active filter summary tags with individual removal triggers and clear-all action.
+    - `MobileFilterDrawer.tsx`: Accessible mobile slide-in drawer with backdrop, keyboard escape/close button, and `aria-modal="true"`.
+    - Barrel exported in `frontend/src/components/catalog/index.ts`.
+  - **State Feedback Handling**:
+    - Integrated `LoadingState`, `ErrorState` with retry mechanism, and `EmptyState` with filter reset action for 0 results.
+  - **Search Status Documentation**:
+    - Verified backend API `GET /api/products` currently does not support search query parameter; search is documented and intentionally deferred without fake client-side filtering.
+  - **Automated Tests**:
+    - Created `frontend/tests/pagination.test.tsx` (4 unit tests for page range, boundary states, and page changes).
+    - Created `frontend/tests/catalog-filters.test.tsx` (5 unit tests for filter selection, sorting change, and filter chip removal).
+    - Created `frontend/tests/ProductsPage.test.tsx` (5 integration tests for mount, category filtering, error retry, empty states, and mobile drawer).
+    - Updated `frontend/tests/catalog-components.test.tsx` and `frontend/tests/HomePage.test.tsx` for router link compatibility.
+    - Total frontend automated tests increased to 46 passing tests across 9 files; backend tests maintained 78 passing tests across 8 files.
 
 ---
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { RootLayout } from '@/layouts/RootLayout';
-import { HomePage } from '@/pages/HomePage';
+import { HomePage, ProductsPage } from '@/pages';
 
 function NotFoundPage(): ReactNode {
   return (
@@ -26,6 +26,7 @@ export function App(): ReactNode {
       <Routes>
         <Route path="/" element={<RootLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="products" element={<ProductsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

@@ -1,15 +1,15 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-04  
-**Current Phase**: `REAL HOMEPAGE + CATALOG API INTEGRATION FOUNDATION (Step 8A Complete)`
+**Last Updated**: 2026-10-05  
+**Current Phase**: `CATALOG BROWSING EXPERIENCE (Step 8B Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The real ecommerce homepage integrated with the backend public catalog REST API has been established (Step 8A). The homepage consumes live catalog data via a dedicated frontend catalog service (`frontend/src/services/catalog-service.ts`) for active categories (`GET /api/categories`) and featured products (`GET /api/products?featured=true`). Reusable presentation components have been created (`ProductCard` and `CategoryCard` in `frontend/src/components/catalog/`), featuring Indian currency formatting for integer paise (`formatPrice`), friendly availability state badges (`In Stock`, `Made to Order`, `Sold Out`), image fallback handling, and robust loading, error retry, and empty state feedback primitives.
+The real catalog browsing page (`/products`) integrated with the backend public catalog REST API has been established (Step 8B). Customers can explore the artisan catalog with URL-driven state (`?category=slug&availability=IN_STOCK&sort=price_asc&page=1`), server-side filtering by category and availability, server-side sorting (`newest`, `price_asc`, `price_desc`), server-side pagination with accessible touch-friendly controls (`Pagination`), responsive desktop filter sidebar, accessible mobile filter drawer (`MobileFilterDrawer`), and active filter summary tags (`ActiveFilterChips`). The catalog consumes the authoritative backend REST API (`GET /api/products` and `GET /api/categories`) without local client-side sorting, filtering, or pagination duplication.
 
-> **CRITICAL NOTE**: Full catalog search/filtering page (`/products`), category detail views (`/categories/:slug`), product detail page (`/products/:slug`), customer cart state, checkout, authentication, customer orders, reviews, and payment flows are **INTENTIONALLY DEFERRED** to subsequent steps.
+> **CRITICAL NOTE**: Backend search query parameter is not currently supported by `GET /api/products` and has been intentionally deferred without fake client-side filtering. Product detail view (`/products/:slug`), customer cart state, checkout, authentication, wishlist, orders, reviews, payments, and admin flows remain **INTENTIONALLY DEFERRED** to subsequent steps.
 
 ---
 
@@ -84,39 +84,48 @@ The real ecommerce homepage integrated with the backend public catalog REST API 
 
 ### Phase 8A: Real Homepage + Catalog API Integration Foundation (Completed)
 
-- [x] **Catalog DTO Types (`frontend/src/types/catalog.ts`)**:
-  - `CategoryDto`, `ProductListItemDto`, `ProductDetailDto`, `ProductImageDto`, `PaginatedData<T>`, `PaginationMeta`.
-- [x] **Price & Availability Formatting (`frontend/src/utils/format.ts`)**:
-  - `formatPrice`: integer paise to Indian currency string formatting (`₹1,499`, `₹1,25,000`).
-  - `getAvailabilityInfo`: Maps `IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT` to friendly labels and badge variants.
-- [x] **Catalog API Service (`frontend/src/services/catalog-service.ts`)**:
-  - `fetchCategories()`, `fetchProducts()`, `fetchFeaturedProducts()`, `fetchProductBySlug()`.
-- [x] **Presentation Components (`frontend/src/components/catalog/`)**:
-  - `ProductCard`: Displays primary image with fallback, category tag, title, formatted price, compare-at price, handcrafted badge, and availability status.
-  - `CategoryCard`: Displays active category card with decorative icon or thumbnail and exploration prompt.
-- [x] **Real Homepage (`frontend/src/pages/HomePage.tsx`)**:
-  - Editorial Hero section with brand message and CTA buttons.
-  - Active Categories section consuming `GET /api/categories` with loading, error retry, and empty state handling.
-  - Featured Artworks section consuming `GET /api/products?featured=true` with responsive grid and state handling.
-  - Heritage value proposition pillars (Handcrafted originals, wooden crating, fair trade).
+- [x] Catalog DTO types, price and availability formatting (`formatPrice`, `getAvailabilityInfo`).
+- [x] Catalog API service (`fetchCategories`, `fetchProducts`, `fetchFeaturedProducts`, `fetchProductBySlug`).
+- [x] Presentation components (`ProductCard`, `CategoryCard`).
+- [x] Real homepage (`HomePage.tsx`) consuming categories and featured products from API.
+- [x] Pushed milestone commit (`feat(catalog): implement real homepage and catalog API integration`).
+
+### Phase 8B: Catalog Browsing Experience (Completed)
+
+- [x] **Products Route (`/products`)**:
+  - Registered `/products` route in `App.tsx` mapped to `ProductsPage`.
+  - Linked navigation in `Header.tsx`, `HomePage.tsx`, and `CategoryCard.tsx`.
+- [x] **URL-Driven Catalog State (`useSearchParams`)**:
+  - `category` (category slug parameter, resetting to page 1).
+  - `availability` (`IN_STOCK`, `MADE_TO_ORDER`, `SOLD_OUT`).
+  - `sort` (`newest`, `price_asc`, `price_desc`).
+  - `page` (1-indexed pagination number).
+- [x] **Reusable UI & Catalog Components**:
+  - `Pagination` (`frontend/src/components/ui/Pagination.tsx`): Touch-friendly ($\ge 44\text{px}$) accessible pagination with previous/next controls, page numbers, ellipsis handling, and active aria states.
+  - `CatalogFilters` (`frontend/src/components/catalog/CatalogFilters.tsx`): Category, availability, and sort filter panel.
+  - `ActiveFilterChips` (`frontend/src/components/catalog/ActiveFilterChips.tsx`): Active filter pill indicators with individual dismissal and clear-all action.
+  - `MobileFilterDrawer` (`frontend/src/components/catalog/MobileFilterDrawer.tsx`): Accessible slide-in drawer with backdrop, close button, and focus trap attributes.
+- [x] **State & Error Feedback**:
+  - Loading state (`LoadingState`), Error retry state (`ErrorState`), and Filter Empty State (`EmptyState`) with "Clear All Filters" button.
 - [x] **Automated Tests & Quality**:
-  - 32 frontend unit tests passing across 6 test files (`frontend/tests/`).
+  - 46 frontend automated tests passing across 9 test files (`frontend/tests/`).
   - 78 backend tests passing across 8 test suites (`backend/tests/`).
-  - Clean build, 0 ESLint warnings, 100% Prettier formatting compliance.
+  - Clean build across all workspaces (`tsc -b && vite build` and `tsc`).
+  - 0 ESLint warnings across all workspaces.
+  - 100% Prettier formatting compliance.
 
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 8A is complete and ready for review).
+- _None_ (Step 8B is complete and awaiting review).
 
 ---
 
-## 4. Planned Next Work (Step 8B: Catalog Browsing, Filtering & Exploration Experience)
+## 4. Planned Next Work (Step 9: Product Detail Page Experience)
 
-1. Build catalog listing page with active category filters, availability filters, and sorting controls (`newest`, `price_asc`, `price_desc`).
-2. Implement server-side pagination navigation controls.
-3. Build product detail page (`/products/:slug`) with multi-image gallery preview, dimensions, materials, and artisan story.
+1. Build individual artwork detail page (`/products/:slug`) with multi-image gallery preview, artisan lineage notes, dimensions, and materials.
+2. Prepare artwork detail view for future cart and checkout integration.
 
 ---
 

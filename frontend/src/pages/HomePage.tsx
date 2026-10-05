@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Container,
   Section,
@@ -89,11 +90,11 @@ export function HomePage(): ReactNode {
               </p>
 
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <a href="#featured-collection" className="w-full sm:w-auto">
+                <Link to="/products" className="w-full sm:w-auto">
                   <Button variant="primary" size="lg" className="w-full sm:w-auto">
                     Explore Curated Collection
                   </Button>
-                </a>
+                </Link>
                 <a href="#artisan-heritage" className="w-full sm:w-auto">
                   <Button variant="secondary" size="lg" className="w-full sm:w-auto">
                     Discover The Craft Lineage
@@ -206,7 +207,12 @@ export function HomePage(): ReactNode {
               </p>
             </div>
             <div className="hidden sm:block">
-              <Badge variant="outline">Showing Handcrafted Highlights</Badge>
+              <Link
+                to="/products"
+                className="text-xs font-semibold text-art-charcoal hover:text-art-ochre transition-colors"
+              >
+                View Full Catalog →
+              </Link>
             </div>
           </div>
 
