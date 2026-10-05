@@ -1,45 +1,16 @@
-export interface CheckoutCustomer {
+export interface CreateOrderCustomerInput {
   fullName: string;
   email: string;
   phone: string;
 }
 
-export interface CheckoutShippingAddress {
+export interface CreateOrderShippingAddressInput {
   addressLine1: string;
   addressLine2?: string;
   city: string;
   state: string;
   postalCode: string;
-  country: string;
-}
-
-export interface CheckoutFormData {
-  fullName: string;
-  email: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-}
-
-export interface CheckoutFormErrors {
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  addressLine1?: string;
-  addressLine2?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
   country?: string;
-}
-
-export interface CheckoutData {
-  customer: CheckoutCustomer;
-  shippingAddress: CheckoutShippingAddress;
 }
 
 export interface CreateOrderItemInput {
@@ -48,19 +19,8 @@ export interface CreateOrderItemInput {
 }
 
 export interface CreateOrderRequest {
-  customer: {
-    fullName: string;
-    email: string;
-    phone: string;
-  };
-  shippingAddress: {
-    addressLine1: string;
-    addressLine2?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country?: string;
-  };
+  customer: CreateOrderCustomerInput;
+  shippingAddress: CreateOrderShippingAddressInput;
   items: CreateOrderItemInput[];
 }
 
@@ -69,9 +29,9 @@ export interface OrderItemSnapshotDto {
   productId: string | null;
   productName: string;
   productSku: string;
-  unitPrice: number;
+  unitPrice: number; // in integer paise
   quantity: number;
-  total: number;
+  total: number; // in integer paise
 }
 
 export interface OrderResponseDto {

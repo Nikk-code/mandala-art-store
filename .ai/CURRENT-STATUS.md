@@ -1,15 +1,15 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `CHECKOUT FOUNDATION (Step 11 Complete)`
+**Current Phase**: `BACKEND ORDER CREATION + CHECKOUT API FOUNDATION (Step 12 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The checkout foundation (Step 11) has been established with a responsive and accessible guest checkout flow (`/checkout`) directly consuming `CartContext`. The checkout experience features customer contact collection (Full Name, Email, Indian 10-digit Phone), shipping address capture (Street Address, optional Landmark/Suite, City, State, 6-digit Indian PIN code, Country defaulted to India), comprehensive input validation with clear inline error messaging, an accessible reusable `Input` component with ARIA error associations, dynamic cart order summary with integer-paise calculations, a controlled transition to a verified review state, empty-cart guardrails, and seamless transition from `/cart`.
+The backend order creation and checkout API foundation (Step 12) has been implemented to safely transform customer checkout details and guest cart items into authoritative pending-payment order records (`POST /api/checkout/orders`). The backend serves as the single source of truth for pricing, availability, and financial totals: client-submitted prices and totals are completely ignored, monetary values are calculated in integer paise, and `IN_STOCK` items undergo atomic conditional stock decrements inside a PostgreSQL Prisma transaction to eliminate race-condition overselling. Newly created orders enter the `PENDING_PAYMENT` lifecycle state alongside an initial `Payment` record in `PENDING` status (`amount = total`, `currency = 'INR'`, `provider = 'razorpay'`), while storing immutable product snapshots (name, SKU, unit price, line total) and full shipping address snapshots. Support for duplicate submission protection via optional `Idempotency-Key` headers is integrated.
 
-> **CRITICAL NOTE**: Payment gateway processing (Razorpay integration, webhook verification, capture), backend order creation APIs, customer authentication/login, coupons/discounts, shipping calculation (deferred), and tax/GST calculation (deferred) remain **INTENTIONALLY DEFERRED** to subsequent steps. No shipping or tax calculations are implemented in Step 11.
+> **CRITICAL NOTE**: Payment gateway API calls (Razorpay order creation, payment capture, webhook handling, signature verification) and customer account authentication remain **INTENTIONALLY DEFERRED** to subsequent steps. No payment gateway API requests are executed in Step 12.
 
 ---
 
@@ -163,17 +163,52 @@ The checkout foundation (Step 11) has been established with a responsive and acc
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
 
+### Phase 12: Backend Order Creation + Checkout API Foundation (Completed)
+
+- [x] **API Endpoint & Routing**:
+  - Registered `POST /api/checkout/orders` route in `backend/src/routes/checkout.routes.ts` mounted under `/api/checkout`.
+  - Created `checkout.controller.ts` orchestrating request extraction, optional `Idempotency-Key` header retrieval, and delegation to `OrderService`.
+- [x] **Strict Server-Side Validation**:
+  - Implemented `backend/src/utils/checkout-validation.ts` with pure validation for Customer contact details, Indian shipping address (6-digit PIN validation), and order item list (UUID format, positive integer quantities $\le 100$, duplicate product ID merging).
+- [x] **Authoritative Pricing & Domain Rules**:
+  - Backend retrieves authoritative live products from PostgreSQL inside a transaction. Client-provided prices or totals are not accepted.
+  - Subtotal and total calculated exclusively from live database prices in integer paise.
+  - Non-existent products return `404 Not Found`. Inactive products or inactive categories return `400 Bad Request`. `SOLD_OUT` products return `409 Conflict`.
+- [x] **Atomic Inventory Reservation & Concurrency Safety**:
+  - For `IN_STOCK` items, atomic conditional decrement (`stockQuantity: { decrement: quantity }` with `stockQuantity: { gte: quantity }`) prevents race-condition overselling under concurrent checkouts.
+  - `MADE_TO_ORDER` products bypass physical stock decrements while maintaining authoritative pricing.
+- [x] **Order Snapshots & Pending Payment Lifecycle**:
+  - Generated unique customer-facing order numbers via `backend/src/utils/order-number.ts` (`MAT-YYYYMMDD-XXXXXX`).
+  - Persisted immutable historical snapshots for `OrderItem` (name, SKU, unitPrice in paise, quantity, total) and shipping address.
+  - Created `Payment` record with status `PENDING`, `amount = total`, `currency = 'INR'`, `provider = 'razorpay'`, and all provider identifiers as `null`.
+  - Created `Order` record with status `PENDING_PAYMENT` and `userId = null` for guest checkout.
+- [x] **Idempotency & Duplicate Submission Protection**:
+  - Supported `Idempotency-Key` request header with bounded in-memory TTL caching and in-flight deduplication to safely replay identical successful order responses without duplicate database transactions or double stock decrements.
+- [x] **Repository Layer & Clean Architecture**:
+  - Implemented `OrderRepository.createOrderTransaction(tx, data)` in `backend/src/repositories/order.repository.ts`.
+  - Zero raw Prisma error leakage; full mapping to domain error classes (`AppError`, `NotFoundError`, `ConflictError`, `ValidationError`, `BadRequestError`).
+- [x] **Frontend API Integration Foundation**:
+  - Added `apiPost<T>` helper to `frontend/src/services/api-client.ts`.
+  - Added `CreateOrderRequest`, `OrderResponseDto`, and `OrderItemSnapshotDto` types to `frontend/src/types/checkout.ts`.
+  - Added `createCheckoutOrder` client service to `frontend/src/services/checkout-service.ts`.
+- [x] **Automated Tests & Quality**:
+  - 11 backend automated test suites passing with 112 tests (`backend/tests/`).
+  - 14 frontend automated test suites passing with 102 tests (`frontend/tests/`).
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 11 is complete and awaiting review).
+- _None_ (Step 12 is complete and ready for review).
 
 ---
 
 ## 4. Planned Next Work
 
-- Payment Gateway Integration (Razorpay, backend order creation API, webhook verification).
+- Step 13: Razorpay Payment Gateway Integration (SDK setup, Razorpay order creation, frontend payment modal, signature verification, webhook processing, payment capture).
 
 ---
 

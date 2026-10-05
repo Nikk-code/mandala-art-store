@@ -19,6 +19,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-011: Defer Product Variants](#adr-011-defer-product-variants)
 - [ADR-012: Guest Checkout Support with Contact Snapshots & Client Cart Merging](#adr-012-guest-checkout-support-with-contact-snapshots--client-cart-merging)
 - [ADR-013: Public Catalog REST API Design, Server-Side Pagination & Information Protection](#adr-013-public-catalog-rest-api-design-server-side-pagination--information-protection)
+- [ADR-014: Authoritative Backend Order Creation, Atomic Inventory Reservation & Pending Payment Lifecycle](#adr-014-authoritative-backend-order-creation-atomic-inventory-reservation--pending-payment-lifecycle)
 
 ---
 
@@ -187,3 +188,22 @@ This document tracks significant architectural, technical, and governance decisi
   - _Client-side pagination / unconstrained result sets_: Vulnerable to denial-of-service and high database memory load as catalog grows.
   - _GraphQL or complex query filters_: Overkill for initial boutique store needs; standard REST keeps client lightweight and easily cacheable.
 - **Consequences**: Fast, secure, cacheable public API responses; zero database leaks; clean contract ready for React frontend integration.
+
+---
+
+### ADR-014: Authoritative Backend Order Creation, Atomic Inventory Reservation & Pending Payment Lifecycle
+
+- **Date**: 2026-10-05
+- **Status**: Accepted
+- **Context**: Transforming customer checkout information and cart items into an order must guarantee financial correctness, prevent overselling handmade physical artworks under concurrent checkouts, and maintain immutable price/item snapshots. Client-submitted prices and totals cannot be trusted.
+- **Decision**: Implement `POST /api/checkout/orders` as the single authoritative backend entry point for order creation.
+  1. **Strict Server-Side Validation**: Validate customer contact details, Indian shipping address, and item list independently of frontend client validation.
+  2. **Authoritative Pricing & Availability**: Fetch live product and category records from the database inside an atomic transaction. Client price/subtotal/total inputs are completely ignored.
+  3. **Atomic Inventory Reservation**: For `IN_STOCK` items, execute conditional decrements (`updateMany` with `stockQuantity: { gte: requestedQuantity }`) within the transaction to prevent overselling race conditions. `MADE_TO_ORDER` products bypass physical stock decrements.
+  4. **Snapshots & Pending Payment Lifecycle**: Atomically persist the `Order` in `PENDING_PAYMENT` status, `OrderItem` immutable historical snapshots (unit price in integer paise, SKU, product name), and a `Payment` record in `PENDING` status.
+  5. **Duplicate Protection**: Support optional `Idempotency-Key` request headers backed by in-memory replay caching to prevent duplicate orders and double-decrementing stock from rapid double-clicks.
+- **Alternatives Considered**:
+  - _Trusting client-calculated totals_: High security vulnerability allowing price manipulation.
+  - _Decrementing inventory after payment confirmation_: Risks inventory overselling where multiple customers pay for a single unique artwork simultaneously.
+  - _Separate non-transactional database calls_: Susceptible to orphaned orders or partial stock decrements upon failures.
+- **Consequences**: High financial integrity, zero race-condition overselling, transaction-safe rollback on any failure, immutable audit trail for order items, and clean preparation for payment gateway integration (Razorpay) in subsequent steps.

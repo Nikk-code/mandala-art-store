@@ -57,6 +57,42 @@ export async function apiGet<T>(path: string, options?: RequestInit): Promise<T>
   return response.json() as Promise<T>;
 }
 
+export async function apiPost<T>(path: string, body: unknown, options?: RequestInit): Promise<T> {
+  const url = normalizeUrl(path);
+
+  const response = await fetch(url, {
+    ...options,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...options?.headers,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    let errorCode: string | undefined;
+    let errorDetails: unknown;
+
+    try {
+      const errorJson = (await response.json()) as ApiErrorResponse;
+      if (errorJson && errorJson.error) {
+        errorMessage = errorJson.error.message || errorMessage;
+        errorCode = errorJson.error.code;
+        errorDetails = errorJson.error.details;
+      }
+    } catch {
+      // Non-JSON error body fallback
+    }
+
+    throw new ApiError(errorMessage, response.status, errorCode, errorDetails);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function fetchHealth(): Promise<ApiHealthResponse> {
   return apiGet<ApiHealthResponse>('health');
 }

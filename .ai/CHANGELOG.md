@@ -11,12 +11,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Payment gateway integration (Razorpay, backend order creation API, webhook verification).
+- Razorpay payment gateway integration (SDK setup, Razorpay order creation, frontend payment modal, signature verification, webhook processing, payment capture).
 - Customer authentication and account order history.
 
 ---
 
-## [0.14.0] - 2026-10-05
+## [0.15.0] - 2026-10-05
+
+### Added
+
+- **Step 12: Backend Order Creation + Checkout API Foundation**:
+  - **API Endpoint & Controller Architecture**:
+    - Created `POST /api/checkout/orders` route in `backend/src/routes/checkout.routes.ts` mounted at `/api/checkout`.
+    - Created `backend/src/controllers/checkout.controller.ts` extracting request body, `Idempotency-Key` header, and returning `201 Created` with sanitized `OrderResponseDto`.
+  - **Strict Server-Side Validation**:
+    - Authored `backend/src/utils/checkout-validation.ts` with pure validation functions for Customer information (fullName length, normalized email regex, 10-digit Indian phone normalization), Indian shipping address (5-character minimum address line 1, 6-digit Indian PIN regex, India delivery constraint), and order item list (UUID format, positive integer quantity 1-100, duplicate product quantity aggregation).
+  - **Authoritative Database Pricing & Domain Services**:
+    - Implemented `backend/src/services/order.service.ts` ensuring database is the sole authority for product existence, active status, category active status, availability, and unit prices.
+    - Financial totals (subtotal, total) calculated strictly in integer paise (`discountAmount = 0`, `shippingFee = 0`, `taxAmount = 0`). Client-submitted financial totals or pricing are discarded.
+  - **Atomic Inventory Reservation & Concurrency Safety**:
+    - Implemented atomic conditional update inside Prisma transaction (`updateMany` with `stockQuantity: { gte: quantity }`) for `IN_STOCK` items, preventing race-condition overselling.
+    - Supported `MADE_TO_ORDER` items without physical stock decrements while maintaining authoritative pricing.
+    - Rejected `SOLD_OUT` products with `409 Conflict`, non-existent products with `404 Not Found`, and inactive items with `400 Bad Request`.
+  - **Order Snapshots & Pending Payment Lifecycle**:
+    - Generated customer order numbers via `backend/src/utils/order-number.ts` (`MAT-YYYYMMDD-XXXXXX`).
+    - Persisted immutable historical snapshots for `OrderItem` (name, SKU, unitPrice in paise, quantity, line total) and delivery destination.
+    - Created `Order` in `PENDING_PAYMENT` state with `userId = null` for guest checkout.
+    - Created `Payment` in `PENDING` state (`amount = total`, `currency = 'INR'`, `provider = 'razorpay'`).
+  - **Idempotency & Duplicate Submission Protection**:
+    - Implemented bounded in-memory idempotency TTL cache and in-flight request deduplication on `Idempotency-Key` header to safely return identical successful order snapshots on rapid double-clicks without duplicate orders or double stock decrements.
+  - **Repository Layer Foundation**:
+    - Implemented `OrderRepository.createOrderTransaction(tx, data)` in `backend/src/repositories/order.repository.ts`.
+  - **Frontend API Client Integration**:
+    - Added `apiPost<T>` helper to `frontend/src/services/api-client.ts`.
+    - Added DTO and request types to `frontend/src/types/checkout.ts`.
+    - Created `frontend/src/services/checkout-service.ts` for calling `createCheckoutOrder`.
+  - **Automated Tests**:
+    - Added `backend/tests/checkout-validation.test.ts` (unit tests for customer, shipping, item validation).
+    - Added `backend/tests/order.service.test.ts` (unit tests for domain rules, pricing authority, atomic stock decrement, MADE_TO_ORDER, SOLD_OUT, and idempotency key replay).
+    - Added `backend/tests/checkout.api.test.ts` (API endpoint tests for `POST /api/checkout/orders`).
+    - Added `apiPost` integration tests in `frontend/tests/api-client.test.ts`.
 
 ### Added
 
