@@ -284,3 +284,32 @@ This document tracks significant architectural, technical, and governance decisi
   - _Returning 403 Forbidden for another customer's order_: Leaks the existence of valid order IDs across the customer base (resource enumeration).
   - _Deriving order ownership from client-provided headers or query parameters_: Vulnerable to IDOR (Insecure Direct Object Reference). Ownership is strictly derived from verified server session/token.
 - **Consequences**: Rock-solid post-payment reliability, full reload safety, zero exposure of internal database fields or payment secrets, and airtight customer data isolation.
+
+---
+
+### ADR-018: Customer Authentication, Cryptographic JWT Session Management & Secure Cookie Architecture
+
+- **Date**: 2026-10-05
+- **Status**: Accepted
+- **Context**: The store requires secure customer authentication for registration, login, profile management, and accessing protected order details/history. Insecure mechanisms (such as unverified client UUIDs, client headers, or unhashed passwords) must never be permitted in any environment. Storing long-lived tokens in localStorage exposes credentials to XSS extraction.
+- **Decision**:
+  1. **Password Security**:
+     - All customer passwords are strictly hashed using `bcryptjs` with salt factor 10 before saving to PostgreSQL (`users.password_hash`). Plaintext passwords and password hashes are never returned in responses or logged.
+  2. **Cryptographic Identity Verification**:
+     - Sessions are authenticated using HMAC-SHA256 signed JSON Web Tokens (JWT) containing `{ id, email, role }` signed with `JWT_SECRET` from server-only environment configuration.
+     - Public registration unconditionally assigns `role = CUSTOMER`, preventing privilege escalation.
+     - Login failures return generic `401 Unauthorized` ("Invalid email or password.") for both non-existent accounts and incorrect passwords, preventing email/user enumeration.
+  3. **Secure Cookie Session Delivery**:
+     - Server issues JWT tokens via HttpOnly, SameSite=Lax, Secure (in production) `auth_token` cookies with 7-day expiration.
+     - Frontend `api-client` communicates with `credentials: 'include'`, automatically sending cookies with CORS credentials enabled.
+     - Zero long-lived tokens stored in localStorage.
+  4. **Strict Authentication Guard Isolation**:
+     - `requireAuth` middleware verifies cryptographic signatures on incoming JWTs (from cookies or Bearer headers) using `algorithms: ['HS256']`.
+     - Rejects any client-supplied `x-user-id` headers, query parameters, unverified UUIDs, tampered tokens, or expired tokens with `401 Unauthorized`.
+  5. **Session Invalidation & Logout**:
+     - `POST /api/auth/logout` explicitly clears the `auth_token` cookie across browser sessions.
+- **Alternatives Considered**:
+  - _Storing JWTs in localStorage_: Vulnerable to XSS token theft.
+  - _Stateful database session table without JWT_: Adds unnecessary database query overhead on every request without horizontal scaling advantages at this stage.
+  - _Trusting client-provided user IDs_: Insecure direct object reference and identity spoofing vulnerability.
+- **Consequences**: Production-ready cryptographic security, resistance to XSS session harvesting, zero email enumeration, seamless customer authentication experience, and full compatibility across modern browsers.

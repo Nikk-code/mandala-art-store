@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { APP_NAME } from '@/constants';
 import { IconButton } from '@/components/ui';
-import { useCart } from '@/context';
+import { useCart, useAuth } from '@/context';
 
 interface NavItem {
   name: string;
@@ -21,6 +21,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
 export function Header(): ReactNode {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { itemCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-art-stone/80 bg-white/95 backdrop-blur-md transition-shadow duration-200 shadow-sm">
@@ -99,51 +100,40 @@ export function Header(): ReactNode {
           ))}
         </nav>
 
-        {/* Action icons / placeholders */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
-          {/* Search Icon Placeholder */}
-          <IconButton
-            aria-label="Search collection"
-            title="Search collection (Coming soon)"
-            icon={
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            }
-          />
-
-          {/* Wishlist Placeholder */}
-          <IconButton
-            aria-label="Saved items"
-            title="Saved items (Coming soon)"
-            icon={
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            }
-          />
+        {/* Action icons & Account Navigation */}
+        <div className="flex items-center space-x-1 sm:space-x-3">
+          {/* Account Menu (Desktop) */}
+          <div className="hidden sm:flex items-center text-xs">
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2.5 pl-2 border-l border-art-stone/60">
+                <span className="font-medium text-art-charcoal truncate max-w-[120px]">
+                  {user.firstName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="text-stone-500 hover:text-art-terracotta transition-colors font-semibold"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 pl-2 border-l border-art-stone/60">
+                <Link
+                  to="/login"
+                  className="font-medium text-stone-600 hover:text-art-charcoal transition-colors py-1 px-2 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="font-bold text-art-terracotta hover:text-art-terracotta/90 transition-colors py-1 px-2 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-art-terracotta"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* Cart Icon Link */}
           <Link
@@ -198,6 +188,42 @@ export function Header(): ReactNode {
               {item.name}
             </Link>
           ))}
+
+          {/* Mobile Auth actions */}
+          <div className="pt-3 border-t border-art-stone/60 space-y-2">
+            {isAuthenticated && user ? (
+              <div className="px-3 py-2 space-y-2">
+                <p className="text-xs text-stone-500">Signed in as {user.email}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full text-left font-semibold text-sm text-art-terracotta hover:underline"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 px-1 pt-1">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center justify-center rounded-xl border border-art-stone bg-white px-4 py-2.5 text-xs font-bold text-art-charcoal shadow-sm hover:bg-stone-50"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex items-center justify-center rounded-xl bg-art-terracotta px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-art-terracotta/90"
+                >
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
         </nav>
       )}
     </header>

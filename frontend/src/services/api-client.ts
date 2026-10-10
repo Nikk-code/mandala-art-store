@@ -1,4 +1,4 @@
-import { DEFAULT_API_BASE_URL, AUTH_STORAGE_KEY, DEFAULT_CUSTOMER_ID } from '@/constants';
+import { DEFAULT_API_BASE_URL } from '@/constants';
 import type { ApiHealthResponse, ApiErrorResponse } from '@/types';
 
 export class ApiError extends Error {
@@ -21,22 +21,10 @@ let currentAuthToken: string | null = null;
 
 export function setAuthToken(token: string | null): void {
   currentAuthToken = token;
-  if (typeof window !== 'undefined') {
-    if (token) {
-      localStorage.setItem(AUTH_STORAGE_KEY, token);
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
-  }
 }
 
-export function getAuthToken(): string {
-  if (currentAuthToken) return currentAuthToken;
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (saved) return saved;
-  }
-  return DEFAULT_CUSTOMER_ID;
+export function getAuthToken(): string | null {
+  return currentAuthToken;
 }
 
 function normalizeUrl(path: string): string {
@@ -57,6 +45,7 @@ export async function apiGet<T>(path: string, options?: RequestInit): Promise<T>
 
   const response = await fetch(url, {
     method: 'GET',
+    credentials: 'include',
     ...options,
     headers,
   });
@@ -83,7 +72,7 @@ export async function apiGet<T>(path: string, options?: RequestInit): Promise<T>
   return response.json() as Promise<T>;
 }
 
-export async function apiPost<T>(path: string, body: unknown, options?: RequestInit): Promise<T> {
+export async function apiPost<T>(path: string, body?: unknown, options?: RequestInit): Promise<T> {
   const url = normalizeUrl(path);
   const token = getAuthToken();
 
@@ -95,10 +84,11 @@ export async function apiPost<T>(path: string, body: unknown, options?: RequestI
   };
 
   const response = await fetch(url, {
-    ...options,
     method: 'POST',
+    credentials: 'include',
+    ...options,
     headers,
-    body: JSON.stringify(body),
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   if (!response.ok) {

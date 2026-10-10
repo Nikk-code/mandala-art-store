@@ -9,8 +9,10 @@ import {
   CheckoutPage,
   OrderConfirmationPage,
   OrderHistoryPage,
+  LoginPage,
+  RegisterPage,
 } from '@/pages';
-import { CartProvider } from '@/context';
+import { CartProvider, AuthProvider } from '@/context';
 
 function NotFoundPage(): ReactNode {
   return (
@@ -31,23 +33,27 @@ function NotFoundPage(): ReactNode {
 
 export function App(): ReactNode {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<RootLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="products" element={<ProductsPage />} />
-            <Route path="products/:slug" element={<ProductDetailPage />} />
-            <Route path="cart" element={<CartPage />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="orders" element={<OrderHistoryPage />} />
-            <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
-            <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<RootLayout />}>
+              <Route index element={<HomePage />} />
+              <Route path="products" element={<ProductsPage />} />
+              <Route path="products/:slug" element={<ProductDetailPage />} />
+              <Route path="cart" element={<CartPage />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="orders" element={<OrderHistoryPage />} />
+              <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
+              <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route path="register" element={<RegisterPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

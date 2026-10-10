@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-05  
-**Current Phase**: `ORDER CONFIRMATION, ORDER HISTORY & POST-PAYMENT RELIABILITY (Step 15 Complete)`
+**Current Phase**: `CUSTOMER AUTHENTICATION & ACCOUNT FOUNDATION (Step 16 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The customer order confirmation, order history, and post-payment reliability foundation (Step 15) has been implemented with strict server-side authorization and anti-enumeration protection. The backend exposes `GET /api/orders/:orderId` (requiring authentication, verifying `authenticatedUser.id === order.userId`, and returning `404 Not Found` if the order is unowned/guest or belongs to another customer to prevent ID enumeration) and `GET /api/orders` (returning paginated customer orders sorted newest first). Authentication in non-test / production environments strictly rejects client-supplied unverified UUIDs or `x-user-id` headers (401 Unauthorized), with full cryptographic token verification scheduled for Step 16. In the frontend, `CheckoutPage.tsx` immediately renders the verified order confirmation view (`orderNumber`, `orderStatus: CONFIRMED`, `paymentStatus: CAPTURED`) upon receiving the authoritative backend verification response and clears the cart only after verification succeeds. Reload-safe order retrieval (`/orders/:orderId`) and order history (`/orders`) are supported for authenticated customer accounts. All 283 backend and frontend tests pass cleanly with 100% build, lint, format, and Prisma validation compliance.
+The customer authentication, registration, login, cryptographic session management, and account foundation (Step 16) has been implemented with production-grade security. The backend exposes `POST /api/auth/register` (normalizing email, hashing passwords with bcrypt work factor 10, creating customer accounts, and issuing HttpOnly session cookies), `POST /api/auth/login` (generic 401 response preventing email enumeration, verifying bcrypt hash, issuing HttpOnly session cookies), `POST /api/auth/logout` (clearing session cookies), and `GET /api/auth/me` (returning sanitized customer profiles without exposing password hashes or secrets). Authentication middleware (`backend/src/middleware/auth.ts`) cryptographically verifies HMAC-SHA256 signed JWT tokens from HttpOnly cookies or Bearer headers with zero tolerance for unverified client headers (`x-user-id`) or arbitrary UUIDs. In the frontend, `LoginPage.tsx` and `RegisterPage.tsx` provide accessible, responsive art-store-styled forms, and `Header.tsx` provides session-aware navigation. All 39 test suites (17 backend / 194 tests, 22 frontend / 135 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -265,24 +265,55 @@ The customer order confirmation, order history, and post-payment reliability fou
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
 
+### Phase 16: Customer Authentication & Account Foundation (Completed)
+
+- [x] **Secure Password Hashing & Registration**:
+  - Registered `POST /api/auth/register` validating inputs, normalizing email, and hashing passwords using `bcryptjs` (salt rounds = 10).
+  - Automatically assigns `role = CUSTOMER` and prevents client privilege escalation.
+  - Returns sanitized customer DTO (`UserDto`) without exposing password hashes or internal fields.
+  - Handles duplicate emails with safe `409 Conflict` response.
+- [x] **Anti-Enumeration Login & Cryptographic JWT Sessions**:
+  - Registered `POST /api/auth/login` verifying email and password against stored bcrypt hash.
+  - Returns generic `401 Unauthorized` ("Invalid email or password.") for non-existent accounts and incorrect passwords to prevent user enumeration.
+  - Issues signed JWT session token (HMAC-SHA256, 7-day expiration) containing `{ id, email, role }` signed with server-only `JWT_SECRET`.
+  - Delivers session via HttpOnly, SameSite=Lax, Secure (in production) `auth_token` cookie.
+- [x] **Session Invalidation & Customer Profile**:
+  - Registered `POST /api/auth/logout` clearing the session cookie across browser sessions.
+  - Registered `GET /api/auth/me` protected by `requireAuth` returning authenticated customer profile.
+- [x] **Cryptographic Auth Middleware**:
+  - Updated `backend/src/middleware/auth.ts` to cryptographically verify incoming JWTs from HttpOnly cookies or Bearer headers with `algorithms: ['HS256']`.
+  - Rejects missing, expired, tampered, or malformed tokens, raw client UUIDs, and `x-user-id` headers with `401 Unauthorized`.
+- [x] **Frontend Authentication & Navigation Experience**:
+  - Created `AuthProvider` and `useAuth` hook managing authenticated user state and session restoration on refresh.
+  - Created responsive, accessible `LoginPage` (`/login`) and `RegisterPage` (`/register`) with input validation and error handling.
+  - Updated `Header.tsx` with session-aware navigation (Sign In / Register links when anonymous; Customer greeting, My Orders, and Sign Out when authenticated).
+  - Auto-populates customer details in `CheckoutPage.tsx` when authenticated.
+- [x] **Automated Tests & Quality**:
+  - 17 backend automated test suites passing with 194 tests (`backend/tests/`).
+  - 22 frontend automated test suites passing with 135 tests (`frontend/tests/`).
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 15 is complete and verified).
+- _None_ (Step 16 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 16: Customer Authentication System (Full Registration, Login, Session Management & Password Recovery).
+- Step 17: Customer Address Book & Account Management (Saved shipping addresses, Profile editing, and default address selection).
 
 ---
 
 ## 5. Known Limitations & Architecture Notes
 
 - **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).
-- **Authentication Credentials**: Production authentication (`requireAuth`) strictly denies unverified client headers / UUID tokens with 401 Unauthorized. Full cryptographic JWT / session token authentication is scheduled for Step 16.
+- **Password Reset & Email Verification**: Automated password reset links and email verification are planned for a subsequent communication integration step.
+- **Cart Merging**: Guest carts are persisted in client localStorage; customer login retains the active cart items. Server-side cart persistence across multiple devices will be addressed in a future milestone.
 
 ---
 

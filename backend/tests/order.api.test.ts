@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { app } from '../src/app';
 import { orderService } from '../src/services';
+import { config } from '../src/config/env';
 import { NotFoundError } from '../src/errors';
 import type { OrderDetailsDto, OrderHistoryResponseDto } from '../src/types';
 
@@ -9,6 +11,18 @@ describe('Order REST API Endpoints (/api/orders)', () => {
   const customerId = '11111111-1111-4111-8111-111111111111';
   const otherCustomerId = '22222222-2222-4222-8222-222222222222';
   const validOrderId = '33333333-3333-4333-8333-333333333333';
+
+  const customerToken = jwt.sign(
+    { id: customerId, email: 'priya@example.com', role: 'CUSTOMER' },
+    config.jwtSecret,
+    { algorithm: 'HS256', expiresIn: '1h' }
+  );
+
+  const otherCustomerToken = jwt.sign(
+    { id: otherCustomerId, email: 'other@example.com', role: 'CUSTOMER' },
+    config.jwtSecret,
+    { algorithm: 'HS256', expiresIn: '1h' }
+  );
 
   const sampleOrderDetails: OrderDetailsDto = {
     id: validOrderId,
@@ -85,12 +99,12 @@ describe('Order REST API Endpoints (/api/orders)', () => {
   });
 
   describe('GET /api/orders/:orderId', () => {
-    it('returns 200 with complete order details for the authenticated customer', async () => {
+    it('returns 200 with complete order details for the authenticated customer (via Bearer token)', async () => {
       vi.spyOn(orderService, 'getOrderById').mockResolvedValue(sampleOrderDetails);
 
       const res = await request(app)
         .get(`/api/orders/${validOrderId}`)
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -101,6 +115,18 @@ describe('Order REST API Endpoints (/api/orders)', () => {
       expect(res.body.data.items).toHaveLength(1);
       expect(res.body.data.items[0].productName).toBe('Sacred Lotus Mandala');
       expect(res.body.data.payments).toHaveLength(1);
+    });
+
+    it('returns 200 with complete order details for the authenticated customer (via HttpOnly auth_token cookie)', async () => {
+      vi.spyOn(orderService, 'getOrderById').mockResolvedValue(sampleOrderDetails);
+
+      const res = await request(app)
+        .get(`/api/orders/${validOrderId}`)
+        .set('Cookie', [`auth_token=${customerToken}`]);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.id).toBe(validOrderId);
     });
 
     it('rejects unauthenticated request with 401 Unauthorized', async () => {
@@ -114,7 +140,7 @@ describe('Order REST API Endpoints (/api/orders)', () => {
     it('rejects invalid UUID parameter with 400 Bad Request', async () => {
       const res = await request(app)
         .get('/api/orders/invalid-uuid-123')
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -128,7 +154,7 @@ describe('Order REST API Endpoints (/api/orders)', () => {
 
       const res = await request(app)
         .get(`/api/orders/${validOrderId}`)
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
@@ -136,14 +162,13 @@ describe('Order REST API Endpoints (/api/orders)', () => {
     });
 
     it('prevents User A from viewing User B’s order (returns 404 anti-enumeration)', async () => {
-      // If order belongs to customerId but otherCustomerId tries to fetch it
       vi.spyOn(orderService, 'getOrderById').mockRejectedValue(
         new NotFoundError(`Order with ID ${validOrderId} was not found.`)
       );
 
       const res = await request(app)
         .get(`/api/orders/${validOrderId}`)
-        .set('Authorization', `Bearer ${otherCustomerId}`);
+        .set('Authorization', `Bearer ${otherCustomerToken}`);
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
@@ -157,7 +182,7 @@ describe('Order REST API Endpoints (/api/orders)', () => {
 
       const res = await request(app)
         .get('/api/orders?page=1&pageSize=10')
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -192,7 +217,7 @@ describe('Order REST API Endpoints (/api/orders)', () => {
 
       const res = await request(app)
         .get('/api/orders')
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -213,7 +238,7 @@ describe('Order REST API Endpoints (/api/orders)', () => {
 
       const res = await request(app)
         .get('/api/orders?page=2&pageSize=5')
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(200);
       expect(spy).toHaveBeenCalledWith(customerId, 2, 5);
@@ -221,6 +246,16 @@ describe('Order REST API Endpoints (/api/orders)', () => {
   });
 
   describe('Security & Identity Trust Audit', () => {
+    it('rejects raw UUID Bearer tokens without cryptographic JWT signatures (returns 401)', async () => {
+      const res = await request(app)
+        .get(`/api/orders/${validOrderId}`)
+        .set('Authorization', `Bearer ${customerId}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
     it('rejects identity spoofing via x-user-id header alone (returns 401)', async () => {
       const res = await request(app).get('/api/orders').set('x-user-id', customerId);
 
@@ -237,61 +272,35 @@ describe('Order REST API Endpoints (/api/orders)', () => {
       expect(res.body.error.code).toBe('UNAUTHORIZED');
     });
 
-    it('strictly rejects unverified Bearer tokens whenever isProduction === true regardless of NODE_ENV', async () => {
-      const { config } = await import('../src/config/env');
-      const originalIsProd = config.isProduction;
-      const originalNodeEnv = config.nodeEnv;
+    it('rejects tampered or forged JWT signatures (returns 401)', async () => {
+      const forgedToken = jwt.sign(
+        { id: customerId, email: 'attacker@example.com', role: 'CUSTOMER' },
+        'wrong_attacker_secret_key_1234567890'
+      );
 
-      try {
-        // Case 1: isProduction is true, nodeEnv is 'test'
-        (config as any).isProduction = true;
-        (config as any).nodeEnv = 'test';
+      const res = await request(app)
+        .get(`/api/orders/${validOrderId}`)
+        .set('Authorization', `Bearer ${forgedToken}`);
 
-        const res1 = await request(app)
-          .get(`/api/orders/${validOrderId}`)
-          .set('Authorization', `Bearer ${customerId}`);
-
-        expect(res1.status).toBe(401);
-        expect(res1.body.success).toBe(false);
-        expect(res1.body.error.code).toBe('UNAUTHORIZED');
-
-        // Case 2: isProduction is true, nodeEnv is 'production'
-        (config as any).isProduction = true;
-        (config as any).nodeEnv = 'production';
-
-        const res2 = await request(app)
-          .get(`/api/orders/${validOrderId}`)
-          .set('Authorization', `Bearer ${customerId}`);
-
-        expect(res2.status).toBe(401);
-        expect(res2.body.success).toBe(false);
-        expect(res2.body.error.code).toBe('UNAUTHORIZED');
-      } finally {
-        (config as any).isProduction = originalIsProd;
-        (config as any).nodeEnv = originalNodeEnv;
-      }
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
     });
 
-    it('strictly rejects unverified Bearer tokens in development environment (nodeEnv !== test)', async () => {
-      const { config } = await import('../src/config/env');
-      const originalIsProd = config.isProduction;
-      const originalNodeEnv = config.nodeEnv;
+    it('rejects expired JWT tokens (returns 401)', async () => {
+      const expiredToken = jwt.sign(
+        { id: customerId, email: 'priya@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '-1s' }
+      );
 
-      try {
-        (config as any).isProduction = false;
-        (config as any).nodeEnv = 'development';
+      const res = await request(app)
+        .get(`/api/orders/${validOrderId}`)
+        .set('Authorization', `Bearer ${expiredToken}`);
 
-        const res = await request(app)
-          .get(`/api/orders/${validOrderId}`)
-          .set('Authorization', `Bearer ${customerId}`);
-
-        expect(res.status).toBe(401);
-        expect(res.body.success).toBe(false);
-        expect(res.body.error.code).toBe('UNAUTHORIZED');
-      } finally {
-        (config as any).isProduction = originalIsProd;
-        (config as any).nodeEnv = originalNodeEnv;
-      }
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
     });
 
     it('strictly denies access to guest orders (order.userId === null) via protected endpoint (returns 404)', async () => {
@@ -301,7 +310,7 @@ describe('Order REST API Endpoints (/api/orders)', () => {
 
       const res = await request(app)
         .get(`/api/orders/${validOrderId}`)
-        .set('Authorization', `Bearer ${customerId}`);
+        .set('Authorization', `Bearer ${customerToken}`);
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);

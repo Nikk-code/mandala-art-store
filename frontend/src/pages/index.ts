@@ -5,3 +5,5 @@ export * from './CartPage';
 export * from './CheckoutPage';
 export * from './OrderConfirmationPage';
 export * from './OrderHistoryPage';
+export * from './LoginPage';
+export * from './RegisterPage';

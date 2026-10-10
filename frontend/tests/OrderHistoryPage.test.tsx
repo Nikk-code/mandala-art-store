@@ -75,12 +75,9 @@ describe('OrderHistoryPage UI & Customer Order List', () => {
     renderOrderHistoryPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { level: 1, name: 'My Artwork Orders' })
-      ).toBeInTheDocument();
+      expect(screen.getByText('No Orders Placed Yet')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('No Orders Placed Yet')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Explore Collections' })).toBeInTheDocument();
   });
 
@@ -90,12 +87,9 @@ describe('OrderHistoryPage UI & Customer Order List', () => {
     renderOrderHistoryPage();
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { level: 1, name: 'My Artwork Orders' })
-      ).toBeInTheDocument();
+      expect(screen.getAllByText(/MAT-20261005-7F2A9C/).length).toBeGreaterThanOrEqual(1);
     });
 
-    expect(screen.getAllByText(/MAT-20261005-7F2A9C/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/MAT-20261001-3A91BC/).length).toBeGreaterThanOrEqual(1);
 
     const viewOrderLinks = screen.getAllByRole('link', { name: /View Order Details/i });

@@ -6,7 +6,7 @@ import {
   ShippingAddressSection,
   CheckoutOrderSummary,
 } from '@/components/checkout';
-import { useCart } from '@/context';
+import { useCart, useAuth } from '@/context';
 import { validateCheckoutForm, loadRazorpayScript } from '@/utils';
 import { createCheckoutOrder, initializeCheckoutPayment, verifyCheckoutPayment } from '@/services';
 import type {
@@ -18,6 +18,7 @@ import type {
 
 export function CheckoutPage(): ReactNode {
   const { items, itemCount, subtotalPaise, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -43,6 +44,17 @@ export function CheckoutPage(): ReactNode {
   useEffect(() => {
     document.title = 'Checkout | Mandala Art Store';
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: prev.fullName || `${user.firstName} ${user.lastName}`.trim(),
+        email: prev.email || user.email,
+        phone: prev.phone || (user.phone ?? ''),
+      }));
+    }
+  }, [user]);
 
   const handleFieldChange = (field: keyof CheckoutFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -1,13 +1,13 @@
 import type { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../errors';
 import { config } from '../config/env';
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import type { JwtUserPayload } from '../types/auth';
 
 export interface AuthenticatedUser {
   id: string;
-  email?: string;
-  role?: string;
+  email: string;
+  role: string;
 }
 
 declare global {
@@ -20,56 +20,76 @@ declare global {
 }
 
 /**
- * Extracts the authenticated user identity.
- *
- * NOTE: Full cryptographic JWT authentication & session token verification is scheduled for Step 16.
- * In non-test / production environments, client-supplied unverified UUIDs or x-user-id headers are
- * strictly rejected to prevent identity spoofing and impersonation attacks.
- *
- * Test-only identity injection is strictly restricted to automated testing (NODE_ENV === 'test').
+ * Extracts and cryptographically verifies the JWT token from HttpOnly cookie or Authorization header.
  */
-function extractUserId(req: Request): string | null {
-  // Never permit test identity injection in production or when not in test mode
-  if (config.isProduction || config.nodeEnv !== 'test') {
-    return null;
+function extractAndVerifyUser(req: Request): AuthenticatedUser | null {
+  let token: string | null = null;
+
+  // 1. Check HttpOnly session cookie
+  if (req.cookies && typeof req.cookies.auth_token === 'string') {
+    token = req.cookies.auth_token.trim();
   }
 
-  // Isolated test harness identity extraction (active ONLY in NODE_ENV === 'test')
-  const authHeader = req.headers.authorization;
-  if (authHeader && typeof authHeader === 'string') {
-    const parts = authHeader.trim().split(' ');
+  // 2. Check Authorization Bearer header
+  if (!token && req.headers.authorization && typeof req.headers.authorization === 'string') {
+    const parts = req.headers.authorization.trim().split(' ');
     if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
-      const token = parts[1].trim();
-      if (UUID_REGEX.test(token)) {
-        return token;
-      }
+      token = parts[1].trim();
     }
   }
 
-  return null;
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret, {
+      algorithms: ['HS256'],
+    }) as JwtUserPayload;
+
+    if (
+      !decoded ||
+      typeof decoded !== 'object' ||
+      typeof decoded.id !== 'string' ||
+      !decoded.id.trim() ||
+      typeof decoded.email !== 'string' ||
+      !decoded.email.trim()
+    ) {
+      return null;
+    }
+
+    return {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role || 'CUSTOMER',
+    };
+  } catch {
+    // Malformed, tampered, expired, or invalid signature
+    return null;
+  }
 }
 
 /**
- * Middleware requiring customer authentication.
+ * Middleware requiring valid customer authentication.
  */
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
-  const userId = extractUserId(req);
+  const user = extractAndVerifyUser(req);
 
-  if (!userId) {
+  if (!user) {
     throw new UnauthorizedError('Authentication required to access this resource.');
   }
 
-  req.user = { id: userId };
+  req.user = user;
   next();
 }
 
 /**
- * Middleware optionally extracting customer authentication if provided in test environment.
+ * Middleware optionally extracting verified customer authentication.
  */
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
-  const userId = extractUserId(req);
-  if (userId) {
-    req.user = { id: userId };
+  const user = extractAndVerifyUser(req);
+  if (user) {
+    req.user = user;
   }
   next();
 }

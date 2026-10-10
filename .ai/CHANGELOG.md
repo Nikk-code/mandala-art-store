@@ -11,11 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Customer authentication system (registration, password hashing, session/cookie tokens).
+- Customer address book and profile editing management.
 
 ---
 
-## [0.18.0] - 2026-10-05
+## [0.19.0] - 2026-10-05
+
+### Added
+
+- **Step 16: Customer Authentication & Account Foundation**:
+  - **Password Security & Registration API**:
+    - Implemented `POST /api/auth/register` with validation utilities in `backend/src/utils/auth-validation.ts`.
+    - Secure password hashing using `bcryptjs` with work factor 10.
+    - Guaranteed role isolation: public registration defaults to `UserRole.CUSTOMER` and ignores client role manipulation.
+    - Handles email uniqueness conflicts with `409 Conflict` response.
+  - **Login API & Cryptographic JWT Sessions**:
+    - Implemented `POST /api/auth/login` verifying email and bcrypt password hash.
+    - Generic `401 Unauthorized` response on both non-existent emails and incorrect passwords preventing user enumeration.
+    - Issues HMAC-SHA256 signed JWT tokens containing `{ id, email, role }` signed with server-only `JWT_SECRET`.
+    - Delivers session via HttpOnly, SameSite=Lax, Secure (in production) `auth_token` cookie.
+  - **Logout & Profile API**:
+    - Implemented `POST /api/auth/logout` clearing the session cookie.
+    - Implemented `GET /api/auth/me` protected by `requireAuth` returning sanitized `UserDto`.
+  - **Cryptographic Auth Middleware**:
+    - Updated `backend/src/middleware/auth.ts` to cryptographically verify incoming JWTs from cookies or Bearer headers.
+    - Strictly rejects tampered tokens, expired tokens, client-controlled headers (`x-user-id`), and arbitrary UUIDs.
+  - **Frontend Authentication & Navigation Experience**:
+    - Created `AuthProvider` and `useAuth` hook managing authenticated session state and automatic session restoration.
+    - Created responsive, accessible `LoginPage.tsx` (`/login`) and `RegisterPage.tsx` (`/register`).
+    - Updated `Header.tsx` with session-aware navigation links and customer greeting / sign-out button.
+    - Pre-populates customer name, email, and phone in `CheckoutPage.tsx` when authenticated.
+  - **Automated Tests**:
+    - Created `backend/tests/auth.api.test.ts` (14 integration tests for register, login, logout, me, cookies, tampered JWTs, and security assertions).
+    - Created `backend/tests/auth.service.test.ts` (9 unit tests for password hashing, duplicate handling, and authentication).
+    - Created `frontend/tests/auth-service.test.ts`, `frontend/tests/AuthProvider.test.tsx`, `frontend/tests/LoginPage.test.tsx`, and `frontend/tests/RegisterPage.test.tsx`.
+  - **Architecture Decision Record**:
+    - Recorded `ADR-018: Customer Authentication, Cryptographic JWT Session Management & Secure Cookie Architecture` in `.ai/DECISIONS.md`.
 
 ### Added
 
