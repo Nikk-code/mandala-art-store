@@ -543,6 +543,15 @@ describe('OrderService Domain Logic', () => {
         NotFoundError
       );
     });
+
+    it('throws NotFoundError (security anti-enumeration) when order is a guest order without an authenticated owner', async () => {
+      vi.spyOn(mockOrderRepo, 'findById').mockResolvedValue({
+        ...mockDbOrder,
+        userId: null,
+      });
+
+      await expect(service.getOrderById(validOrderId, customerId)).rejects.toThrow(NotFoundError);
+    });
   });
 
   describe('getOrderHistory', () => {

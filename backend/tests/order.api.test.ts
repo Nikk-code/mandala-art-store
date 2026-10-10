@@ -219,4 +219,93 @@ describe('Order REST API Endpoints (/api/orders)', () => {
       expect(spy).toHaveBeenCalledWith(customerId, 2, 5);
     });
   });
+
+  describe('Security & Identity Trust Audit', () => {
+    it('rejects identity spoofing via x-user-id header alone (returns 401)', async () => {
+      const res = await request(app).get('/api/orders').set('x-user-id', customerId);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects identity spoofing via client-controlled body or query params', async () => {
+      const res = await request(app).get(`/api/orders?userId=${customerId}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('strictly rejects unverified Bearer tokens whenever isProduction === true regardless of NODE_ENV', async () => {
+      const { config } = await import('../src/config/env');
+      const originalIsProd = config.isProduction;
+      const originalNodeEnv = config.nodeEnv;
+
+      try {
+        // Case 1: isProduction is true, nodeEnv is 'test'
+        (config as any).isProduction = true;
+        (config as any).nodeEnv = 'test';
+
+        const res1 = await request(app)
+          .get(`/api/orders/${validOrderId}`)
+          .set('Authorization', `Bearer ${customerId}`);
+
+        expect(res1.status).toBe(401);
+        expect(res1.body.success).toBe(false);
+        expect(res1.body.error.code).toBe('UNAUTHORIZED');
+
+        // Case 2: isProduction is true, nodeEnv is 'production'
+        (config as any).isProduction = true;
+        (config as any).nodeEnv = 'production';
+
+        const res2 = await request(app)
+          .get(`/api/orders/${validOrderId}`)
+          .set('Authorization', `Bearer ${customerId}`);
+
+        expect(res2.status).toBe(401);
+        expect(res2.body.success).toBe(false);
+        expect(res2.body.error.code).toBe('UNAUTHORIZED');
+      } finally {
+        (config as any).isProduction = originalIsProd;
+        (config as any).nodeEnv = originalNodeEnv;
+      }
+    });
+
+    it('strictly rejects unverified Bearer tokens in development environment (nodeEnv !== test)', async () => {
+      const { config } = await import('../src/config/env');
+      const originalIsProd = config.isProduction;
+      const originalNodeEnv = config.nodeEnv;
+
+      try {
+        (config as any).isProduction = false;
+        (config as any).nodeEnv = 'development';
+
+        const res = await request(app)
+          .get(`/api/orders/${validOrderId}`)
+          .set('Authorization', `Bearer ${customerId}`);
+
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error.code).toBe('UNAUTHORIZED');
+      } finally {
+        (config as any).isProduction = originalIsProd;
+        (config as any).nodeEnv = originalNodeEnv;
+      }
+    });
+
+    it('strictly denies access to guest orders (order.userId === null) via protected endpoint (returns 404)', async () => {
+      vi.spyOn(orderService, 'getOrderById').mockRejectedValue(
+        new NotFoundError(`Order with ID ${validOrderId} was not found.`)
+      );
+
+      const res = await request(app)
+        .get(`/api/orders/${validOrderId}`)
+        .set('Authorization', `Bearer ${customerId}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    });
+  });
 });

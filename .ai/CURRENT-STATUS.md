@@ -7,7 +7,7 @@
 
 ## 1. Status Summary
 
-The customer order confirmation, order history, and post-payment reliability foundation (Step 15) has been implemented with strict server-side authorization and anti-enumeration protection. The backend exposes `GET /api/orders/:orderId` (requiring authentication, verifying `authenticatedUser.id === order.userId`, and returning `404 Not Found` if the order belongs to another customer to prevent ID enumeration) and `GET /api/orders` (returning paginated customer orders sorted newest first). The frontend provides a reload-safe, authoritative `OrderConfirmationPage` (`/orders/:orderId`) and a dedicated `OrderHistoryPage` (`/orders`) with status badges, line item breakdowns, and direct order navigation. Following Razorpay payment verification in `CheckoutPage`, the cart is reliably cleared and the customer is seamlessly routed to the confirmed order. All 279 backend and frontend tests pass cleanly with 100% build, lint, format, and Prisma validation compliance.
+The customer order confirmation, order history, and post-payment reliability foundation (Step 15) has been implemented with strict server-side authorization and anti-enumeration protection. The backend exposes `GET /api/orders/:orderId` (requiring authentication, verifying `authenticatedUser.id === order.userId`, and returning `404 Not Found` if the order is unowned/guest or belongs to another customer to prevent ID enumeration) and `GET /api/orders` (returning paginated customer orders sorted newest first). Authentication in non-test / production environments strictly rejects client-supplied unverified UUIDs or `x-user-id` headers (401 Unauthorized), with full cryptographic token verification scheduled for Step 16. In the frontend, `CheckoutPage.tsx` immediately renders the verified order confirmation view (`orderNumber`, `orderStatus: CONFIRMED`, `paymentStatus: CAPTURED`) upon receiving the authoritative backend verification response and clears the cart only after verification succeeds. Reload-safe order retrieval (`/orders/:orderId`) and order history (`/orders`) are supported for authenticated customer accounts. All 283 backend and frontend tests pass cleanly with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -240,25 +240,26 @@ The customer order confirmation, order history, and post-payment reliability fou
 ### Phase 15: Order Confirmation, Order History & Post-Payment Reliability (Completed)
 
 - [x] **Secure Backend Order Retrieval & Anti-Enumeration Authorization**:
-  - Created authentication middleware (`backend/src/middleware/auth.ts`) supporting `requireAuth` and `optionalAuth` extracting verified user tokens (`Authorization: Bearer <uuid>` or `x-user-id`).
+  - Created authentication middleware (`backend/src/middleware/auth.ts`) supporting `requireAuth` and `optionalAuth`.
+  - Enforced strict environment isolation: in non-test / production environments (`config.isProduction || config.nodeEnv !== 'test'`), unverified client UUIDs, `x-user-id` headers, or query parameters are strictly rejected (`401 Unauthorized`). Cryptographic JWT authentication is scheduled for Step 16.
   - Created `GET /api/orders/:orderId` route in `backend/src/routes/order.routes.ts` with strict ownership validation (`authenticatedUser.id === order.userId`).
-  - Protected against resource enumeration by throwing `404 Not Found` if the requested order belongs to another customer.
+  - Protected against resource enumeration by throwing `404 Not Found` if the requested order belongs to another customer or is an unauthenticated guest order.
   - Returns customer-safe `OrderDetailsDto` including line items, shipping destination, order totals, and authoritative payment status without exposing database internals or secrets.
 - [x] **Customer Order History API**:
   - Implemented `GET /api/orders` in `backend/src/routes/order.routes.ts` and `backend/src/controllers/order.controller.ts`.
   - Implemented `OrderRepository.findByUserId` and `OrderService.getOrderHistory` with server-side pagination (`page`, `pageSize`, `total`, `totalPages`) and descending chronological ordering (`createdAt: 'desc'`).
 - [x] **Order Confirmation & Order Details Frontend Experience**:
   - Created `OrderConfirmationPage` (`/orders/:orderId`) displaying order reference, placed date, delivery destination snapshot, ordered artworks list, line prices, tax/shipping notes, and verified order/payment status badges.
-  - Full reload/refresh resilience: page fetches authoritative order status directly from backend on mount rather than relying solely on ephemeral React navigation state.
+  - Supported reload resilience for authenticated customer orders fetching authoritative status directly from the backend.
 - [x] **Customer Order History Frontend Experience**:
   - Created `OrderHistoryPage` (`/orders`) featuring paginated order cards, order numbers, placement dates, total amounts, status badges, included artwork summaries, and direct links to full order details.
   - Handled loading (`LoadingState`), empty order history (`EmptyState`), and server/network retry states (`ErrorState`).
   - Added "My Orders" navigation link to desktop navbar and mobile drawer in `Header.tsx`.
 - [x] **Checkout Flow Post-Payment Reliability**:
-  - Updated `CheckoutPage.tsx` Razorpay modal handler to verify signature on backend, clear cart upon verification success, and navigate directly to `/orders/:orderId`.
+  - Updated `CheckoutPage.tsx` Razorpay modal handler to verify signature on backend, clear cart only upon verification success, and display verified confirmation view (`orderNumber`, `orderStatus: CONFIRMED`, `paymentStatus: CAPTURED`).
   - Cart is never cleared on unverified callbacks or verification failures, preserving customer intent and preventing order duplication on reload.
 - [x] **Automated Tests & Quality**:
-  - 15 backend automated test suites passing with 163 tests (`backend/tests/`).
+  - 15 backend automated test suites passing with 167 tests (`backend/tests/`).
   - 18 frontend automated test suites passing with 116 tests (`frontend/tests/`).
   - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
@@ -268,7 +269,7 @@ The customer order confirmation, order history, and post-payment reliability fou
 
 ## 3. In-Progress Work
 
-- _None_ (Step 15 is complete and ready for review).
+- _None_ (Step 15 is complete and verified).
 
 ---
 
@@ -278,9 +279,10 @@ The customer order confirmation, order history, and post-payment reliability fou
 
 ---
 
-## 5. Known Issues & Blockers
+## 5. Known Limitations & Architecture Notes
 
-- _None_.
+- **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).
+- **Authentication Credentials**: Production authentication (`requireAuth`) strictly denies unverified client headers / UUID tokens with 401 Unauthorized. Full cryptographic JWT / session token authentication is scheduled for Step 16.
 
 ---
 

@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UnauthorizedError } from '../errors';
+import { config } from '../config/env';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -19,9 +20,21 @@ declare global {
 }
 
 /**
- * Extracts and validates the customer user ID from Authorization header or x-user-id header.
+ * Extracts the authenticated user identity.
+ *
+ * NOTE: Full cryptographic JWT authentication & session token verification is scheduled for Step 16.
+ * In non-test / production environments, client-supplied unverified UUIDs or x-user-id headers are
+ * strictly rejected to prevent identity spoofing and impersonation attacks.
+ *
+ * Test-only identity injection is strictly restricted to automated testing (NODE_ENV === 'test').
  */
 function extractUserId(req: Request): string | null {
+  // Never permit test identity injection in production or when not in test mode
+  if (config.isProduction || config.nodeEnv !== 'test') {
+    return null;
+  }
+
+  // Isolated test harness identity extraction (active ONLY in NODE_ENV === 'test')
   const authHeader = req.headers.authorization;
   if (authHeader && typeof authHeader === 'string') {
     const parts = authHeader.trim().split(' ');
@@ -30,14 +43,7 @@ function extractUserId(req: Request): string | null {
       if (UUID_REGEX.test(token)) {
         return token;
       }
-    } else if (UUID_REGEX.test(authHeader.trim())) {
-      return authHeader.trim();
     }
-  }
-
-  const userIdHeader = req.headers['x-user-id'];
-  if (userIdHeader && typeof userIdHeader === 'string' && UUID_REGEX.test(userIdHeader.trim())) {
-    return userIdHeader.trim();
   }
 
   return null;
@@ -58,7 +64,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 }
 
 /**
- * Middleware optionally extracting customer authentication if provided.
+ * Middleware optionally extracting customer authentication if provided in test environment.
  */
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const userId = extractUserId(req);

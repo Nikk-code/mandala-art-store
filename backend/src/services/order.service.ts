@@ -251,8 +251,8 @@ export class OrderService {
       throw new NotFoundError(`Order with ID "${cleanOrderId}" was not found.`);
     }
 
-    // Strict Authorization: Avoid resource enumeration by returning NotFoundError if order belongs to another customer
-    if (order.userId && order.userId !== cleanUserId) {
+    // Strict Authorization: Avoid resource enumeration by returning NotFoundError if order is a guest order or belongs to another customer
+    if (!order.userId || order.userId !== cleanUserId) {
       throw new NotFoundError(`Order with ID "${cleanOrderId}" was not found.`);
     }
 
