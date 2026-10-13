@@ -5,6 +5,7 @@ import { app } from '../src/app';
 import { orderService } from '../src/services';
 import { config } from '../src/config/env';
 import { NotFoundError } from '../src/errors';
+import { userRepository } from '../src/repositories/user.repository';
 import type { OrderDetailsDto, OrderHistoryResponseDto } from '../src/types';
 
 describe('Order REST API Endpoints (/api/orders)', () => {
@@ -96,6 +97,20 @@ describe('Order REST API Endpoints (/api/orders)', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(userRepository, 'findById').mockImplementation(async (id: string) => {
+      return {
+        id,
+        email: 'priya@example.com',
+        passwordHash: 'hashed_password',
+        firstName: 'Priya',
+        lastName: 'Sharma',
+        phone: '9876543210',
+        role: 'CUSTOMER',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any;
+    });
   });
 
   describe('GET /api/orders/:orderId', () => {
@@ -315,6 +330,40 @@ describe('Order REST API Endpoints (/api/orders)', () => {
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
       expect(res.body.error.code).toBe('NOT_FOUND');
+    });
+
+    it('rejects deactivated customer from accessing order details with 401', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue({
+        id: customerId,
+        email: 'priya@example.com',
+        isActive: false,
+      } as any);
+
+      const res = await request(app)
+        .get(`/api/orders/${validOrderId}`)
+        .set('Authorization', `Bearer ${customerToken}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+      expect(res.body.error.message).toContain('deactivated');
+    });
+
+    it('rejects deactivated customer from accessing order history with 401', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue({
+        id: customerId,
+        email: 'priya@example.com',
+        isActive: false,
+      } as any);
+
+      const res = await request(app)
+        .get('/api/orders')
+        .set('Authorization', `Bearer ${customerToken}`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+      expect(res.body.error.message).toContain('deactivated');
     });
   });
 });

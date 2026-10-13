@@ -113,6 +113,47 @@ export async function apiPost<T>(path: string, body?: unknown, options?: Request
   return response.json() as Promise<T>;
 }
 
+export async function apiPatch<T>(path: string, body?: unknown, options?: RequestInit): Promise<T> {
+  const url = normalizeUrl(path);
+  const token = getAuthToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options?.headers as Record<string, string>),
+  };
+
+  const response = await fetch(url, {
+    method: 'PATCH',
+    credentials: 'include',
+    ...options,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    let errorCode: string | undefined;
+    let errorDetails: unknown;
+
+    try {
+      const errorJson = (await response.json()) as ApiErrorResponse;
+      if (errorJson && errorJson.error) {
+        errorMessage = errorJson.error.message || errorMessage;
+        errorCode = errorJson.error.code;
+        errorDetails = errorJson.error.details;
+      }
+    } catch {
+      // Non-JSON error body fallback
+    }
+
+    throw new ApiError(errorMessage, response.status, errorCode, errorDetails);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function fetchHealth(): Promise<ApiHealthResponse> {
   return apiGet<ApiHealthResponse>('health');
 }

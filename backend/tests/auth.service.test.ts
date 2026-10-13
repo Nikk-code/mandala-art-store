@@ -165,4 +165,67 @@ describe('AuthService Unit Tests', () => {
       );
     });
   });
+
+  describe('updateProfile', () => {
+    it('updates allowed profile fields and returns sanitized user DTO', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+      vi.spyOn(userRepo, 'update').mockResolvedValue({
+        ...sampleUser,
+        firstName: 'UpdatedFirst',
+        lastName: 'UpdatedLast',
+        phone: '9876543210',
+      });
+
+      const updated = await authService.updateProfile(sampleUser.id, {
+        firstName: 'UpdatedFirst',
+        lastName: 'UpdatedLast',
+        phone: '9876543210',
+      });
+
+      expect(updated.firstName).toBe('UpdatedFirst');
+      expect(updated.lastName).toBe('UpdatedLast');
+      expect(updated.phone).toBe('9876543210');
+      expect((updated as any).passwordHash).toBeUndefined();
+    });
+
+    it('ignores and never updates protected fields (role, passwordHash, email, isActive)', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepo, 'update').mockResolvedValue({
+        ...sampleUser,
+        firstName: 'NewName',
+      });
+
+      await authService.updateProfile(sampleUser.id, {
+        firstName: 'NewName',
+        role: 'ADMIN',
+        passwordHash: 'hacked_hash',
+        email: 'attacker@example.com',
+        isActive: false,
+      } as any);
+
+      // Verify update called ONLY with allowed fields
+      expect(updateSpy).toHaveBeenCalledWith(sampleUser.id, {
+        firstName: 'NewName',
+      });
+    });
+
+    it('throws ValidationError when input payload contains no valid fields', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+
+      await expect(authService.updateProfile(sampleUser.id, {})).rejects.toThrow(ValidationError);
+    });
+
+    it('throws UnauthorizedError when updating a deactivated or nonexistent account', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue({
+        ...sampleUser,
+        isActive: false,
+      });
+
+      await expect(
+        authService.updateProfile(sampleUser.id, {
+          firstName: 'NewName',
+        })
+      ).rejects.toThrow(UnauthorizedError);
+    });
+  });
 });

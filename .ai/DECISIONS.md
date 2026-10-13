@@ -23,6 +23,8 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-015: Server-Authoritative Razorpay Payment Order Initialization & Duplicate Safety](#adr-015-server-authoritative-razorpay-payment-order-initialization--duplicate-safety)
 - [ADR-016: Server-Side Razorpay Payment Verification, Webhook Handling & Atomic Order Confirmation](#adr-016-server-side-razorpay-payment-verification-webhook-handling--atomic-order-confirmation)
 - [ADR-017: Customer Order Confirmation, Order History & Anti-Enumeration Access Control](#adr-017-customer-order-confirmation-order-history--anti-enumeration-access-control)
+- [ADR-018: Customer Authentication, Cryptographic JWT Session Management & Secure Cookie Architecture](#adr-018-customer-authentication-cryptographic-jwt-session-management--secure-cookie-architecture)
+- [ADR-019: Customer Profile Editing, Authentication Rate Limiting & Account Security Hardening](#adr-019-customer-profile-editing-authentication-rate-limiting--account-security-hardening)
 
 ---
 
@@ -313,3 +315,38 @@ This document tracks significant architectural, technical, and governance decisi
   - _Stateful database session table without JWT_: Adds unnecessary database query overhead on every request without horizontal scaling advantages at this stage.
   - _Trusting client-provided user IDs_: Insecure direct object reference and identity spoofing vulnerability.
 - **Consequences**: Production-ready cryptographic security, resistance to XSS session harvesting, zero email enumeration, seamless customer authentication experience, and full compatibility across modern browsers.
+
+---
+
+### ADR-019: Customer Profile Editing, Authentication Rate Limiting & Account Security Hardening
+
+- **Date**: 2026-10-13
+- **Status**: Accepted
+- **Context**: Following Step 16 customer authentication, the account experience required completion of customer self-service profile updates, mitigation of brute-force attacks on sensitive auth endpoints, immediate enforcement of account deactivation, and formal documentation of session lifecycle and guest order recovery limitations.
+- **Decision**:
+  1. **Authentication Rate Limiting (`express-rate-limit`)**:
+     - Applied in-memory rate limiting to `POST /api/auth/login` and `POST /api/auth/register` (20 requests per 15-minute sliding window per client IP in production).
+     - Standard RFC draft-6 `RateLimit-*` headers returned.
+     - Custom safe JSON error response: `{ success: false, error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many attempts. Please try again later.' } }`.
+     - Documented multi-instance limitation: Process-local in-memory limiter does not share state across horizontally scaled cluster instances. A shared distributed store (such as Redis) is deferred until multi-instance infrastructure is introduced.
+  2. **Customer Profile Updates (`PATCH /api/auth/me`)**:
+     - Authenticated customers may update `firstName`, `lastName`, and Indian mobile `phone`.
+     - Target account ID is derived strictly from verified `req.user.id`. Client-supplied user IDs or email updates are rejected/ignored.
+     - Privileged and immutable fields (`id`, `email`, `role`, `passwordHash`, `isActive`, `createdAt`, `updatedAt`) cannot be modified through this endpoint.
+     - Strict sanitization and validation: input is trimmed, empty strings disallowed, phone validated against 10-digit Indian mobile format (`^[6-9]\d{9}$`).
+     - Returns sanitized `UserDto`.
+  3. **Deactivated Account Defense-in-Depth**:
+     - `requireAuth` queries `userRepository.findById(userId)` upon token verification to verify that the user exists and `isActive === true`.
+     - Deactivated or deleted accounts immediately receive `401 Unauthorized` across all protected routes (`/api/orders`, `/api/orders/:orderId`, `GET /api/auth/me`, `PATCH /api/auth/me`), revoking access even if an unexpired JWT is presented.
+  4. **Session and Logout Guarantees**:
+     - Sessions use 7-day signed JWTs delivered via HttpOnly cookies.
+     - Logout explicitly clears the `auth_token` cookie across browser sessions.
+     - Copying a valid JWT token prior to logout allows access until token expiry or account deactivation, as immediate distributed token blacklisting without Redis/session state is not part of the current minimal architecture.
+  5. **Guest Order Recovery Limitations**:
+     - Guest orders (`order.userId === null`) remain non-retrievable via unauthenticated UUID lookups to prevent resource enumeration and IDOR vulnerabilities.
+     - Guest order confirmation is rendered immediately post-payment from in-memory state. Reloadable guest order access is deferred to a future milestone implementing cryptographically signed email access links or guest access tokens.
+- **Alternatives Considered**:
+  - _Distributed session store (Redis) or database session table_: Adds unnecessary operational complexity and infrastructure overhead for the current deployment stage.
+  - _Allowing email updates via profile patch_: Deferred to future phase requiring email verification workflows to prevent account takeover.
+  - _Public UUID order lookup for guests_: Rejected due to severe IDOR risk.
+- **Consequences**: Hardened authentication against brute force, secure self-service profile maintenance for customers, immediate lockout of deactivated users, clear documentation of in-memory and logout limitations, and no schema or database regressions.

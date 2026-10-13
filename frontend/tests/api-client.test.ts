@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { apiGet, apiPost, fetchHealth, ApiError } from '@/services/api-client';
+import { apiGet, apiPost, apiPatch, fetchHealth, ApiError } from '@/services/api-client';
 
 describe('Frontend API Client Foundation', () => {
   beforeEach(() => {
@@ -116,6 +116,37 @@ describe('Frontend API Client Foundation', () => {
           'Idempotency-Key': 'key-123',
         }),
         body: JSON.stringify(payload),
+      })
+    );
+  });
+
+  it('sends PATCH request with payload and credentials using apiPatch', async () => {
+    const mockResponse = {
+      success: true,
+      data: {
+        user: { id: 'user-1', firstName: 'PriyaUpdated' },
+      },
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockResponse),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const updatePayload = { firstName: 'PriyaUpdated' };
+    const result = await apiPatch<typeof mockResponse>('auth/me', updatePayload);
+
+    expect(result).toEqual(mockResponse);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/me'),
+      expect.objectContaining({
+        method: 'PATCH',
+        credentials: 'include',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify(updatePayload),
       })
     );
   });

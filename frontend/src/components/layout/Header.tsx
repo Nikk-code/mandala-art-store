@@ -106,9 +106,13 @@ export function Header(): ReactNode {
           <div className="hidden sm:flex items-center text-xs">
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2.5 pl-2 border-l border-art-stone/60">
-                <span className="font-medium text-art-charcoal truncate max-w-[120px]">
+                <Link
+                  to="/account"
+                  className="font-medium text-art-charcoal hover:text-art-ochre transition-colors truncate max-w-[120px]"
+                  title="View Account Profile"
+                >
                   {user.firstName}
-                </span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => logout()}
@@ -194,16 +198,25 @@ export function Header(): ReactNode {
             {isAuthenticated && user ? (
               <div className="px-3 py-2 space-y-2">
                 <p className="text-xs text-stone-500">Signed in as {user.email}</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full text-left font-semibold text-sm text-art-terracotta hover:underline"
-                >
-                  Sign Out
-                </button>
+                <div className="flex flex-col space-y-1.5 pt-1">
+                  <Link
+                    to="/account"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="font-medium text-sm text-art-charcoal hover:text-art-ochre"
+                  >
+                    My Account Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left font-semibold text-sm text-art-terracotta hover:underline"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 px-1 pt-1">

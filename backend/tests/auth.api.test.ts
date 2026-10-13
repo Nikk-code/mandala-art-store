@@ -299,6 +299,175 @@ describe('Auth REST API Endpoints (/api/auth)', () => {
     });
   });
 
+  describe('PATCH /api/auth/me', () => {
+    it('successfully updates permitted customer profile fields and returns sanitized user', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      vi.spyOn(userRepository, 'update').mockResolvedValue({
+        ...sampleUser,
+        firstName: 'AnanyaUpdated',
+        lastName: 'SharmaUpdated',
+        phone: '9876543210',
+      });
+
+      const token = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      );
+
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          firstName: 'AnanyaUpdated',
+          lastName: 'SharmaUpdated',
+          phone: '9876543210',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.user.firstName).toBe('AnanyaUpdated');
+      expect(res.body.data.user.lastName).toBe('SharmaUpdated');
+      expect(res.body.data.user.phone).toBe('9876543210');
+      expect(res.body.data.user.passwordHash).toBeUndefined();
+    });
+
+    it('strips and prevents modification of protected fields (role, passwordHash, email, id)', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepository, 'update').mockResolvedValue({
+        ...sampleUser,
+        firstName: 'NewFirst',
+      });
+
+      const token = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      );
+
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          firstName: 'NewFirst',
+          role: 'ADMIN',
+          passwordHash: 'injected_hash',
+          email: 'newemail@evil.com',
+          id: 'other-user-uuid',
+          isActive: false,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      // Ensure update called ONLY with verified user ID and allowed fields
+      expect(updateSpy).toHaveBeenCalledWith(sampleUserId, {
+        firstName: 'NewFirst',
+      });
+    });
+
+    it('rejects unauthenticated request to PATCH /me with 401', async () => {
+      const res = await request(app).patch('/api/auth/me').send({ firstName: 'Anon' });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects tampered JWT signature with 401', async () => {
+      const forgedToken = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        'tampered_key'
+      );
+
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${forgedToken}`)
+        .send({ firstName: 'Tampered' });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects update if user account has been deactivated in the database', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue({
+        ...sampleUser,
+        isActive: false,
+      });
+
+      const token = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      );
+
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ firstName: 'Deactivated' });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects invalid input payloads with 400 Validation Error', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+
+      const token = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      );
+
+      // Empty payload
+      const res1 = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+      expect(res1.status).toBe(400);
+
+      // Invalid phone format
+      const res2 = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ phone: '123' });
+      expect(res2.status).toBe(400);
+    });
+
+    it('ensures Customer A cannot update Customer B profile through client identity spoofing', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepository, 'update').mockResolvedValue({
+        ...sampleUser,
+        firstName: 'LegitCustomerA',
+      });
+
+      const customerAToken = jwt.sign(
+        { id: sampleUserId, email: 'customerA@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      );
+
+      const victimId = '99999999-9999-4999-8999-999999999999';
+
+      const res = await request(app)
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${customerAToken}`)
+        .send({
+          id: victimId,
+          userId: victimId,
+          firstName: 'LegitCustomerA',
+        });
+
+      expect(res.status).toBe(200);
+      // Must update Customer A (sampleUserId) only, never victimId
+      expect(updateSpy).toHaveBeenCalledWith(sampleUserId, {
+        firstName: 'LegitCustomerA',
+      });
+      expect(updateSpy).not.toHaveBeenCalledWith(victimId, expect.anything());
+    });
+  });
+
   describe('CORS and Origin Security', () => {
     it('does not set Access-Control-Allow-Origin for untrusted origins', async () => {
       const res = await request(app)

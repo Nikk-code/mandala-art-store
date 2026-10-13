@@ -4,6 +4,8 @@ import { UnauthorizedError } from '../errors';
 import { config } from '../config/env';
 import type { JwtUserPayload } from '../types/auth';
 
+import { userRepository } from '../repositories/user.repository';
+
 export interface AuthenticatedUser {
   id: string;
   email: string;
@@ -71,25 +73,59 @@ function extractAndVerifyUser(req: Request): AuthenticatedUser | null {
 
 /**
  * Middleware requiring valid customer authentication.
+ * Cryptographically verifies token and ensures customer account is active in the database.
  */
-export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
-  const user = extractAndVerifyUser(req);
+export async function requireAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  const tokenPayload = extractAndVerifyUser(req);
 
-  if (!user) {
-    throw new UnauthorizedError('Authentication required to access this resource.');
+  if (!tokenPayload) {
+    return next(new UnauthorizedError('Authentication required to access this resource.'));
   }
 
-  req.user = user;
-  next();
+  try {
+    const user = await userRepository.findById(tokenPayload.id);
+
+    if (!user || !user.isActive) {
+      return next(new UnauthorizedError('User account not found or deactivated.'));
+    }
+
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
 
 /**
  * Middleware optionally extracting verified customer authentication.
  */
-export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
-  const user = extractAndVerifyUser(req);
-  if (user) {
-    req.user = user;
+export async function optionalAuth(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  const tokenPayload = extractAndVerifyUser(req);
+
+  if (!tokenPayload) {
+    return next();
   }
-  next();
+
+  try {
+    const user = await userRepository.findById(tokenPayload.id);
+
+    if (user && user.isActive) {
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      };
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 }

@@ -11,6 +11,7 @@ import {
   OrderHistoryPage,
   LoginPage,
   RegisterPage,
+  AccountPage,
 } from '@/pages';
 import { CartProvider, AuthProvider } from '@/context';
 
@@ -48,6 +49,7 @@ export function App(): ReactNode {
               <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
+              <Route path="account" element={<AccountPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

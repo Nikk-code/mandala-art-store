@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { UserDto, RegisterInput, LoginInput } from '@/types';
+import type { UserDto, RegisterInput, LoginInput, UpdateProfileInput } from '@/types';
 
 export interface AuthContextValue {
   user: UserDto | null;
@@ -9,6 +9,7 @@ export interface AuthContextValue {
   register: (data: RegisterInput) => Promise<UserDto>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<UserDto | null>;
+  updateProfile: (data: UpdateProfileInput) => Promise<UserDto>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -25,6 +26,9 @@ export const defaultAuthContextValue: AuthContextValue = {
   },
   logout: async () => {},
   refreshUser: async () => null,
+  updateProfile: async () => {
+    throw new Error('useAuth must be used within an AuthProvider to perform updateProfile');
+  },
 };
 
 export function useAuth(): AuthContextValue {

@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as apiClient from '@/services/api-client';
-import { registerUser, loginUser, logoutUser, fetchCurrentUser } from '@/services/auth-service';
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  fetchCurrentUser,
+  updateUserProfile,
+} from '@/services/auth-service';
 import type { UserDto } from '@/types';
 
 describe('Auth Service Client API', () => {
@@ -84,6 +90,21 @@ describe('Auth Service Client API', () => {
 
       expect(apiSpy).toHaveBeenCalledWith('auth/me');
       expect(result).toEqual(sampleUser);
+    });
+  });
+
+  describe('updateUserProfile', () => {
+    it('sends PATCH request to auth/me and returns updated user DTO', async () => {
+      const updatedUser = { ...sampleUser, firstName: 'Updated' };
+      const apiSpy = vi.spyOn(apiClient, 'apiPatch').mockResolvedValue({
+        success: true,
+        data: { user: updatedUser },
+      });
+
+      const result = await updateUserProfile({ firstName: 'Updated' });
+
+      expect(apiSpy).toHaveBeenCalledWith('auth/me', { firstName: 'Updated' });
+      expect(result).toEqual(updatedUser);
     });
   });
 });

@@ -22,6 +22,12 @@ export interface LoginInput {
   password: string;
 }
 
+export interface UpdateProfileInput {
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+}
+
 export interface AuthResponseData {
   user: UserDto;
 }

@@ -24,6 +24,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface UpdateProfileRequest {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+}
+
 export interface AuthResponseDto {
   user: UserDto;
 }

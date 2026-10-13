@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
-import { fetchCurrentUser, loginUser, registerUser, logoutUser } from '@/services/auth-service';
-import type { UserDto, RegisterInput, LoginInput } from '@/types';
+import {
+  fetchCurrentUser,
+  loginUser,
+  registerUser,
+  logoutUser,
+  updateUserProfile,
+} from '@/services/auth-service';
+import type { UserDto, RegisterInput, LoginInput, UpdateProfileInput } from '@/types';
 import { AuthContext, type AuthContextValue } from './AuthContext';
 
 export interface AuthProviderProps {
@@ -60,6 +66,17 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     }
   };
 
+  const updateProfile = async (data: UpdateProfileInput): Promise<UserDto> => {
+    setIsLoading(true);
+    try {
+      const updatedUser = await updateUserProfile(data);
+      setUser(updatedUser);
+      return updatedUser;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: AuthContextValue = {
     user,
     isAuthenticated: Boolean(user),
@@ -68,6 +85,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     register,
     logout,
     refreshUser,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

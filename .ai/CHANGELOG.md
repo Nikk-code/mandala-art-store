@@ -11,7 +11,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Customer address book and profile editing management.
+- Customer address book and checkout address integration.
+
+---
+
+## [0.20.0] - 2026-10-13
+
+### Added
+
+- **Step 17: Customer Account Completion & Security Hardening**:
+  - **Authentication Rate Limiting**:
+    - Integrated `express-rate-limit` for `POST /api/auth/login` and `POST /api/auth/register`.
+    - Enforced 20 requests per 15-minute sliding window per client IP in production.
+    - Standard RFC draft-6 `RateLimit-*` headers returned with safe JSON response (`429 Too Many Requests`).
+    - Documented process-local in-memory limiter behavior and multi-instance deployment limitations.
+  - **Session & Logout Security Hardening**:
+    - Updated `requireAuth` to verify that the customer account exists in the database and `isActive === true`.
+    - Deactivated or deleted accounts immediately receive `401 Unauthorized` across all protected routes.
+    - Verified `POST /api/auth/logout` clears session cookies across browsers.
+  - **Customer Profile Update API**:
+    - Implemented `PATCH /api/auth/me` allowing authenticated customers to update approved profile fields (`firstName`, `lastName`, `phone`).
+    - Exclusively derives target identity from verified token (`req.user.id`).
+    - Disallows client modification of `role`, `passwordHash`, `email`, `isActive`, or `id`.
+    - Validates and sanitizes input (Indian mobile phone regex, whitespace trimming).
+    - Returns sanitized `UserDto`.
+  - **Frontend Account Experience**:
+    - Added responsive, accessible `AccountPage.tsx` mounted at `/account`.
+    - Displays patron profile overview card with initials, role badge, member since date, and order history navigation.
+    - Profile update form with real-time validation, loading indicators, success feedback, and double-submission guard.
+    - Protected route redirects anonymous visitors to `/login?redirect=/account`.
+    - Connected header customer greeting and mobile drawer links to `/account`.
+  - **Automated Tests**:
+    - Created `backend/tests/rate-limit.test.ts` (5 integration tests for login/register rate limit thresholds, 429 status, and headers).
+    - Added 7 tests to `backend/tests/auth.api.test.ts` for `PATCH /api/auth/me` (success, field restriction, unauthenticated, tampered JWT, deactivated account, validation, and anti-spoofing).
+    - Added 4 tests to `backend/tests/auth.service.test.ts` for profile updates.
+    - Added 2 tests to `backend/tests/order.api.test.ts` verifying deactivated account rejection on order endpoints.
+    - Created `frontend/tests/AccountPage.test.tsx` (8 component and flow tests).
+    - Added unit tests for `apiPatch` and `updateUserProfile`.
+  - **Documentation & Decisions**:
+    - Recorded `ADR-019: Customer Profile Editing, Authentication Rate Limiting & Account Security Hardening` in `.ai/DECISIONS.md`.
+    - Updated `.ai/SECURITY-STANDARDS.md` with rate limiting, session/logout guarantees, profile update rules, and guest order recovery limitations.
 
 ---
 

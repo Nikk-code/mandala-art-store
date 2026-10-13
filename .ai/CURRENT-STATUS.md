@@ -1,13 +1,13 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-05  
-**Current Phase**: `CUSTOMER AUTHENTICATION & ACCOUNT FOUNDATION (Step 16 Complete)`
+**Last Updated**: 2026-10-13  
+**Current Phase**: `CUSTOMER ACCOUNT COMPLETION & SECURITY HARDENING (Step 17 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-The customer authentication, registration, login, cryptographic session management, and account foundation (Step 16) has been implemented with production-grade security. The backend exposes `POST /api/auth/register` (normalizing email, hashing passwords with bcrypt work factor 10, creating customer accounts, and issuing HttpOnly session cookies), `POST /api/auth/login` (generic 401 response preventing email enumeration, verifying bcrypt hash, issuing HttpOnly session cookies), `POST /api/auth/logout` (clearing session cookies), and `GET /api/auth/me` (returning sanitized customer profiles without exposing password hashes or secrets). Authentication middleware (`backend/src/middleware/auth.ts`) cryptographically verifies HMAC-SHA256 signed JWT tokens from HttpOnly cookies or Bearer headers with zero tolerance for unverified client headers (`x-user-id`) or arbitrary UUIDs. In the frontend, `LoginPage.tsx` and `RegisterPage.tsx` provide accessible, responsive art-store-styled forms, and `Header.tsx` provides session-aware navigation. All 39 test suites (17 backend / 194 tests, 22 frontend / 135 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Customer account completion and security hardening (Step 17) has been implemented and thoroughly verified. Authentication endpoints `POST /api/auth/login` and `POST /api/auth/register` are protected by in-memory rate limiting via `express-rate-limit` returning standard `RateLimit-*` headers and safe RFC 429 error payloads without logging credentials. Customer profile updating is implemented via `PATCH /api/auth/me`, deriving target identity strictly from verified session tokens, allowing updates exclusively to permitted fields (`firstName`, `lastName`, `phone`), and strictly rejecting modification of protected fields (`role`, `passwordHash`, `email`, `isActive`, `id`). Deactivated accounts are rejected with `401 Unauthorized` across all protected routes via database user verification in `requireAuth`. The frontend features a responsive, accessible `AccountPage.tsx` (`/account`) with patron overview card, read-only account details, member timeline, order history link, and an interactive profile edit form with validation. All 41 test suites (18 backend / 217 tests, 23 frontend / 145 tests, totaling 362 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -295,22 +295,57 @@ The customer authentication, registration, login, cryptographic session manageme
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
 
+### Phase 17: Customer Account Completion & Security Hardening (Completed)
+
+- [x] **Authentication Rate Limiting**:
+  - Protected `POST /api/auth/login` and `POST /api/auth/register` with `express-rate-limit`.
+  - Configured 20 requests per 15-minute sliding window per client IP in production.
+  - Returned standard RFC draft-6 `RateLimit-*` headers and custom safe error response (`429 Too Many Requests`).
+  - Zero logging of passwords, tokens, or sensitive credentials.
+  - Documented process-local in-memory behavior and multi-instance limitations.
+- [x] **Session & Logout Hardening**:
+  - Preserved 7-day HMAC-SHA256 signed JWT session cookies with HttpOnly, SameSite=Lax, Secure attributes.
+  - Clear cookies on logout via `POST /api/auth/logout`.
+  - Added database user verification in `requireAuth` to instantly reject deactivated or deleted accounts with `401 Unauthorized` across `/api/orders`, `/api/orders/:orderId`, `GET /api/auth/me`, and `PATCH /api/auth/me`.
+  - Documented token lifecycle and revocation constraints without requiring Redis or database session tables.
+- [x] **Customer Profile Completion API**:
+  - Implemented `PATCH /api/auth/me` in `backend/src/routes/auth.routes.ts`, `auth.controller.ts`, and `auth.service.ts`.
+  - Identity strictly derived from authenticated `req.user.id`; client-provided target IDs or emails are ignored/rejected.
+  - Enforced permitted fields whitelist (`firstName`, `lastName`, `phone`); protected fields (`role`, `passwordHash`, `email`, `isActive`, `id`) cannot be modified.
+  - Validated and sanitized input (Indian mobile phone validation `^[6-9]\d{9}$`, whitespace trimming).
+  - Returns sanitized `UserDto`.
+- [x] **Frontend Account Experience**:
+  - Created responsive, accessible `AccountPage.tsx` mounted at `/account`.
+  - Patron overview card with member initials, membership badge, member since date, and direct CTA to `/orders`.
+  - Profile edit form with loading, success feedback, validation, and double-submit prevention.
+  - Restores session on refresh and redirects unauthenticated guests to `/login?redirect=/account`.
+  - Added "My Account" link to customer name in desktop navigation and mobile drawer in `Header.tsx`.
+- [x] **Automated Tests & Quality**:
+  - 18 backend automated test suites passing with 217 tests (`backend/tests/`).
+  - 23 frontend automated test suites passing with 145 tests (`frontend/tests/`).
+  - 41 total test suites with 362 passing tests.
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 16 is complete and verified).
+- _None_ (Step 17 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 17: Customer Address Book & Account Management (Saved shipping addresses, Profile editing, and default address selection).
+- Step 18: Customer Address Management (Saved delivery addresses, default address selection, and address book checkout integration).
 
 ---
 
 ## 5. Known Limitations & Architecture Notes
 
+- **In-Memory Rate Limiting**: The rate limiter tracks requests in local Node.js process memory. In a clustered or multi-instance deployment behind a load balancer, limits are enforced per instance rather than globally. A distributed store (such as Redis) will be introduced when multi-instance production infrastructure is deployed.
+- **Session Revocation Window**: JWT session tokens have a 7-day lifespan. Logout clears the client cookie, but copied tokens remain cryptographically valid until expiration unless the user account is deactivated in the database (which immediately revokes access via `requireAuth`).
 - **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).
 - **Password Reset & Email Verification**: Automated password reset links and email verification are planned for a subsequent communication integration step.
 - **Cart Merging**: Guest carts are persisted in client localStorage; customer login retains the active cart items. Server-side cart persistence across multiple devices will be addressed in a future milestone.

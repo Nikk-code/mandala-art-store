@@ -4,7 +4,11 @@ import { UserRole, type User } from '@prisma/client';
 import { config } from '../config/env';
 import { userRepository, type UserRepository } from '../repositories/user.repository';
 import { ConflictError, UnauthorizedError } from '../errors';
-import { validateRegisterInput, validateLoginInput } from '../utils/auth-validation';
+import {
+  validateRegisterInput,
+  validateLoginInput,
+  validateUpdateProfileInput,
+} from '../utils/auth-validation';
 import type { UserDto, UserRoleType, JwtUserPayload } from '../types/auth';
 
 const BCRYPT_SALT_ROUNDS = 10;
@@ -117,6 +121,27 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  /**
+   * Updates permitted profile fields (firstName, lastName, phone) for authenticated user.
+   * Privileged fields (role, passwordHash, email, isActive) can never be updated through this method.
+   */
+  public async updateProfile(userId: string, input: unknown): Promise<UserDto> {
+    const validated = validateUpdateProfileInput(input);
+
+    const user = await this.userRepo.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedError('User account not found or deactivated.');
+    }
+
+    const updatedUser = await this.userRepo.update(userId, {
+      ...(validated.firstName ? { firstName: validated.firstName } : {}),
+      ...(validated.lastName ? { lastName: validated.lastName } : {}),
+      ...(validated.phone !== undefined ? { phone: validated.phone } : {}),
+    });
+
+    return this.sanitizeUser(updatedUser);
   }
 }
 

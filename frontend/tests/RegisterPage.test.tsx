@@ -10,6 +10,7 @@ describe('RegisterPage Component', () => {
   const mockRegister = vi.fn();
   const mockLogout = vi.fn();
   const mockRefreshUser = vi.fn();
+  const mockUpdateProfile = vi.fn();
 
   const sampleUser: UserDto = {
     id: '11111111-1111-4111-8111-111111111111',
@@ -24,6 +25,7 @@ describe('RegisterPage Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     mockRegister.mockReset();
+    mockUpdateProfile.mockReset();
 
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: null,
@@ -33,6 +35,7 @@ describe('RegisterPage Component', () => {
       register: mockRegister,
       logout: mockLogout,
       refreshUser: mockRefreshUser,
+      updateProfile: mockUpdateProfile,
     });
   });
 

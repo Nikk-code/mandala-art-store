@@ -149,3 +149,62 @@ export function validateLoginInput(body: unknown): NormalizedLoginInput {
     password: data.password,
   };
 }
+
+export interface NormalizedUpdateProfileInput {
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+}
+
+export function validateUpdateProfileInput(body: unknown): NormalizedUpdateProfileInput {
+  if (!body || typeof body !== 'object') {
+    throw new ValidationError('Profile update payload must be a JSON object.');
+  }
+
+  const data = body as Record<string, unknown>;
+  const result: NormalizedUpdateProfileInput = {};
+  let hasValidField = false;
+
+  // Name handling: support either "name" (full name) or individual "firstName" and "lastName"
+  if (typeof data.name === 'string' && data.name.trim()) {
+    const cleanFullName = validateName(data.name, 'name');
+    const parts = cleanFullName.split(/\s+/);
+    result.firstName = parts[0];
+    result.lastName = parts.slice(1).join(' ') || parts[0];
+    hasValidField = true;
+  } else {
+    if (data.firstName !== undefined) {
+      result.firstName = validateName(data.firstName, 'firstName');
+      hasValidField = true;
+    }
+    if (data.lastName !== undefined) {
+      result.lastName = validateName(data.lastName, 'lastName');
+      hasValidField = true;
+    }
+  }
+
+  // Phone handling
+  if (data.phone !== undefined) {
+    if (data.phone === null || data.phone === '') {
+      result.phone = null;
+      hasValidField = true;
+    } else if (typeof data.phone === 'string') {
+      const cleanPhone = data.phone.trim().replace(/[\s\-()+]/g, '');
+      if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+        throw new ValidationError('Please enter a valid 10-digit Indian mobile number.', 'phone');
+      }
+      result.phone = cleanPhone;
+      hasValidField = true;
+    } else {
+      throw new ValidationError('Phone number must be a valid string or null.', 'phone');
+    }
+  }
+
+  if (!hasValidField) {
+    throw new ValidationError(
+      'At least one valid field (name, firstName, lastName, or phone) must be provided for update.'
+    );
+  }
+
+  return result;
+}
