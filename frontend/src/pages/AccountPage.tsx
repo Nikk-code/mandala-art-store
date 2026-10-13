@@ -207,6 +207,21 @@ export function AccountPage(): ReactNode {
               View Order History →
             </Link>
           </Section>
+
+          {/* Wishlist Quick Card */}
+          <Section className="rounded-2xl border border-art-stone bg-art-cream/40 p-5">
+            <h3 className="font-serif text-sm font-bold text-art-charcoal mb-3">Saved Artworks</h3>
+            <p className="text-xs text-stone-600 mb-4 leading-relaxed">
+              Review handcrafted mandalas, canvas pieces, and traditional art saved to your personal
+              wishlist.
+            </p>
+            <Link
+              to="/wishlist"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-art-terracotta px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-art-terracotta/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta"
+            >
+              View Saved Wishlist →
+            </Link>
+          </Section>
         </div>
 
         {/* Right Column: Profile Edit Form & Saved Addresses */}

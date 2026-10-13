@@ -99,6 +99,10 @@ describe('AccountPage Component', () => {
       'href',
       '/orders'
     );
+    expect(screen.getByRole('link', { name: /View Saved Wishlist/i })).toHaveAttribute(
+      'href',
+      '/wishlist'
+    );
     expect(screen.getByDisplayValue('Priya')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Sharma')).toBeInTheDocument();
     expect(screen.getByDisplayValue('9876543210')).toBeInTheDocument();

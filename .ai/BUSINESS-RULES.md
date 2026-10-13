@@ -154,3 +154,14 @@ The following areas require explicit business decisions before implementation:
 - [TBD] Fragile art packaging surcharge amount.
 - [TBD] GST rate classification for handmade art categories.
 - [TBD] Shipping fee calculation method (weight-based, flat rate, or tiered).
+
+---
+
+## 9. Customer Wishlist Rules
+
+- **Authentication Requirement**: Wishlist bookmarking and persistence is exclusively available to authenticated patrons. Unauthenticated guests clicking a wishlist action are prompted to log in or register.
+- **Identity Derivation**: Customer identity is strictly extracted from verified authentication tokens (`req.user.id`). Client-supplied `userId` parameters are rejected or ignored.
+- **Uniqueness Invariant**: A customer can only save a specific product once. Enforced at the database engine level via `UNIQUE(user_id, product_id)`. Attempting to add an existing product returns `409 Conflict`.
+- **Product Verification**: Wishlist items can only be added for existing, active artworks (`product.isActive = true`). Nonexistent or inactive products return `404 Not Found`. Inactive items are filtered out of public customer views.
+- **Safe Removal**: Customers can remove saved items from their own wishlist. Attempting to remove an absent item returns `404 Not Found`. Customer A cannot access or remove Customer B's wishlist items.
+- **Storefront Synchronization**: Wishlist state is reactively reflected across product cards, product detail pages, header navigation badge count, and the dedicated `/wishlist` patron gallery.

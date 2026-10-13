@@ -10,6 +10,7 @@ import {
   EmptyState,
 } from '@/components/ui';
 import { ProductImageGallery } from '@/components/catalog';
+import { WishlistButton } from '@/components/wishlist';
 import { fetchProductBySlug } from '@/services';
 import { formatPrice, formatWeight, getAvailabilityInfo } from '@/utils';
 import { useCart } from '@/context';
@@ -342,6 +343,14 @@ export function ProductDetailPage(): ReactNode {
                         : 'Add to Cart'}
                     </Button>
                   )}
+
+                  {/* Reusable Wishlist Control */}
+                  <WishlistButton
+                    productId={product.id}
+                    productName={product.name}
+                    variant="button"
+                    className="w-full"
+                  />
                 </div>
               </div>
 

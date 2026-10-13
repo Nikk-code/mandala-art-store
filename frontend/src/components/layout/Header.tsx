@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { APP_NAME } from '@/constants';
 import { IconButton } from '@/components/ui';
-import { useCart, useAuth } from '@/context';
+import { useCart, useAuth, useWishlist } from '@/context';
 
 interface NavItem {
   name: string;
@@ -21,6 +21,7 @@ const NAVIGATION_ITEMS: NavItem[] = [
 export function Header(): ReactNode {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { itemCount } = useCart();
+  const { itemCount: wishlistItemCount } = useWishlist();
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
@@ -139,6 +140,35 @@ export function Header(): ReactNode {
             )}
           </div>
 
+          {/* Wishlist Icon Link */}
+          <Link
+            to="/wishlist"
+            className="relative inline-flex items-center justify-center rounded-lg p-2 text-art-charcoal hover:bg-art-cream hover:text-rose-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px] min-w-[44px]"
+            aria-label={`Wishlist with ${wishlistItemCount} ${wishlistItemCount === 1 ? 'item' : 'items'}`}
+          >
+            <svg
+              className={`h-5 w-5 ${wishlistItemCount > 0 ? 'fill-rose-500 text-rose-500' : 'fill-none'}`}
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            {wishlistItemCount > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute top-1 right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
+              >
+                {wishlistItemCount}
+              </span>
+            ) : null}
+          </Link>
+
           {/* Cart Icon Link */}
           <Link
             to="/cart"
@@ -192,6 +222,19 @@ export function Header(): ReactNode {
               {item.name}
             </Link>
           ))}
+
+          <Link
+            to="/wishlist"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-medium text-art-charcoal hover:bg-art-cream hover:text-rose-600 transition-colors"
+          >
+            <span>My Wishlist</span>
+            {wishlistItemCount > 0 && (
+              <span className="rounded-full bg-rose-100 text-rose-700 px-2 py-0.5 text-xs font-bold">
+                {wishlistItemCount}
+              </span>
+            )}
+          </Link>
 
           {/* Mobile Auth actions */}
           <div className="pt-3 border-t border-art-stone/60 space-y-2">

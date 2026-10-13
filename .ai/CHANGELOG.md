@@ -15,6 +15,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.22.0] - 2026-10-13
+
+### Added
+
+- **Step 19: Customer Wishlist & Storefront Synchronization**:
+  - **Database & Schema Invariant**:
+    - Created migration `20261013231500_add_wishlist_items` creating `wishlist_items` table with `user_id` and `product_id` foreign keys with cascade deletion.
+    - Enforced engine-level compound unique constraint `@@unique([userId, productId])` and indices on `user_id` and `product_id`.
+    - Added `wishlistItems WishlistItem[]` relation to Prisma `User` and `Product` models.
+  - **Backend Domain, Anti-IDOR Security & Endpoints**:
+    - Created `backend/src/types/wishlist.ts` defining `WishlistItemDto`, `AddWishlistItemInput`, and `WishlistResponseData`.
+    - Created `backend/src/utils/wishlist-validation.ts` validating UUID formats.
+    - Created `WishlistRepository` and `WishlistService` verifying active product status (`product.isActive = true`), rejecting nonexistent/inactive products with `404 Not Found`, catching Prisma `P2002` duplicate entries to return `409 Conflict`, and returning `404 Not Found` when removing absent items.
+    - Endpoints strictly guarded by `requireAuth`:
+      - `GET /api/wishlist`: List active saved artworks for the authenticated customer.
+      - `POST /api/wishlist`: Add artwork to customer's wishlist (strictly extracts `req.user.id`).
+      - `DELETE /api/wishlist/:productId`: Remove artwork from customer's wishlist.
+      - `GET /api/wishlist/check/:productId`: Fast O(1) membership check.
+  - **Frontend Wishlist System & Storefront Components**:
+    - Created `frontend/src/types/wishlist.ts` and `frontend/src/services/wishlist-service.ts`.
+    - Created `WishlistContext` and `WishlistProvider` managing active wishlist items, count, and in-flight operation tracking to prevent double-click race conditions.
+    - Created reusable `WishlistButton.tsx` supporting icon overlay (used on `ProductCard.tsx`) and button variant (used on `ProductDetailPage.tsx`), automatically routing unauthenticated guests to `/login` with return destination tracking.
+    - Created `WishlistCard.tsx` and full dedicated `WishlistPage.tsx` (`/wishlist`) featuring real-time availability badges, "Move to Cart" action, "Move Available to Cart" batch action, and empty state with catalog shopping CTA.
+    - Updated `Header.tsx` with Wishlist heart icon button, live count badge, and mobile drawer navigation item.
+    - Added "Saved Artworks" card to patron overview on `AccountPage.tsx`.
+  - **Automated Tests**:
+    - Created `backend/tests/wishlist.service.test.ts` (10 service unit tests covering get, add, 404 inactive, duplicate conflict, P2002 mapping, removal, and presence checks).
+    - Created `backend/tests/wishlist.api.test.ts` (12 API integration tests covering auth guards, deactivated account rejection, anti-IDOR, duplicate 409 responses, and absent 404 responses).
+    - Created `frontend/tests/wishlist-service.test.ts` (4 client service unit tests).
+    - Created `frontend/tests/WishlistButton.test.tsx` (5 component unit tests).
+    - Created `frontend/tests/WishlistPage.test.tsx` (6 page component integration tests).
+    - Updated `AccountPage.test.tsx` and `ProductDetailPage.test.tsx`.
+  - **Documentation & Decisions**:
+    - Recorded `ADR-021: Customer Wishlist Persistence, Database Unique Constraint & Storefront Synchronization` in `.ai/DECISIONS.md`.
+    - Updated `.ai/CURRENT-STATUS.md` and `.ai/BUSINESS-RULES.md`.
+
+---
+
 ## [0.21.0] - 2026-10-13
 
 ### Added

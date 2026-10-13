@@ -381,3 +381,35 @@ This document tracks significant architectural, technical, and governance decisi
   - _Client-supplied customer ID_: Insecure and vulnerable to IDOR.
   - _Standard non-partial unique constraint on (userId, isDefault)_: Infeasible because customers can have multiple non-default addresses (`isDefault = false`).
 - **Consequences**: Fast checkout for returning customers, zero tampering or cross-user address leakage, database-enforced single default invariant, safe 409 conflict handling on race conditions, and preserved snapshot immutability.
+
+---
+
+### ADR-021: Customer Wishlist Persistence, Database Unique Constraint & Storefront Synchronization
+
+- **Date**: 2026-10-13
+- **Status**: Accepted
+- **Context**: Authenticated customers need the ability to bookmark and save sacred artworks, Lippan art, and paintings to a personal wishlist. The system must persist wishlist items in PostgreSQL, prevent duplicate entries for the same customer and artwork via database constraints, reject client-supplied user IDs, verify active product status, allow removal of absent items safely, provide an empty state with shopping CTAs, and synchronize wishlist states across product cards, product detail pages, customer account pages, and the header navigation without clutter.
+- **Decision**:
+  1. **PostgreSQL Schema & Compound Unique Constraint**:
+     - Introduced table `wishlist_items` via migration `20261013231500_add_wishlist_items`:
+       - Columns: `id` (UUID PK), `user_id` (UUID FK to `users` on cascade delete), `product_id` (UUID FK to `products` on cascade delete), `created_at` (TIMESTAMPTZ).
+       - Enforced compound unique constraint `@@unique([userId, productId])` and indices on `user_id` and `product_id`.
+     - Guarantees at the database engine level that duplicate wishlist additions are impossible.
+  2. **Security & Anti-IDOR Authorization**:
+     - All wishlist endpoints (`GET /api/wishlist`, `POST /api/wishlist`, `DELETE /api/wishlist/:productId`, `GET /api/wishlist/check/:productId`) require valid JWT authentication via `requireAuth`.
+     - Customer identity is strictly derived from verified `req.user.id`. Any client-supplied `userId` is ignored or rejected.
+     - Removal endpoints verify ownership; attempting to remove an item that is absent from the user's wishlist returns `404 Not Found` rather than leaking information across accounts.
+  3. **Product Integrity & DTO Reuse**:
+     - `WishlistService` validates that the referenced product exists and is active (`product.isActive === true`). If nonexistent or inactive, it throws `NotFoundError` (HTTP 404).
+     - Wishlist queries join `Product` with `Category` and `Images` and map products into standard `PublicProductListItemDto`, allowing frontend UI components to reuse existing price formatting, availability logic, and artwork galleries without data duplication.
+     - Caught Prisma `P2002` unique constraint violations to safely return `ConflictError` (HTTP 409) on race collisions.
+  4. **Frontend Architecture & Reactive Storefront**:
+     - `WishlistContext` / `WishlistProvider`: Maintains active wishlist state, tracks pending asynchronous operations by product ID to prevent double-click race conditions, and clears state immediately upon customer sign out.
+     - Header Navigation: Added an accessible Wishlist heart icon button with real-time item count badge next to the Cart icon, plus a drawer navigation link for mobile viewports.
+     - Reusable `WishlistButton`: Accessible toggle control supporting both overlay icon variant (for `ProductCard`) and labeled action button variant (for `ProductDetailPage`). Automatically redirects unauthenticated guests to `/login` with return destination tracking.
+     - `WishlistPage` (`/wishlist`): Dedicated patron gallery displaying saved artworks with availability tags, quick "Move to Cart" and "Move Available to Cart" batch actions, item removal, and an empty state leading back to the artwork catalog.
+     - Account Page (`/account`): Added "Saved Artworks" quick navigation card in the patron dashboard overview.
+- **Alternatives Considered**:
+  - _Guest Wishlist in LocalStorage_: Deferred per prompt instructions to prevent complex synchronization and merge conflicts until authenticated requirements were fully satisfied.
+  - _Soft-deleting wishlist items_: Rejected in favor of hard deletion to maintain a clean junction table and simplify unique constraint indexing.
+- **Consequences**: Persistent, secure customer wishlists backed by PostgreSQL engine invariants, real-time responsive UI state across all storefront components, zero data leakage or IDOR vulnerabilities, and zero cart/checkout regressions.

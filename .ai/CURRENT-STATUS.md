@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-13  
-**Current Phase**: `SAVED ADDRESS MANAGEMENT (Step 18 Complete)`
+**Current Phase**: `CUSTOMER WISHLIST (Step 19 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Customer saved address management (Step 18) has been implemented and thoroughly verified with database-level invariant hardening. Authenticated customers can view, create, edit, delete, and set default delivery addresses via `/api/addresses` REST endpoints guarded by `requireAuth`. All address operations enforce anti-IDOR security by resolving user identity strictly from `req.user.id` and returning uniform `404 Not Found` for non-existent or other users' addresses, while deactivated accounts are rejected by database verification. The single-default-address invariant is enforced authoritatively at both the application transaction layer and the database layer via PostgreSQL partial unique index `addresses_user_default_unique_idx` (`WHERE is_default = true`), with safe `409 Conflict` mapping for concurrent race conditions. Historical order addresses remain strictly immutable snapshots on the `orders` table. On the frontend, `AccountPage.tsx` features an accessible `SavedAddressesSection` with modal form, and `CheckoutPage.tsx` features `SavedAddressSelector` allowing authenticated customers to pick saved addresses (prefilled from default) or enter a new delivery destination. All 46 test suites (20 backend / 249 tests, 26 frontend / 163 tests, totaling 412 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Customer wishlist functionality (Step 19) has been implemented and thoroughly verified across both backend and frontend workspaces. Authenticated customers can save, bookmark, and curate artworks from product cards and the product detail page, review them on a dedicated wishlist page (`/wishlist`), check real-time stock availability, and move saved artworks directly to the shopping cart. Persisted in PostgreSQL via `wishlist_items` table with database-enforced compound unique constraint `@@unique([userId, productId])` and foreign key cascade deletion, preventing duplicate entries and orphaned records. Backend REST endpoints (`GET /api/wishlist`, `POST /api/wishlist`, `DELETE /api/wishlist/:productId`, `GET /api/wishlist/check/:productId`) derive customer identity strictly from verified authentication middleware (`req.user.id`), rejecting client-supplied spoofed identities, validating active product status, and enforcing anti-IDOR protections with 404 responses for absent items. On the storefront, `WishlistContext` provides reactive O(1) state synchronization, `Header.tsx` displays an accessible Wishlist heart icon with item count badge, `ProductCard.tsx` and `ProductDetailPage.tsx` feature reusable `WishlistButton` controls, and `AccountPage.tsx` integrates a quick saved artworks card. All 51 test suites (22 backend / 277 tests, 29 frontend / 178 tests, totaling 455 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -361,17 +361,46 @@ Customer saved address management (Step 18) has been implemented and thoroughly 
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
 
+### Phase 19: Customer Wishlist & Storefront Synchronization (Completed)
+
+- [x] **PostgreSQL Schema & Database Migration**:
+  - Authored migration `20261013231500_add_wishlist_items` creating `wishlist_items` table with foreign keys to `users` and `products` (`ON DELETE CASCADE`).
+  - Enforced engine-level uniqueness with `@@unique([userId, productId])` and indices on `user_id` and `product_id`.
+  - Updated Prisma schema `User` and `Product` models with `wishlistItems WishlistItem[]` relations.
+- [x] **Backend Domain & Anti-IDOR REST Endpoints**:
+  - Implemented `WishlistRepository`, `WishlistService`, `WishlistController`, and `wishlist.routes.ts` mounted at `/api/wishlist`.
+  - Endpoints strictly guarded by `requireAuth`:
+    - `GET /api/wishlist`: Returns customer's active wishlist items mapped to `PublicProductListItemDto`.
+    - `POST /api/wishlist`: Adds artwork to wishlist with duplicate prevention (P2002 conflict handling) and active product verification (404 on inactive/missing).
+    - `DELETE /api/wishlist/:productId`: Removes item from wishlist with 404 response on absent item.
+    - `GET /api/wishlist/check/:productId`: Fast O(1) membership check.
+  - Rejection of client-supplied user ID parameters with strict identity extraction from `req.user.id`.
+- [x] **Frontend Wishlist System & Components**:
+  - Created `WishlistContext` and `WishlistProvider` tracking wishlist items, count, and in-flight pending operations to prevent double-click race conditions.
+  - Created reusable `WishlistButton` component supporting icon overlay (used on `ProductCard.tsx`) and full button variant (used on `ProductDetailPage.tsx`), redirecting unauthenticated guests to `/login`.
+  - Created `WishlistCard.tsx` and full dedicated `WishlistPage.tsx` (`/wishlist`) with empty state and quick "Move Available to Cart" batch action.
+  - Updated `Header.tsx` with Wishlist heart icon and dynamic count badge, and mobile drawer navigation item.
+  - Added "Saved Artworks" card to `AccountPage.tsx`.
+- [x] **Automated Tests & Quality**:
+  - 22 backend automated test suites passing with 277 tests (`backend/tests/`).
+  - 29 frontend automated test suites passing with 178 tests (`frontend/tests/`).
+  - 51 total test suites with 455 passing tests.
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - 100% Vite and TypeScript production build passing across workspaces.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 18 is complete and verified).
+- _None_ (Step 19 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 19: Order Cancellation, Returns & Advanced Post-Payment Hardening (Customer cancellation windows, admin order state transitions, and webhook concurrency hardening).
+- Step 20: Order Cancellation, Returns & Advanced Post-Payment Hardening (Customer cancellation windows, admin order state transitions, and webhook concurrency hardening).
 
 ---
 

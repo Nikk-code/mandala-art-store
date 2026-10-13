@@ -12,8 +12,9 @@ import {
   LoginPage,
   RegisterPage,
   AccountPage,
+  WishlistPage,
 } from '@/pages';
-import { CartProvider, AuthProvider } from '@/context';
+import { CartProvider, AuthProvider, WishlistProvider } from '@/context';
 
 function NotFoundPage(): ReactNode {
   return (
@@ -35,26 +36,29 @@ function NotFoundPage(): ReactNode {
 export function App(): ReactNode {
   return (
     <AuthProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<RootLayout />}>
-              <Route index element={<HomePage />} />
-              <Route path="products" element={<ProductsPage />} />
-              <Route path="products/:slug" element={<ProductDetailPage />} />
-              <Route path="cart" element={<CartPage />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="orders" element={<OrderHistoryPage />} />
-              <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
-              <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="register" element={<RegisterPage />} />
-              <Route path="account" element={<AccountPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </CartProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<RootLayout />}>
+                <Route index element={<HomePage />} />
+                <Route path="products" element={<ProductsPage />} />
+                <Route path="products/:slug" element={<ProductDetailPage />} />
+                <Route path="cart" element={<CartPage />} />
+                <Route path="wishlist" element={<WishlistPage />} />
+                <Route path="checkout" element={<CheckoutPage />} />
+                <Route path="orders" element={<OrderHistoryPage />} />
+                <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
+                <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+                <Route path="account" element={<AccountPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </CartProvider>
+      </WishlistProvider>
     </AuthProvider>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { ProductListItemDto } from '@/types';
 import { Badge } from '@/components/ui';
 import { formatPrice, getAvailabilityInfo } from '@/utils';
+import { WishlistButton } from '@/components/wishlist';
 
 export interface ProductCardProps {
   product: ProductListItemDto;
@@ -51,18 +52,25 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
           )}
 
           {/* Status Badges Overlay */}
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1 pointer-events-none">
-            {product.isFeatured ? (
-              <Badge variant="ochre" className="shadow-sm">
+          <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 pointer-events-none z-10">
+            {product.isFeatured && (
+              <Badge variant="ochre" className="shadow-sm text-[10px]">
                 Featured
               </Badge>
-            ) : (
-              <span />
             )}
-
-            <Badge variant={availability.badgeVariant} className="shadow-sm">
+            <Badge variant={availability.badgeVariant} className="shadow-sm text-[10px]">
               {availability.label}
             </Badge>
+          </div>
+
+          {/* Wishlist Button Overlay */}
+          <div className="absolute top-3 right-3 z-10">
+            <WishlistButton
+              productId={product.id}
+              productName={product.name}
+              variant="icon"
+              size="sm"
+            />
           </div>
         </div>
 

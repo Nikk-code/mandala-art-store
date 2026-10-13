@@ -23,3 +23,4 @@ export * from './catalog';
 export * from './checkout';
 export * from './auth';
 export * from './address';
+export * from './wishlist';

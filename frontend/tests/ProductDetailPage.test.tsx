@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import type { ProductDetailDto } from '@/types';
-
 import { CartProvider } from '@/context';
 
 describe('ProductDetailPage Integration & State Handling', () => {
