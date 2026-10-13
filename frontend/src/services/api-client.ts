@@ -154,6 +154,45 @@ export async function apiPatch<T>(path: string, body?: unknown, options?: Reques
   return response.json() as Promise<T>;
 }
 
+export async function apiDelete<T>(path: string, options?: RequestInit): Promise<T> {
+  const url = normalizeUrl(path);
+  const token = getAuthToken();
+
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options?.headers as Record<string, string>),
+  };
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    credentials: 'include',
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    let errorCode: string | undefined;
+    let errorDetails: unknown;
+
+    try {
+      const errorJson = (await response.json()) as ApiErrorResponse;
+      if (errorJson && errorJson.error) {
+        errorMessage = errorJson.error.message || errorMessage;
+        errorCode = errorJson.error.code;
+        errorDetails = errorJson.error.details;
+      }
+    } catch {
+      // Non-JSON error body fallback
+    }
+
+    throw new ApiError(errorMessage, response.status, errorCode, errorDetails);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function fetchHealth(): Promise<ApiHealthResponse> {
   return apiGet<ApiHealthResponse>('health');
 }

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { AccountPage } from '@/pages/AccountPage';
 import * as AuthContextModule from '@/context/AuthContext';
+import * as AddressServiceModule from '@/services/address-service';
 import type { UserDto } from '@/types';
 
 describe('AccountPage Component', () => {
@@ -25,6 +26,7 @@ describe('AccountPage Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     mockUpdateProfile.mockReset();
+    vi.spyOn(AddressServiceModule, 'fetchAddresses').mockResolvedValue([]);
 
     vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
       user: sampleUser,

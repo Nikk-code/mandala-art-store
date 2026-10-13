@@ -1,9 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { CheckoutPage } from '@/pages/CheckoutPage';
 import { CartProvider } from '@/context';
-import type { CartItem } from '@/types';
+import * as AuthContextModule from '@/context/AuthContext';
+import * as addressService from '@/services/address-service';
+import type { CartItem, UserDto, AddressDto } from '@/types';
 
 describe('CheckoutPage UI & Checkout Flow', () => {
   const mockCartItems: CartItem[] = [
@@ -209,5 +211,56 @@ describe('CheckoutPage UI & Checkout Flow', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Artwork Checkout' })).toBeInTheDocument();
     expect(screen.getByLabelText(/Full Name/)).toHaveValue('Radhika Sharma');
+  });
+
+  it('prefills shipping address when customer has saved addresses', async () => {
+    const mockUser: UserDto = {
+      id: 'user-1',
+      email: 'aarav@example.com',
+      firstName: 'Aarav',
+      lastName: 'Sharma',
+      phone: '9876543210',
+      role: 'CUSTOMER',
+      createdAt: '2026-10-01T10:00:00.000Z',
+    };
+
+    const mockSavedAddress: AddressDto = {
+      id: 'addr-1',
+      userId: 'user-1',
+      recipientName: 'Aarav Sharma',
+      phone: '9876543210',
+      addressLine1: '123 Heritage Lane',
+      addressLine2: 'Apt 4B',
+      city: 'Jaipur',
+      state: 'Rajasthan',
+      postalCode: '302001',
+      country: 'India',
+      isDefault: true,
+      createdAt: '2026-10-01T10:00:00.000Z',
+      updatedAt: '2026-10-01T10:00:00.000Z',
+    };
+
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: mockUser,
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      refreshUser: vi.fn(),
+      updateProfile: vi.fn(),
+    });
+
+    vi.spyOn(addressService, 'fetchAddresses').mockResolvedValue([mockSavedAddress]);
+
+    renderCheckoutPage([mockCartItems[0]]);
+
+    await waitFor(() => {
+      expect(screen.getByText('Saved Delivery Addresses')).toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText(/Street Address/)).toHaveValue('123 Heritage Lane');
+    expect(screen.getByLabelText(/City \/ Town/)).toHaveValue('Jaipur');
+    expect(screen.getByLabelText(/PIN \/ Postal Code/)).toHaveValue('302001');
   });
 });

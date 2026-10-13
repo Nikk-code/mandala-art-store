@@ -5,6 +5,7 @@ import catalogRoutes from './catalog.routes';
 import checkoutRoutes from './checkout.routes';
 import webhookRoutes from './webhook.routes';
 import orderRoutes from './order.routes';
+import addressRoutes from './address.routes';
 
 const apiRouter = Router();
 
@@ -13,6 +14,9 @@ apiRouter.use('/health', healthRoutes);
 
 // Customer Authentication endpoints -> /api/auth
 apiRouter.use('/auth', authRoutes);
+
+// Customer Address endpoints -> /api/addresses
+apiRouter.use('/addresses', addressRoutes);
 
 // Checkout endpoints -> /api/checkout/orders
 apiRouter.use('/checkout', checkoutRoutes);

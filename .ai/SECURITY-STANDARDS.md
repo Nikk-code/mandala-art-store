@@ -84,3 +84,29 @@
 - **Anti-Enumeration Guarantee**: Guest orders (`order.userId === null`) cannot be retrieved via unauthenticated UUID endpoints. Exposing order lookups by UUID alone would allow attackers to probe and harvest customer order details, PII, and artwork purchases.
 - **Current Limitation**: Guest order confirmation is rendered immediately post-payment from in-memory callback state. Guest order status does not survive a page refresh without authentication.
 - **Deferred Recovery Design**: Future guest order recovery requires cryptographically signed tokens (e.g. `guestAccessToken` or HMAC-signed order review URLs dispatched to verified customer email addresses) without expanding the public API surface.
+
+---
+
+## 8. Customer Saved Address Security & Anti-IDOR Standards (Step 18 Standards)
+
+### 8.1 Zero-Trust Client & Customer Ownership
+
+- **Identity Derivation**: All address management endpoints (`GET /api/addresses`, `GET /api/addresses/:addressId`, `POST /api/addresses`, `PATCH /api/addresses/:addressId`, `DELETE /api/addresses/:addressId`, `POST /api/addresses/:addressId/default`) strictly derive customer identity from verified `req.user.id`. Any `userId` field submitted in request bodies or query parameters is rejected or ignored.
+- **Anti-IDOR & Anti-Enumeration**: Any attempt by a customer to view, update, delete, or mark as default an address belonging to another customer—or a non-existent UUID—returns a uniform HTTP `404 Not Found` (`Address not found.`), preventing resource enumeration and IDOR attacks.
+- **Account Verification Defense-in-Depth**: `requireAuth` verifies that the requesting user exists in the database and `isActive === true`. Deactivated accounts cannot perform any address operations.
+
+### 8.2 Input Validation & Normalization
+
+- **Strict Format Enforcements**:
+  - Phone: Exactly 10 digits matching Indian mobile format `^[6-9]\d{9}$`. Leading `+91`, `91`, or `0` prefixes and whitespace are stripped prior to validation.
+  - Postal Code: Exactly 6 digits matching Indian PIN code format `^[1-9][0-9]{5}$`.
+  - Recipient Name: 1–100 characters; whitespace trimmed.
+  - Address Lines: Line 1 (3–200 characters), Line 2 (optional, max 200 characters), Landmark (optional, max 100 characters).
+  - City / State: 2–100 characters; whitespace trimmed.
+  - Country: Normalized and defaults to "India".
+- **Protection Against Unsafe Mutation**: Client cannot mutate `id`, `userId`, `createdAt`, or `updatedAt` directly.
+
+### 8.3 Order Address Snapshot Immutability
+
+- Delivery addresses captured at checkout are stored directly on the `orders` table as snapshot fields.
+- Address mutations or deletions in the customer address book never mutate existing order records or historical receipts.

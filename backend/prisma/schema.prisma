@@ -192,6 +192,7 @@ model Address {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Note: PostgreSQL partial unique index "addresses_user_default_unique_idx" ON "addresses"("user_id") WHERE ("is_default" = true) is enforced via Prisma migration 20261013230000_add_unique_default_address_per_user
   @@index([userId])
   @@map("addresses")
 }

@@ -25,6 +25,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-017: Customer Order Confirmation, Order History & Anti-Enumeration Access Control](#adr-017-customer-order-confirmation-order-history--anti-enumeration-access-control)
 - [ADR-018: Customer Authentication, Cryptographic JWT Session Management & Secure Cookie Architecture](#adr-018-customer-authentication-cryptographic-jwt-session-management--secure-cookie-architecture)
 - [ADR-019: Customer Profile Editing, Authentication Rate Limiting & Account Security Hardening](#adr-019-customer-profile-editing-authentication-rate-limiting--account-security-hardening)
+- [ADR-020: Customer Saved Address Management, Default Address Consistency & Checkout Integration](#adr-020-customer-saved-address-management-default-address-consistency--checkout-integration)
 
 ---
 
@@ -350,3 +351,33 @@ This document tracks significant architectural, technical, and governance decisi
   - _Allowing email updates via profile patch_: Deferred to future phase requiring email verification workflows to prevent account takeover.
   - _Public UUID order lookup for guests_: Rejected due to severe IDOR risk.
 - **Consequences**: Hardened authentication against brute force, secure self-service profile maintenance for customers, immediate lockout of deactivated users, clear documentation of in-memory and logout limitations, and no schema or database regressions.
+
+---
+
+### ADR-020: Customer Saved Address Management, Default Address Consistency & Checkout Integration
+
+- **Date**: 2026-10-13
+- **Status**: Accepted
+- **Context**: Authenticated customers need the ability to maintain multiple delivery addresses in their account, designate a primary default address, and select from saved addresses at checkout to eliminate manual re-typing. The implementation must strictly prevent IDOR vulnerabilities, maintain default address consistency within database transactions, format/validate Indian PIN codes and mobile numbers, integrate seamlessly into the checkout flow with fallback to manual entry, and guarantee that historical order addresses remain immutable snapshots.
+- **Decision**:
+  1. **Reuse Existing Address Model**: Reused existing Prisma `Address` schema model (`id`, `userId`, `recipientName`, `phone`, `addressLine1`, `addressLine2`, `landmark`, `city`, `state`, `postalCode`, `country`, `isDefault`, `createdAt`, `updatedAt`) without altering database tables or running redundant migrations.
+  2. **Anti-IDOR Security & Authentication Guard**: All address endpoints (`GET /api/addresses`, `GET /api/addresses/:addressId`, `POST /api/addresses`, `PATCH /api/addresses/:addressId`, `DELETE /api/addresses/:addressId`, `POST /api/addresses/:addressId/default`) are strictly guarded by `requireAuth`. The target customer identity is exclusively extracted from `req.user.id`. Any attempt to access or modify an address belonging to another customer or a non-existent UUID fails with a uniform `404 Not Found` ("Address not found.") to prevent IDOR and enumeration. Client-supplied user IDs in request bodies or query parameters are rejected or ignored. Deactivated accounts are blocked at the middleware level.
+  3. **Atomic Default Address Consistency**: Handled via Prisma `$transaction`:
+     - Creating the first address automatically sets `isDefault: true`.
+     - Explicitly setting an address as default unsets `isDefault` across all other addresses of that user in the same transaction.
+     - When deleting a default address, the transaction automatically promotes the most recently updated remaining address to default (`isDefault: true`).
+     - Updating an address with `isDefault: true` unsets other addresses; updating an address with `isDefault: false` when it is the user's only address preserves `isDefault: true`.
+  4. **Strict Server-Side Validation**: Validates Indian phone numbers (`^[6-9]\d{9}$`) and 6-digit postal PIN codes (`^[1-9][0-9]{5}$`). Normalizes/trims text fields. Rejects unknown or empty values with `400 Bad Request` domain validation errors.
+  5. **Order Address Immutability**: Historical orders store delivery addresses as snapshot columns (`shippingRecipientName`, `shippingPhone`, `shippingAddressLine1`, etc.) directly on the `orders` table. Modifying or deleting a customer's saved address never alters already-created orders.
+  6. **Frontend Account & Checkout Integration**:
+     - Customer Account (`/account`): `SavedAddressesSection` provides an intuitive card list with badges, "Set as Default" button, edit/delete actions with confirmation dialogs, and accessible modal dialog for adding/editing addresses.
+     - Checkout (`/checkout`): `SavedAddressSelector` loads saved addresses for authenticated customers, automatically selects the default address and prefills the shipping form, allows switching between saved addresses, and provides a "Ship to a new address" option that reveals the empty address form.
+  7. **Database Invariant Hardening (PostgreSQL Partial Unique Index)**:
+     - Added Prisma migration `20261013230000_add_unique_default_address_per_user` defining `CREATE UNIQUE INDEX "addresses_user_default_unique_idx" ON "addresses"("user_id") WHERE ("is_default" = true);`.
+     - Guarantees at the database engine level that no customer can have more than one default address even during race conditions.
+     - `AddressService` safely catches Prisma `P2002` unique constraint errors and returns HTTP 409 `ConflictError` rather than unhandled 500 errors.
+- **Alternatives Considered**:
+  - _Foreign key referencing `Address` on `Order`_: Rejected because modifying or deleting an address would corrupt or break historical order records. Snapshot fields preserve legal and audit records.
+  - _Client-supplied customer ID_: Insecure and vulnerable to IDOR.
+  - _Standard non-partial unique constraint on (userId, isDefault)_: Infeasible because customers can have multiple non-default addresses (`isDefault = false`).
+- **Consequences**: Fast checkout for returning customers, zero tampering or cross-user address leakage, database-enforced single default invariant, safe 409 conflict handling on race conditions, and preserved snapshot immutability.

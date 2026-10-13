@@ -11,11 +11,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Customer address book and checkout address integration.
+- Customer order cancellation, return flows, and webhook concurrency hardening.
 
 ---
 
-## [0.20.0] - 2026-10-13
+## [0.21.0] - 2026-10-13
+
+### Added
+
+- **Step 18: Customer Saved Address Management**:
+  - **Database & Schema Invariant Hardening**:
+    - Reused existing Prisma `Address` model.
+    - Added non-destructive Prisma SQL migration `20261013230000_add_unique_default_address_per_user` creating PostgreSQL partial unique index `addresses_user_default_unique_idx` (`WHERE "is_default" = true`) guaranteeing at most one default address per customer.
+    - Preserved frozen address snapshot columns on `orders` table (`shippingRecipientName`, `shippingPhone`, `shippingAddressLine1`, etc.) ensuring complete address immutability for existing and future placed orders.
+  - **Address Validation & Anti-IDOR Security**:
+    - Created `backend/src/utils/address-validation.ts` validating Indian phone numbers (`^[6-9]\d{9}$`), 6-digit postal PIN codes (`^[1-9][0-9]{5}$`), and string sanitization.
+    - Enforced strict customer ownership in `AddressService` using `req.user.id`; returned uniform `404 Not Found` for non-existent or other users' address IDs to prevent enumeration and IDOR attacks.
+    - Handled Prisma `P2002` unique constraint violations in `AddressService` by raising `ConflictError` (HTTP 409) rather than 500 errors.
+    - Middleware rejects deactivated accounts via database validation.
+  - **Atomic Default Address Consistency**:
+    - Implemented Prisma `$transaction`-backed operations in `AddressRepository`:
+      - First created address automatically defaults to `isDefault: true`.
+      - Setting default unsets all other addresses of that customer.
+      - Deleting a default address automatically promotes the most recently updated remaining address.
+  - **REST API Endpoints**:
+    - `GET /api/addresses`: Retrieve customer's saved addresses.
+    - `GET /api/addresses/:addressId`: Retrieve single customer address.
+    - `POST /api/addresses`: Add new saved address (returns 409 on default collision).
+    - `PATCH /api/addresses/:addressId`: Update existing saved address.
+    - `DELETE /api/addresses/:addressId`: Delete saved address with safe default promotion.
+    - `POST /api/addresses/:addressId/default`: Set address as primary default.
+  - **Frontend Account & Checkout Experiences**:
+    - Added `apiDelete` to frontend API client.
+    - Added `AddressModal.tsx` for adding and editing addresses with client-side Indian phone/PIN validation and accessible dialog controls.
+    - Added `SavedAddressesSection.tsx` on `AccountPage.tsx` with card management, default badges, and delete confirmation modal.
+    - Added `SavedAddressSelector.tsx` on `CheckoutPage.tsx` with address radio card selection, automatic default prefilling, and manual "Ship to a new address" toggle.
+  - **Automated Tests**:
+    - Created `backend/tests/address.service.test.ts` (15 service unit tests including concurrency conflict handling).
+    - Created `backend/tests/address.api.test.ts` (17 integration tests covering auth, IDOR, CRUD, default consistency, and 409 conflict responses).
+    - Created `frontend/tests/address-service.test.ts` (6 client tests).
+    - Created `frontend/tests/SavedAddressesSection.test.tsx` (6 component tests).
+    - Created `frontend/tests/SavedAddressSelector.test.tsx` (4 component tests).
+    - Updated `AccountPage.test.tsx`, `CheckoutPage.test.tsx`, and `api-client.test.ts`.
+  - **Documentation & Decisions**:
+    - Recorded `ADR-020: Customer Saved Address Management, Default Address Consistency & Checkout Integration` in `.ai/DECISIONS.md`.
 
 ### Added
 

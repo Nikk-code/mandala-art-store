@@ -5,15 +5,22 @@ import {
   ContactInfoSection,
   ShippingAddressSection,
   CheckoutOrderSummary,
+  SavedAddressSelector,
 } from '@/components/checkout';
 import { useCart, useAuth } from '@/context';
 import { validateCheckoutForm, loadRazorpayScript } from '@/utils';
-import { createCheckoutOrder, initializeCheckoutPayment, verifyCheckoutPayment } from '@/services';
+import {
+  createCheckoutOrder,
+  initializeCheckoutPayment,
+  verifyCheckoutPayment,
+  fetchAddresses,
+} from '@/services';
 import type {
   CheckoutFormData,
   CheckoutFormErrors,
   PaymentInitializationDto,
   PaymentVerificationResultDto,
+  AddressDto,
 } from '@/types';
 
 export function CheckoutPage(): ReactNode {
@@ -32,6 +39,9 @@ export function CheckoutPage(): ReactNode {
     postalCode: '',
     country: 'India',
   });
+
+  const [savedAddresses, setSavedAddresses] = useState<AddressDto[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
@@ -53,8 +63,73 @@ export function CheckoutPage(): ReactNode {
         email: prev.email || user.email,
         phone: prev.phone || (user.phone ?? ''),
       }));
+
+      fetchAddresses()
+        .then(addresses => {
+          setSavedAddresses(addresses);
+          if (addresses.length > 0) {
+            const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
+            setSelectedAddressId(defaultAddr.id);
+            setFormData(prev => ({
+              ...prev,
+              fullName: defaultAddr.recipientName,
+              phone: defaultAddr.phone,
+              addressLine1: defaultAddr.addressLine1,
+              addressLine2: defaultAddr.addressLine2 || '',
+              city: defaultAddr.city,
+              state: defaultAddr.state,
+              postalCode: defaultAddr.postalCode,
+              country: defaultAddr.country,
+            }));
+          }
+        })
+        .catch(() => {
+          // Gracefully continue with manual address entry if fetching fails
+        });
+    } else {
+      setSavedAddresses([]);
+      setSelectedAddressId(null);
     }
   }, [user]);
+
+  const handleSelectSavedAddress = (addr: AddressDto) => {
+    setSelectedAddressId(addr.id);
+    setFormData(prev => ({
+      ...prev,
+      fullName: addr.recipientName,
+      phone: addr.phone,
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || '',
+      city: addr.city,
+      state: addr.state,
+      postalCode: addr.postalCode,
+      country: addr.country,
+    }));
+    setErrors(prev => {
+      const next = { ...prev };
+      delete next.addressLine1;
+      delete next.addressLine2;
+      delete next.city;
+      delete next.state;
+      delete next.postalCode;
+      delete next.fullName;
+      delete next.phone;
+      return next;
+    });
+  };
+
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setFormData(prev => ({
+      ...prev,
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'India',
+    }));
+  };
 
   const handleFieldChange = (field: keyof CheckoutFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -332,6 +407,16 @@ export function CheckoutPage(): ReactNode {
                       onChange={handleFieldChange}
                       disabled={isSubmitting}
                     />
+
+                    {savedAddresses.length > 0 && (
+                      <SavedAddressSelector
+                        addresses={savedAddresses}
+                        selectedAddressId={selectedAddressId}
+                        onSelectAddress={handleSelectSavedAddress}
+                        onUseNewAddress={handleUseNewAddress}
+                        disabled={isSubmitting}
+                      />
+                    )}
 
                     <ShippingAddressSection
                       formData={formData}

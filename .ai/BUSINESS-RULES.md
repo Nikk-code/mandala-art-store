@@ -100,7 +100,15 @@ This document outlines the core business logic, domain constraints, and calculat
 
 ## 5. Shipping & Fulfillment Rules
 
-- **Shipping Address**: Embedded directly into the Order record as immutable snapshot fields.
+- **Shipping Address Immutability**: Embedded directly into the Order record as immutable snapshot fields (`shippingRecipientName`, `shippingPhone`, `shippingAddressLine1`, etc.). Editing or deleting an address in the customer's saved address book never modifies historical or in-flight orders.
+- **Customer Saved Addresses & Default Consistency**:
+  - Authenticated customers may save and manage multiple delivery addresses.
+  - Exactly one address per customer is designated as default (`isDefault = true`).
+  - Creating the first address automatically sets it as the default address.
+  - Setting an address as default atomically unsets default on all other addresses of that customer.
+  - Deleting the default address atomically promotes the most recently updated remaining address to default.
+  - The default address cannot be demoted to non-default if it is the customer's only saved address.
+  - Address validation rules: recipient name (1–100 characters), 10-digit Indian mobile phone (`^[6-9]\d{9}$`), address line 1 (3–200 characters), city (2–100 characters), state (2–100 characters), 6-digit Indian postal PIN code (`^[1-9][0-9]{5}$`), and country ("India").
 - **Shipping Fee**: Calculated by the backend and stored as `shipping_fee` on the Order in paise.
   - Free shipping threshold: [To Be Defined].
   - Fragile art packaging surcharge: [To Be Defined].

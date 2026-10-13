@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Container, Section, Badge, Input, Button, LoadingState } from '@/components/ui';
+import { SavedAddressesSection } from '@/components/account';
 import { useAuth } from '@/context';
 
 interface FormErrors {
@@ -208,8 +209,8 @@ export function AccountPage(): ReactNode {
           </Section>
         </div>
 
-        {/* Right Column: Profile Edit Form */}
-        <div className="md:col-span-2">
+        {/* Right Column: Profile Edit Form & Saved Addresses */}
+        <div className="md:col-span-2 space-y-8">
           <Section className="rounded-2xl border border-art-stone bg-white p-6 sm:p-8 shadow-sm">
             <div className="mb-6 border-b border-art-stone/60 pb-4">
               <h2 className="font-serif text-xl font-bold text-art-charcoal">Profile Details</h2>
@@ -364,6 +365,8 @@ export function AccountPage(): ReactNode {
               </div>
             </form>
           </Section>
+
+          <SavedAddressesSection />
         </div>
       </div>
     </Container>

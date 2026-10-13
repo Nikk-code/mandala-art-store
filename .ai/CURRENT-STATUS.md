@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-13  
-**Current Phase**: `CUSTOMER ACCOUNT COMPLETION & SECURITY HARDENING (Step 17 Complete)`
+**Current Phase**: `SAVED ADDRESS MANAGEMENT (Step 18 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Customer account completion and security hardening (Step 17) has been implemented and thoroughly verified. Authentication endpoints `POST /api/auth/login` and `POST /api/auth/register` are protected by in-memory rate limiting via `express-rate-limit` returning standard `RateLimit-*` headers and safe RFC 429 error payloads without logging credentials. Customer profile updating is implemented via `PATCH /api/auth/me`, deriving target identity strictly from verified session tokens, allowing updates exclusively to permitted fields (`firstName`, `lastName`, `phone`), and strictly rejecting modification of protected fields (`role`, `passwordHash`, `email`, `isActive`, `id`). Deactivated accounts are rejected with `401 Unauthorized` across all protected routes via database user verification in `requireAuth`. The frontend features a responsive, accessible `AccountPage.tsx` (`/account`) with patron overview card, read-only account details, member timeline, order history link, and an interactive profile edit form with validation. All 41 test suites (18 backend / 217 tests, 23 frontend / 145 tests, totaling 362 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Customer saved address management (Step 18) has been implemented and thoroughly verified with database-level invariant hardening. Authenticated customers can view, create, edit, delete, and set default delivery addresses via `/api/addresses` REST endpoints guarded by `requireAuth`. All address operations enforce anti-IDOR security by resolving user identity strictly from `req.user.id` and returning uniform `404 Not Found` for non-existent or other users' addresses, while deactivated accounts are rejected by database verification. The single-default-address invariant is enforced authoritatively at both the application transaction layer and the database layer via PostgreSQL partial unique index `addresses_user_default_unique_idx` (`WHERE is_default = true`), with safe `409 Conflict` mapping for concurrent race conditions. Historical order addresses remain strictly immutable snapshots on the `orders` table. On the frontend, `AccountPage.tsx` features an accessible `SavedAddressesSection` with modal form, and `CheckoutPage.tsx` features `SavedAddressSelector` allowing authenticated customers to pick saved addresses (prefilled from default) or enter a new delivery destination. All 46 test suites (20 backend / 249 tests, 26 frontend / 163 tests, totaling 412 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -328,17 +328,50 @@ Customer account completion and security hardening (Step 17) has been implemente
   - 100% Prettier formatting compliance.
   - Prisma schema validation verified.
 
+### Phase 18: Customer Saved Address Management (Completed)
+
+- [x] **Database & Schema Invariant Hardening**:
+  - Reused existing `Address` model in `backend/prisma/schema.prisma`.
+  - Added non-destructive Prisma SQL migration `20261013230000_add_unique_default_address_per_user` defining PostgreSQL partial unique index `CREATE UNIQUE INDEX "addresses_user_default_unique_idx" ON "addresses"("user_id") WHERE ("is_default" = true);`.
+  - Reused existing `orders` table snapshot architecture (`shippingRecipientName`, `shippingPhone`, `shippingAddressLine1`, etc.) ensuring historical order address immutability.
+- [x] **Backend Address Domain, Repository & Service**:
+  - Created `backend/src/types/address.ts` with `AddressDto`, `CreateAddressInput`, `UpdateAddressInput`.
+  - Created `backend/src/utils/address-validation.ts` validating Indian mobile numbers (`^[6-9]\d{9}$`), 6-digit PIN codes (`^[1-9][0-9]{5}$`), and string boundaries.
+  - Created `AddressRepository` supporting CRUD and Prisma `$transaction`-backed atomic default consistency.
+  - Created `AddressService` strictly enforcing customer ownership and returning uniform `404 Not Found` for foreign or non-existent address IDs.
+  - Added safe handling of Prisma `P2002` unique constraint violations in `AddressService`, raising `ConflictError` (`409 Conflict`) to protect against concurrent race conditions.
+- [x] **REST API Routes & Controllers**:
+  - Mounted `/api/addresses` router protected by `requireAuth`:
+    - `GET /api/addresses`: Lists authenticated customer's saved addresses (default first, then newest).
+    - `GET /api/addresses/:addressId`: Retrieves single address owned by customer.
+    - `POST /api/addresses`: Creates new address (auto-sets `isDefault: true` if first address; returns 409 on default collision).
+    - `PATCH /api/addresses/:addressId`: Updates address with default consistency.
+    - `DELETE /api/addresses/:addressId`: Deletes address with automatic promotion of next address if default is deleted.
+    - `POST /api/addresses/:addressId/default`: Atomically designates address as default.
+- [x] **Frontend Account & Checkout Experiences**:
+  - Created `AddressModal.tsx` accessible dialog with Indian mobile and PIN code validation.
+  - Created `SavedAddressesSection.tsx` on `AccountPage.tsx` with card listing, default badge, set-default action, edit modal, and delete confirmation dialog.
+  - Created `SavedAddressSelector.tsx` on `CheckoutPage.tsx` allowing authenticated customers to pick from their address book or opt to ship to a new destination.
+  - Automatic prefilling of checkout shipping form from customer default address with zero loss of manual checkout fallback.
+- [x] **Automated Tests & Quality**:
+  - 20 backend automated test suites passing with 249 tests (`backend/tests/`).
+  - 26 frontend automated test suites passing with 163 tests (`frontend/tests/`).
+  - 46 total test suites with 412 passing tests.
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 17 is complete and verified).
+- _None_ (Step 18 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 18: Customer Address Management (Saved delivery addresses, default address selection, and address book checkout integration).
+- Step 19: Order Cancellation, Returns & Advanced Post-Payment Hardening (Customer cancellation windows, admin order state transitions, and webhook concurrency hardening).
 
 ---
 

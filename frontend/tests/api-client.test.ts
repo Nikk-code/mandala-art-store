@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { apiGet, apiPost, apiPatch, fetchHealth, ApiError } from '@/services/api-client';
+import { apiGet, apiPost, apiPatch, apiDelete, fetchHealth, ApiError } from '@/services/api-client';
 
 describe('Frontend API Client Foundation', () => {
   beforeEach(() => {
@@ -147,6 +147,30 @@ describe('Frontend API Client Foundation', () => {
           'Content-Type': 'application/json',
         }),
         body: JSON.stringify(updatePayload),
+      })
+    );
+  });
+
+  it('sends DELETE request with credentials using apiDelete', async () => {
+    const mockResponse = {
+      success: true,
+      data: { message: 'Deleted' },
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockResponse),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await apiDelete<typeof mockResponse>('addresses/addr-1');
+
+    expect(result).toEqual(mockResponse);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/addresses/addr-1'),
+      expect.objectContaining({
+        method: 'DELETE',
+        credentials: 'include',
       })
     );
   });
