@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UnauthorizedError } from '../errors';
+import { UserRole } from '@prisma/client';
+import { UnauthorizedError, ForbiddenError } from '../errors';
 import { config } from '../config/env';
 import type { JwtUserPayload } from '../types/auth';
 
@@ -98,6 +99,49 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
   } catch (error) {
     next(error);
   }
+}
+
+/**
+ * Middleware requiring verified administrator authorization.
+ * Ensures the requesting user is authenticated, active in the database, and has the ADMIN role.
+ * - Unauthenticated requests receive 401 Unauthorized.
+ * - Deactivated accounts receive 401 Unauthorized.
+ * - Authenticated non-admin accounts receive 403 Forbidden.
+ */
+export async function requireAdmin(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  // If requireAuth has not already run on this request, authenticate the user first
+  if (!req.user) {
+    const tokenPayload = extractAndVerifyUser(req);
+    if (!tokenPayload) {
+      return next(new UnauthorizedError('Authentication required to access admin resources.'));
+    }
+
+    try {
+      const user = await userRepository.findById(tokenPayload.id);
+      if (!user || !user.isActive) {
+        return next(new UnauthorizedError('User account not found or deactivated.'));
+      }
+
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      };
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  // Verify the user has the explicit ADMIN role
+  if (req.user.role !== UserRole.ADMIN && req.user.role !== 'ADMIN') {
+    return next(new ForbiddenError('Administrator access required.'));
+  }
+
+  next();
 }
 
 /**

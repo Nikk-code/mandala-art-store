@@ -28,6 +28,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-020: Customer Saved Address Management, Default Address Consistency & Checkout Integration](#adr-020-customer-saved-address-management-default-address-consistency--checkout-integration)
 - [ADR-021: Customer Wishlist Persistence, Database Unique Constraint & Storefront Synchronization](#adr-021-customer-wishlist-persistence-database-unique-constraint--storefront-synchronization)
 - [ADR-022: Product Reviews & Ratings Architecture, Verified Purchase Eligibility & Storefront Integration](#adr-022-product-reviews--ratings-architecture-verified-purchase-eligibility--storefront-integration)
+- [ADR-023: Role-Based Administrator Authentication, Safe Account Provisioning & Control Dashboard Foundation](#adr-023-role-based-administrator-authentication-safe-account-provisioning--control-dashboard-foundation)
 
 ---
 
@@ -460,3 +461,43 @@ This document tracks significant architectural, technical, and governance decisi
   - _Multiple reviews per product_: Rejected to prevent review bombing and duplicate inflation.
   - _Client-side rating calculation_: Rejected because clients can be manipulated and pagination would prevent accurate global aggregation.
 - **Consequences**: Bulletproof review authenticity, zero IDOR vulnerabilities, server-enforced data integrity, accessible and responsive UI across viewports, zero schema migration regressions, and seamless customer review management.
+
+---
+
+### ADR-023: Role-Based Administrator Authentication, Safe Account Provisioning & Control Dashboard Foundation
+
+- **Date**: 2026-10-14
+- **Status**: Accepted
+- **Context**: The store operations require administrative management (art catalog management, order fulfillment, review moderation, customer oversight, inventory allocation). The administrative system must be securely gated by role-based authorization, prevent privilege escalation via customer endpoints, avoid default credentials or public admin registration, provide an explicit operator-driven account promotion mechanism, and offer a responsive, protected dashboard shell without fabricated business metrics.
+- **Decision**:
+  1. **Strict Role-Based Authorization & Reusable Middleware**:
+     - Customer registration (`POST /api/auth/register`) strictly sets `role: UserRole.CUSTOMER`. Any client-submitted `role` field is stripped and ignored.
+     - Customer profile editing (`PATCH /api/auth/me`) strictly limits modifiable fields to `firstName`, `lastName`, and `phone`, preventing role tampering.
+     - Created `requireAdmin` middleware in `backend/src/middleware/auth.ts`:
+       - Unauthenticated requests receive HTTP `401 Unauthorized`.
+       - Deactivated accounts receive HTTP `401 Unauthorized`.
+       - Authenticated non-admin customers receive HTTP `403 Forbidden` (`Administrator access required.`).
+       - Authenticated active users with `role === UserRole.ADMIN` proceed.
+       - Works both standalone and in sequence after `requireAuth`.
+  2. **Safe, Operator-Driven Administrator Provisioning**:
+     - Created `backend/scripts/promote-admin.ts` (`npm run admin:promote -- <email>`).
+     - Never creates default credentials, hardcoded passwords, or unauthenticated promotion endpoints.
+     - Never silently promotes the first registered customer.
+     - Validates email format, verifies account existence, and rejects deactivated accounts.
+     - Idempotent: repeated promotion of an existing admin exits cleanly without modification.
+     - Never logs secrets, passwords, hashes, or tokens.
+  3. **Protected Admin API Foundation**:
+     - `GET /api/admin/dashboard` protected by `requireAuth` and `requireAdmin`.
+     - Returns sanitized administrator profile (`id`, `email`, `firstName`, `lastName`, `role`), runtime system metadata (`environment`, `serverTime`, `version`), and planned operational modules.
+     - Never leaks passwords, password hashes, secrets, or JWT tokens.
+     - Zero fabricated statistics or unsupported business numbers.
+  4. **Responsive Frontend Admin Shell & Route Guard**:
+     - `AdminRoute`: Route guard that displays a loading state during verification, redirects unauthenticated visitors to `/login`, renders an accessible HTTP `403 Forbidden` Access Denied page for customers, and renders `AdminLayout` for administrators.
+     - `AdminLayout`: Clean, dedicated administrative header with "Mandala Studio Admin Portal" branding, Admin badge, admin identity pill, "Storefront" link (`/`), and "Sign Out" button.
+     - `AdminDashboardPage`: Dashboard rendering admin welcome banner, system environment tiles, and 5 planned operational module cards (Catalog Management, Order Fulfillment, Customer Patronage, Review Moderation, Inventory Allocation) with "Planned Module" badges.
+     - Navigation visibility: Customer storefront `Header.tsx` only shows the "Admin Portal" button if `user.role === 'ADMIN'`. Customers and guests see zero administrative links.
+- **Alternatives Considered**:
+  - _Public /admin/register endpoint with secret code_: Rejected due to brute-force vulnerability and risk of secret exposure.
+  - _Automatic promotion of first user on startup_: Rejected as insecure in production environments.
+  - _Frontend-only role hiding_: Rejected because client route guards are purely for UX; backend middleware must authoritatively enforce access.
+- **Consequences**: Secure, tamper-proof administrative foundation, zero privilege escalation vectors, clean operator provisioning, accessible UX with dedicated admin shell, and 100% test coverage.

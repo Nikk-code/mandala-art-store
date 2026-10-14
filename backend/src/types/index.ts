@@ -25,3 +25,4 @@ export * from './auth';
 export * from './address';
 export * from './wishlist';
 export * from './review';
+export * from './admin';

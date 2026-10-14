@@ -193,6 +193,30 @@ export function AccountPage(): ReactNode {
             </div>
           </Section>
 
+          {/* Admin Portal Quick Card (Admins Only) */}
+          {user.role === 'ADMIN' && (
+            <Section className="rounded-2xl border border-art-ochre/50 bg-amber-50/60 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-art-ochre text-art-charcoal">
+                  Staff Access
+                </span>
+              </div>
+              <h3 className="font-serif text-sm font-bold text-art-charcoal mb-2">
+                Administrator Portal
+              </h3>
+              <p className="text-xs text-stone-600 mb-4 leading-relaxed">
+                Access store operations, system infrastructure metadata, and upcoming administrative
+                modules.
+              </p>
+              <Link
+                to="/admin"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-art-charcoal px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+              >
+                Open Admin Dashboard →
+              </Link>
+            </Section>
+          )}
+
           {/* Quick Navigation Card */}
           <Section className="rounded-2xl border border-art-stone bg-art-cream/40 p-5">
             <h3 className="font-serif text-sm font-bold text-art-charcoal mb-3">Order History</h3>

@@ -156,10 +156,28 @@ This document outlines the core business logic, domain constraints, and calculat
 
 ## 7. Authentication & Authorization Rules
 
-- **Single User Table**: Customers and admins share the same `User` table, differentiated by a `role` field (`'customer'` or `'admin'`).
-- **Password Storage**: Bcrypt or Argon2id hash. Plaintext passwords are NEVER stored, logged, or transmitted.
-- **Admin Access**: Enforced via backend middleware that checks `role === 'admin'` from verified JWT token. Frontend route guards are for UX only, not security.
-- **Account Deactivation**: Users with orders cannot be physically deleted. `is_active = false` soft-disables their account.
+- **Single User Table**: Customers and admins share the same `User` table, differentiated by the `role` enum (`UserRole`: `CUSTOMER` or `ADMIN`).
+- **Password Storage**: Strong adaptive bcrypt hashing with 10 salt rounds. Plaintext passwords are NEVER stored, logged, or transmitted in responses.
+- **Public Registration Role Assignment**:
+  - Public registration (`POST /api/auth/register`) strictly assigns `role: UserRole.CUSTOMER`.
+  - Client-submitted `role` values or privilege escalation attempts are completely stripped and ignored.
+- **Profile Update Role Protection**:
+  - Customer profile modifications (`PATCH /api/auth/me`) are strictly limited to `firstName`, `lastName`, and `phone`. The `role`, `id`, `email`, and `passwordHash` fields can never be updated through customer profile endpoints.
+- **Role-Based Admin Access & Authorization**:
+  - Enforced authoritatively via backend middleware `requireAdmin` (`backend/src/middleware/auth.ts`).
+  - Access to admin routes requires valid authentication, an active database record (`isActive === true`), and `role === UserRole.ADMIN`.
+  - Unauthenticated requests receive HTTP `401 Unauthorized`.
+  - Deactivated accounts receive HTTP `401 Unauthorized`.
+  - Authenticated non-admin customers receive HTTP `403 Forbidden` (`Administrator access required.`).
+  - Frontend route guards (`AdminRoute`) provide usability gating; backend authorization remains authoritative.
+- **Administrator Account Provisioning**:
+  - Administrator accounts are provisioned exclusively via explicit operator CLI action: `npm run admin:promote -- <email>`.
+  - There are NO public admin registration endpoints, NO default credentials, and NO automatic promotion of first-registered users on application startup.
+  - The provisioning script requires an existing, active account registered with that email and performs safe, idempotent re-execution if the account is already an administrator.
+- **Storefront Navigation & Link Privacy**:
+  - Ordinary customers and unauthenticated visitors never see administrative links, badges, or portals in storefront headers, drawers, or account dashboards.
+  - Only accounts verified with `role === 'ADMIN'` display the "Admin Portal" navigation shortcuts.
+- **Account Deactivation**: Users with historical orders cannot be physically deleted. `isActive = false` soft-disables their account, immediately revoking both customer and administrative authentication.
 
 ---
 

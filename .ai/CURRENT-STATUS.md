@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-14  
-**Current Phase**: `PRODUCT REVIEWS & RATINGS (Step 20 Complete)`
+**Current Phase**: `ADMIN AUTHENTICATION & DASHBOARD FOUNDATION (Step 21 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Product reviews and ratings (Step 20) have been fully implemented and verified across both backend and frontend workspaces. Verified buyers who have purchased and received an artwork can submit a star rating (1–5) and written review text. Reviews reuse the existing PostgreSQL `reviews` table and `ReviewStatus` enum without any database migrations, maintaining engine-level duplicate prevention via compound unique constraint `@@unique([userId, productId])`. Backend domain architecture (Repository → Service → Controller → Routes) at `/api/reviews` derives reviewer identity strictly from verified authentication (`req.user.id`), verifies purchase eligibility authoritatively against backend order and payment records (`status` in `CONFIRMED`/`PROCESSING`/`SHIPPED`/`DELIVERED` with `payment.status === 'CAPTURED'`), and enforces strict anti-IDOR protections returning uniform 404 responses for cross-user modifications. Public catalog endpoints derive rating aggregates (`averageRating`, `totalReviews`, and 5-tier distribution) authoritatively from `APPROVED` reviews. On the storefront, `StarRating` provides accessible interactive star inputs and read-only displays, `RatingSummary` presents score and percentage distribution bars, `ReviewCard` renders reviewer details and owner edit/delete actions, `ReviewForm` provides validated input with live character counting, and `ProductReviewsSection` integrates cleanly onto `ProductDetailPage.tsx` alongside rating previews on `ProductCard.tsx`. All 56 test suites (24 backend / 315 tests, 32 frontend / 194 tests, totaling 509 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Role-based administrator authorization and dashboard foundation (Step 21) have been implemented and verified across both backend and frontend workspaces. Public customer registration strictly assigns the `CUSTOMER` role, and customer profile updates prevent privilege escalation. Backend administrative routes under `/api/admin/*` are authoritatively guarded by `requireAuth` and `requireAdmin` middleware, enforcing HTTP `401 Unauthorized` for unauthenticated or deactivated accounts and HTTP `403 Forbidden` for non-admin customers. Safe administrator account provisioning is supported exclusively via an explicit, idempotent operator CLI script (`npm run admin:promote -- <email>`) that verifies pre-existing registered accounts and avoids hardcoded credentials or automatic startup promotions. The protected `GET /api/admin/dashboard` endpoint returns sanitized administrator profile details, runtime environment metadata, and planned operational modules without exposing secrets, password hashes, or fabricated statistics. On the storefront, customer navigation hides all administrative links, while verified administrators see dedicated "Admin Portal" navigation in `Header.tsx` and `AccountPage.tsx`. The frontend `/admin` route is guarded by `AdminRoute` and framed in `AdminLayout`, providing an accessible HTTP 403 Access Denied fallback for customers. All 62 test suites (27 backend / 333 tests, 35 frontend / 204 tests, totaling 537 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -421,23 +421,56 @@ Product reviews and ratings (Step 20) have been fully implemented and verified a
   - 100% Vite and TypeScript production build passing across workspaces.
   - Prisma schema validation verified.
 
+### Phase 21: Admin Authentication & Dashboard Foundation (Completed)
+
+- [x] **Backend Role-Based Access Control & Reusable Middleware**:
+  - Implemented `requireAdmin` middleware in `backend/src/middleware/auth.ts`:
+    - Validates active database status (`isActive === true`) and asserts `req.user.role === UserRole.ADMIN`.
+    - Returns HTTP `401 Unauthorized` for unauthenticated or deactivated accounts.
+    - Returns HTTP `403 Forbidden` (`Administrator access required.`) for authenticated non-admin customers.
+    - Operates seamlessly both chained with `requireAuth` or standalone.
+  - Verified privilege escalation prevention: public registration enforces `role: UserRole.CUSTOMER`; profile editing restricts updates to non-privileged fields.
+- [x] **Safe Administrator Account Provisioning CLI**:
+  - Implemented `backend/scripts/promote-admin.ts` (`npm run admin:promote -- <email>`).
+  - Requires explicit operator invocation with email argument or `ADMIN_PROMOTION_EMAIL` environment variable.
+  - Validates email format, verifies account pre-existence, and rejects deactivated accounts.
+  - Idempotent: repeated promotion of an existing admin exits cleanly without modification.
+  - Zero hardcoded admin credentials, zero default seeds, and zero silent promotions on startup.
+- [x] **Protected Admin API Foundation**:
+  - Created `AdminService`, `AdminController`, and `admin.routes.ts` mounted at `/api/admin`.
+  - Implemented `GET /api/admin/dashboard` returning sanitized admin profile, system environment metadata, and planned operational modules without leaking secrets or fabricating metrics.
+- [x] **Frontend Admin Dashboard & Navigation Shell**:
+  - Created `AdminRoute.tsx` with loading state, login redirect with return destination tracking, and accessible HTTP 403 Access Denied presentation.
+  - Created `AdminLayout.tsx` providing a dedicated administrative shell with portal branding, admin identity pill, "Storefront" link (`/`), and "Sign Out" action.
+  - Created `AdminDashboardPage.tsx` at `/admin` rendering admin welcome banner, system environment tile, and 5 planned operational module cards (Catalog Management, Order Fulfillment, Customer Patronage, Review Moderation, Inventory Allocation).
+  - Updated `Header.tsx` and `AccountPage.tsx` to conditionally render "Admin Portal" navigation shortcuts strictly for verified `role === 'ADMIN'` users.
+- [x] **Automated Tests & Quality**:
+  - 27 backend automated test suites passing with 333 tests (`backend/tests/`).
+  - 35 frontend automated test suites passing with 204 tests (`frontend/tests/`).
+  - 62 total test suites with 537 passing tests across workspaces.
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - 100% Vite and TypeScript production build passing across workspaces.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 20 is complete and verified).
+- _None_ (Step 21 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 21: Customer Order Cancellation, Returns & Advanced Post-Payment Hardening / Administrative Review Moderation Dashboard.
+- Step 22: Admin Art Catalog Management (Product & Category CRUD, Image Galleries & Pricing Management).
 
 ---
 
 ## 5. Known Limitations & Architecture Notes
 
-- **Verified Buyer Auto-Approval**: In the absence of an administrative moderation dashboard in this milestone, verified-purchase reviews are created with `status: APPROVED` and `isVerifiedPurchase: true` so genuine buyer feedback reflects immediately. Administrative moderation controls (overriding status, flagging, or bulk approval) are deferred to the admin management milestone.
+- **Initial Administrator Provisioning**: The store contains no default admin credentials or public registration endpoints. The first administrator must register as a customer through the standard registration flow and subsequently be promoted via the CLI operator command (`npm run admin:promote -- <email>`).
+- **Verified Buyer Auto-Approval**: In the absence of an administrative moderation dashboard in this milestone, verified-purchase reviews are created with `status: APPROVED` and `isVerifiedPurchase: true` so genuine buyer feedback reflects immediately. Administrative moderation controls (overriding status, flagging, or bulk approval) are scheduled for Step 25.
 - **In-Memory Rate Limiting**: The rate limiter tracks requests in local Node.js process memory. In a clustered or multi-instance deployment behind a load balancer, limits are enforced per instance rather than globally. A distributed store (such as Redis) will be introduced when multi-instance production infrastructure is deployed.
 - **Session Revocation Window**: JWT session tokens have a 7-day lifespan. Logout clears the client cookie, but copied tokens remain cryptographically valid until expiration unless the user account is deactivated in the database (which immediately revokes access via `requireAuth`).
 - **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).

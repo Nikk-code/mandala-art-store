@@ -9,3 +9,4 @@ export * from './LoginPage';
 export * from './RegisterPage';
 export * from './AccountPage';
 export * from './WishlistPage';
+export * from './admin/AdminDashboardPage';

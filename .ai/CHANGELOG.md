@@ -15,6 +15,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.24.0] - 2026-10-14
+
+### Added
+
+- **Step 21: Admin Authentication & Dashboard Foundation**:
+  - **Backend Role-Based Access Control & Middleware**:
+    - Created `requireAdmin` authorization middleware in `backend/src/middleware/auth.ts` enforcing `UserRole.ADMIN` and active database status.
+    - Protected admin endpoints: unauthenticated or deactivated requests receive HTTP `401 Unauthorized`; authenticated non-admin customers receive HTTP `403 Forbidden` (`Administrator access required.`).
+    - Verified strict privilege escalation prevention: public registration enforces `role: UserRole.CUSTOMER`; profile editing restricts updates to permitted fields only.
+  - **Safe Administrator Account Provisioning CLI**:
+    - Created `backend/scripts/promote-admin.ts` and npm script `"admin:promote"`.
+    - Promotes an existing, active registered account via email argument or `ADMIN_PROMOTION_EMAIL` environment variable.
+    - Idempotent: repeated promotion of an existing admin exits cleanly without modification.
+    - Zero hardcoded admin credentials, zero default seeds, and zero silent promotions on startup.
+  - **Protected Admin API Foundation**:
+    - Created `backend/src/types/admin.ts` defining `AdminProfileDto`, `AdminSystemInfoDto`, `AdminModuleDto`, `AdminDashboardResponseData`, and `PromoteAdminResult`.
+    - Created `AdminService`, `AdminController`, and `admin.routes.ts` mounted at `/api/admin`.
+    - Endpoint `GET /api/admin/dashboard` returning sanitized admin profile, system environment metadata, and planned operational modules without leaking secrets or fabricating metrics.
+  - **Frontend Admin Dashboard & Navigation Shell**:
+    - Created `frontend/src/types/admin.ts` and `frontend/src/services/admin-service.ts`.
+    - Created `AdminRoute.tsx` with loading state, login redirect with return destination tracking, and accessible HTTP 403 Access Denied presentation.
+    - Created `AdminLayout.tsx` providing a dedicated administrative shell with portal branding, admin identity pill, "Storefront" link (`/`), and "Sign Out" action.
+    - Created `AdminDashboardPage.tsx` at `/admin` rendering admin welcome banner, system environment tile, and 5 planned operational module cards (Catalog Management, Order Fulfillment, Customer Patronage, Review Moderation, Inventory Allocation).
+    - Updated `Header.tsx` and `AccountPage.tsx` to conditionally render "Admin Portal" navigation shortcuts strictly for verified `role === 'ADMIN'` users.
+  - **Automated Tests**:
+    - Created `backend/tests/admin.middleware.test.ts` (5 unit tests covering 401 unauthenticated, 401 deactivated, 403 customer, and 200/next admin).
+    - Created `backend/tests/admin.api.test.ts` (7 integration tests covering 401 unauthenticated, 401 forged token, 401 deactivated, 403 customer, 200 admin via header, 200 admin via cookie, and sensitive leakage prevention).
+    - Created `backend/tests/promote-admin.test.ts` (6 unit tests covering validation, nonexistent user, deactivated user, successful promotion, and idempotent re-run).
+    - Created `frontend/tests/admin-service.test.ts` (2 client service unit tests).
+    - Created `frontend/tests/AdminRoute.test.tsx` (4 route guard tests covering loading, unauthenticated redirect, 403 access denied, and admin render).
+    - Created `frontend/tests/AdminDashboardPage.test.tsx` (4 component integration tests covering loading, admin identity, planned module cards, and error retry).
+  - **Documentation & Decisions**:
+    - Recorded `ADR-023: Role-Based Administrator Authentication, Safe Account Provisioning & Control Dashboard Foundation` in `.ai/DECISIONS.md`.
+    - Updated `.ai/CURRENT-STATUS.md`, `.ai/BUSINESS-RULES.md`, and `.ai/SECURITY-STANDARDS.md`.
+
+---
+
 ## [0.23.0] - 2026-10-14
 
 ### Added

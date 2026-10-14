@@ -13,7 +13,9 @@ import {
   RegisterPage,
   AccountPage,
   WishlistPage,
+  AdminDashboardPage,
 } from '@/pages';
+import { AdminRoute } from '@/components/admin';
 import { CartProvider, AuthProvider, WishlistProvider } from '@/context';
 
 function NotFoundPage(): ReactNode {
@@ -40,6 +42,17 @@ export function App(): ReactNode {
         <CartProvider>
           <BrowserRouter>
             <Routes>
+              {/* Protected Administrator Dashboard Area */}
+              <Route
+                path="admin"
+                element={
+                  <AdminRoute>
+                    <AdminDashboardPage />
+                  </AdminRoute>
+                }
+              />
+
+              {/* Public Storefront Area */}
               <Route path="/" element={<RootLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="products" element={<ProductsPage />} />

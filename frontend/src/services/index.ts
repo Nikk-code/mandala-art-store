@@ -6,3 +6,4 @@ export * from './auth-service';
 export * from './address-service';
 export * from './wishlist-service';
 export * from './review-service';
+export * from './admin-service';

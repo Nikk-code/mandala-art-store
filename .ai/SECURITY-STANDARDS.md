@@ -147,3 +147,39 @@
 
 - **No Frontend Overrides**: Star rating averages, total review counts, and rating distribution breakdowns are computed directly on the backend using SQL aggregation of `APPROVED` reviews.
 - Frontend clients cannot inject or override rating averages, counts, or verification flags.
+
+---
+
+## 10. Admin Authentication, Authorization & Provisioning Standards (Step 21 Standards)
+
+### 10.1 Role-Based Backend Access Control (Zero-Trust Frontend)
+
+- **Authoritative Authorization**: Admin routes under `/api/admin/*` are protected by `requireAuth` and `requireAdmin` middleware. The `requireAdmin` middleware asserts that `req.user.role === 'ADMIN'` and that the account is active (`isActive === true`) in the database.
+- **Strict HTTP Status Semantics**:
+  - Unauthenticated requests receive HTTP `401 Unauthorized` (`Authentication required to access admin resources.`).
+  - Deactivated accounts receive HTTP `401 Unauthorized` (`User account not found or deactivated.`).
+  - Authenticated non-admin customers receive HTTP `403 Forbidden` (`Administrator access required.`).
+- **Zero Client Trust**: Client-supplied `role`, `isAdmin`, or `userId` parameters in headers, query strings, or request bodies are strictly ignored.
+
+### 10.2 Privilege Escalation Prevention
+
+- **Registration Guard**: Public customer registration (`POST /api/auth/register`) strictly sets `role: UserRole.CUSTOMER`. Any `role` submitted in the registration payload is ignored.
+- **Profile Modification Guard**: Customer profile updates (`PATCH /api/auth/me`) allow editing only `firstName`, `lastName`, and `phone`. The `role` property cannot be altered through customer-facing APIs.
+
+### 10.3 Safe Administrator Account Provisioning
+
+- **No Default Credentials**: The codebase contains zero hardcoded admin passwords, zero default admin seed accounts, and zero public admin signup routes.
+- **Operator-Driven Promotion**: The sole authorized mechanism to grant administrative access is the explicit CLI command:
+  `npm run admin:promote -- <email>`
+- **Prerequisites for Promotion**:
+  - The targeted account must already exist (registered via standard authentication).
+  - The account must be active (`isActive === true`). Deactivated accounts cannot be promoted.
+  - The script validates email format and performs safe, idempotent re-execution if the account is already an administrator.
+  - The script never logs passwords, hashes, secrets, or tokens.
+- **No Automatic Promotion**: The system never promotes the first registered customer automatically or runs promotions during startup.
+
+### 10.4 Information Disclosure & Payload Sanitization
+
+- **Minimal Dashboard Payload**: The administrative endpoint `GET /api/admin/dashboard` returns only public operator details (`id`, `email`, `firstName`, `lastName`, `role`), runtime environment metadata, and planned operational module definitions.
+- **No Sensitive Leakage**: Passwords, password hashes (`passwordHash`), secret keys, and JWT tokens are never included in admin API responses.
+- **No Fabricated Data**: The dashboard foundation does not invent business numbers or display simulated financial statistics.

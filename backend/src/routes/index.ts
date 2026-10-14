@@ -8,6 +8,7 @@ import orderRoutes from './order.routes';
 import addressRoutes from './address.routes';
 import wishlistRoutes from './wishlist.routes';
 import reviewRoutes from './review.routes';
+import adminRoutes from './admin.routes';
 
 const apiRouter = Router();
 
@@ -16,6 +17,9 @@ apiRouter.use('/health', healthRoutes);
 
 // Customer Authentication endpoints -> /api/auth
 apiRouter.use('/auth', authRoutes);
+
+// Administrator endpoints -> /api/admin
+apiRouter.use('/admin', adminRoutes);
 
 // Customer Address endpoints -> /api/addresses
 apiRouter.use('/addresses', addressRoutes);
