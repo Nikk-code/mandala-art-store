@@ -93,6 +93,24 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
             {product.name}
           </h3>
 
+          {/* Rating Preview */}
+          {product.totalReviews !== undefined && product.totalReviews > 0 && (
+            <div
+              className="mt-1 flex items-center gap-1.5 text-xs text-stone-600"
+              aria-label={`Rated ${product.averageRating?.toFixed(1)} out of 5 stars (${product.totalReviews} reviews)`}
+            >
+              <span className="text-amber-400 text-xs leading-none" aria-hidden="true">
+                ★
+              </span>
+              <span className="font-bold text-art-charcoal text-xs leading-none">
+                {product.averageRating?.toFixed(1)}
+              </span>
+              <span className="text-stone-400 text-[11px] leading-none">
+                ({product.totalReviews})
+              </span>
+            </div>
+          )}
+
           {/* Short Description */}
           {product.shortDescription && (
             <p className="mt-1 text-xs text-stone-600 line-clamp-2 leading-relaxed">

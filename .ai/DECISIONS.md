@@ -26,6 +26,8 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-018: Customer Authentication, Cryptographic JWT Session Management & Secure Cookie Architecture](#adr-018-customer-authentication-cryptographic-jwt-session-management--secure-cookie-architecture)
 - [ADR-019: Customer Profile Editing, Authentication Rate Limiting & Account Security Hardening](#adr-019-customer-profile-editing-authentication-rate-limiting--account-security-hardening)
 - [ADR-020: Customer Saved Address Management, Default Address Consistency & Checkout Integration](#adr-020-customer-saved-address-management-default-address-consistency--checkout-integration)
+- [ADR-021: Customer Wishlist Persistence, Database Unique Constraint & Storefront Synchronization](#adr-021-customer-wishlist-persistence-database-unique-constraint--storefront-synchronization)
+- [ADR-022: Product Reviews & Ratings Architecture, Verified Purchase Eligibility & Storefront Integration](#adr-022-product-reviews--ratings-architecture-verified-purchase-eligibility--storefront-integration)
 
 ---
 
@@ -413,3 +415,48 @@ This document tracks significant architectural, technical, and governance decisi
   - _Guest Wishlist in LocalStorage_: Deferred per prompt instructions to prevent complex synchronization and merge conflicts until authenticated requirements were fully satisfied.
   - _Soft-deleting wishlist items_: Rejected in favor of hard deletion to maintain a clean junction table and simplify unique constraint indexing.
 - **Consequences**: Persistent, secure customer wishlists backed by PostgreSQL engine invariants, real-time responsive UI state across all storefront components, zero data leakage or IDOR vulnerabilities, and zero cart/checkout regressions.
+
+---
+
+### ADR-022: Product Reviews & Ratings Architecture, Verified Purchase Eligibility & Storefront Integration
+
+- **Date**: 2026-10-14
+- **Status**: Accepted
+- **Context**: Customers purchasing sacred artworks, Lippan art, and canvas paintings need the ability to leave feedback, star ratings, and written reviews. The system must ensure review integrity, calculate server-authoritative rating aggregates, prevent fake reviews and rating manipulation, permit customer edits and deletions of their own reviews without exposing IDOR vulnerabilities, and display accessible rating previews on catalog cards and the product detail page.
+- **Decision**:
+  1. **Schema Reuse & Single Review Invariant**:
+     - Reused the existing `Review` model and `ReviewStatus` enum (`PENDING`, `APPROVED`, `REJECTED`) defined in `backend/prisma/schema.prisma` and migrated in `20261004153500_init_ecommerce_schema`.
+     - Preserved the database-enforced compound unique constraint `@@unique([userId, productId])` and foreign key cascade deletions, ensuring customers can write at most one review per product at the database engine level.
+  2. **Authoritative Backend Verified Purchase Eligibility**:
+     - Customer eligibility to review is determined authoritatively by `ReviewRepository.findEligiblePurchase` querying backend order and payment records:
+       - The order must belong to `req.user.id`.
+       - The order must contain an `OrderItem` matching the requested `productId`.
+       - The order status must be `CONFIRMED`, `PROCESSING`, `SHIPPED`, or `DELIVERED`.
+       - The associated payment record must have status `CAPTURED`.
+       - Cancelled, refunded, failed, or pending orders do not qualify.
+     - Never trust client-supplied purchase status, order IDs, or reviewer names.
+     - Unauthenticated customers or customers without an eligible verified purchase receive `403 Forbidden` (`Only customers with a verified purchase of this product may submit a review.`).
+  3. **Auto-Approval Policy in Milestone Scope**:
+     - In the absence of an administrative moderation dashboard in this milestone (per prompt instruction: "Do not build a full moderation dashboard in this step"), verified purchase reviews submitted by authenticated patrons are created with `status: ReviewStatus.APPROVED` and `isVerifiedPurchase: true`.
+     - Allows genuine buyer feedback to immediately reflect in public storefront averages, distribution bars, and reviews lists without artificial manual friction.
+  4. **Strict Anti-IDOR Authorization for Updates & Deletions**:
+     - `PUT /api/reviews/:reviewId` and `DELETE /api/reviews/:reviewId` strictly query by `id === reviewId AND userId === req.user.id`.
+     - If the review does not exist or belongs to another user, return a uniform `404 Not Found` (`Review not found.`) rather than leaking information about other users' reviews.
+     - Deletion or editing triggers recalculation of aggregate rating metrics in queries.
+  5. **Server-Authoritative Metrics & Catalog Integration**:
+     - `getRatingSummary` aggregates `count`, `avg`, and 5-tier distribution (1-star through 5-star counts) exclusively from `APPROVED` reviews.
+     - Server injects `averageRating` (rounded to 1 decimal place) and `totalReviews` into `PublicProductListItemDto` across catalog endpoints (`GET /api/catalog/products` and `GET /api/catalog/products/:slug`).
+     - Frontend clients are strictly prohibited from submitting rating averages or review counts; all summaries are derived server-side.
+  6. **Accessible Frontend Components**:
+     - `StarRating`: Accessible component with 5 interactive radio inputs (`role="radiogroup"`), aria-labels, and hover/focus styling, also serving as an accessible read-only visual star display.
+     - `RatingSummary`: Displays overall score, stars, review count, and percentage progress bars for 1-5 star distributions.
+     - `ReviewCard`: Formats reviewer first name, verified purchase badge, relative/locale review date, star rating, and owner action buttons (Edit, Delete).
+     - `ReviewForm`: Accessible form with interactive star rating, character counter (5-2000 chars), field validations, and loading/error states.
+     - `ProductReviewsSection`: Orchestrates review loading, eligibility state banner with sign-in link, review submission, edit mode, and delete confirmation dialog.
+     - `ProductCard`: Displays subtle rating preview when `product.totalReviews > 0`.
+     - `ProductDetailPage`: Features header rating preview anchor linking smoothly to `#reviews` and embeds `ProductReviewsSection` at the bottom of the page.
+- **Alternatives Considered**:
+  - _Unverified public reviews with CAPTCHA_: Rejected to maintain boutique art authenticity and prevent spam/fabricated testimonials.
+  - _Multiple reviews per product_: Rejected to prevent review bombing and duplicate inflation.
+  - _Client-side rating calculation_: Rejected because clients can be manipulated and pagination would prevent accurate global aggregation.
+- **Consequences**: Bulletproof review authenticity, zero IDOR vulnerabilities, server-enforced data integrity, accessible and responsive UI across viewports, zero schema migration regressions, and seamless customer review management.

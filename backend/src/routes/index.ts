@@ -7,6 +7,7 @@ import webhookRoutes from './webhook.routes';
 import orderRoutes from './order.routes';
 import addressRoutes from './address.routes';
 import wishlistRoutes from './wishlist.routes';
+import reviewRoutes from './review.routes';
 
 const apiRouter = Router();
 
@@ -21,6 +22,9 @@ apiRouter.use('/addresses', addressRoutes);
 
 // Customer Wishlist endpoints -> /api/wishlist
 apiRouter.use('/wishlist', wishlistRoutes);
+
+// Product Reviews & Ratings endpoints -> /api/reviews
+apiRouter.use('/reviews', reviewRoutes);
 
 // Checkout endpoints -> /api/checkout/orders
 apiRouter.use('/checkout', checkoutRoutes);

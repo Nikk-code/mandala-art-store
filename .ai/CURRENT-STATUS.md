@@ -1,13 +1,13 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-13  
-**Current Phase**: `CUSTOMER WISHLIST (Step 19 Complete)`
+**Last Updated**: 2026-10-14  
+**Current Phase**: `PRODUCT REVIEWS & RATINGS (Step 20 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Customer wishlist functionality (Step 19) has been implemented and thoroughly verified across both backend and frontend workspaces. Authenticated customers can save, bookmark, and curate artworks from product cards and the product detail page, review them on a dedicated wishlist page (`/wishlist`), check real-time stock availability, and move saved artworks directly to the shopping cart. Persisted in PostgreSQL via `wishlist_items` table with database-enforced compound unique constraint `@@unique([userId, productId])` and foreign key cascade deletion, preventing duplicate entries and orphaned records. Backend REST endpoints (`GET /api/wishlist`, `POST /api/wishlist`, `DELETE /api/wishlist/:productId`, `GET /api/wishlist/check/:productId`) derive customer identity strictly from verified authentication middleware (`req.user.id`), rejecting client-supplied spoofed identities, validating active product status, and enforcing anti-IDOR protections with 404 responses for absent items. On the storefront, `WishlistContext` provides reactive O(1) state synchronization, `Header.tsx` displays an accessible Wishlist heart icon with item count badge, `ProductCard.tsx` and `ProductDetailPage.tsx` feature reusable `WishlistButton` controls, and `AccountPage.tsx` integrates a quick saved artworks card. All 51 test suites (22 backend / 277 tests, 29 frontend / 178 tests, totaling 455 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Product reviews and ratings (Step 20) have been fully implemented and verified across both backend and frontend workspaces. Verified buyers who have purchased and received an artwork can submit a star rating (1–5) and written review text. Reviews reuse the existing PostgreSQL `reviews` table and `ReviewStatus` enum without any database migrations, maintaining engine-level duplicate prevention via compound unique constraint `@@unique([userId, productId])`. Backend domain architecture (Repository → Service → Controller → Routes) at `/api/reviews` derives reviewer identity strictly from verified authentication (`req.user.id`), verifies purchase eligibility authoritatively against backend order and payment records (`status` in `CONFIRMED`/`PROCESSING`/`SHIPPED`/`DELIVERED` with `payment.status === 'CAPTURED'`), and enforces strict anti-IDOR protections returning uniform 404 responses for cross-user modifications. Public catalog endpoints derive rating aggregates (`averageRating`, `totalReviews`, and 5-tier distribution) authoritatively from `APPROVED` reviews. On the storefront, `StarRating` provides accessible interactive star inputs and read-only displays, `RatingSummary` presents score and percentage distribution bars, `ReviewCard` renders reviewer details and owner edit/delete actions, `ReviewForm` provides validated input with live character counting, and `ProductReviewsSection` integrates cleanly onto `ProductDetailPage.tsx` alongside rating previews on `ProductCard.tsx`. All 56 test suites (24 backend / 315 tests, 32 frontend / 194 tests, totaling 509 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -390,22 +390,54 @@ Customer wishlist functionality (Step 19) has been implemented and thoroughly ve
   - 100% Vite and TypeScript production build passing across workspaces.
   - Prisma schema validation verified.
 
+### Phase 20: Product Reviews & Ratings (Completed)
+
+- [x] **PostgreSQL Schema & Invariant Reuse**:
+  - Reused existing `Review` model and `ReviewStatus` enum (`PENDING`, `APPROVED`, `REJECTED`) from initial schema migration (`20261004153500_init_ecommerce_schema`) with zero new database migrations.
+  - Maintained database-enforced compound unique constraint `@@unique([userId, productId])` and foreign key cascade deletions.
+- [x] **Backend Domain & Anti-IDOR REST Endpoints**:
+  - Implemented `ReviewRepository`, `ReviewService`, `ReviewController`, and `review.routes.ts` mounted at `/api/reviews`.
+  - Authoritative verified-purchase eligibility checking (`ReviewRepository.findEligiblePurchase` verifying customer order status in `CONFIRMED`/`PROCESSING`/`SHIPPED`/`DELIVERED` with `CAPTURED` payment).
+  - Derived reviewer identity strictly from verified `req.user.id`, rejecting client-supplied IDs or names.
+  - Input validation: integer ratings (1–5), optional title (<= 200 chars), review body (5–2000 chars), and strict UUID v4 checking.
+  - Caught Prisma `P2002` duplicate unique violations safely returning `409 Conflict`.
+  - Strict anti-IDOR owner enforcement on `PUT /api/reviews/:reviewId` and `DELETE /api/reviews/:reviewId`, returning uniform `404 Not Found` for unauthorized or absent reviews.
+  - Auto-approval of verified purchase reviews (`APPROVED` status, `isVerifiedPurchase = true`) for immediate storefront reflection in milestone scope.
+  - Server-authoritative rating summary aggregation (`count`, `avg`, 5-tier distribution) integrated into catalog listings (`GET /api/catalog/products` and `GET /api/catalog/products/:slug`).
+- [x] **Frontend Components & Storefront Presentation**:
+  - Created `frontend/src/types/review.ts` and `frontend/src/services/review-service.ts` with typed API client wrappers.
+  - Created `StarRating.tsx` accessible rating control with radiogroup semantics and read-only star visual display.
+  - Created `RatingSummary.tsx` rendering overall score, stars, review count, and percentage distribution progress bars.
+  - Created `ReviewCard.tsx` rendering reviewer name, verified buyer badge, relative review date, and owner edit/delete actions.
+  - Created `ReviewForm.tsx` with live character counter, field validation, and responsive submission state.
+  - Created `ProductReviewsSection.tsx` orchestrating summary, eligibility banner with sign-in link, review submission/edit, and review list.
+  - Integrated rating previews on `ProductCard.tsx` and `ProductDetailPage.tsx` with smooth-scroll `#reviews` anchor link.
+- [x] **Automated Tests & Quality**:
+  - 24 backend automated test suites passing with 315 tests (`backend/tests/`).
+  - 32 frontend automated test suites passing with 194 tests (`frontend/tests/`).
+  - 56 total test suites with 509 passing tests.
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - 100% Vite and TypeScript production build passing across workspaces.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 19 is complete and verified).
+- _None_ (Step 20 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 20: Order Cancellation, Returns & Advanced Post-Payment Hardening (Customer cancellation windows, admin order state transitions, and webhook concurrency hardening).
+- Step 21: Customer Order Cancellation, Returns & Advanced Post-Payment Hardening / Administrative Review Moderation Dashboard.
 
 ---
 
 ## 5. Known Limitations & Architecture Notes
 
+- **Verified Buyer Auto-Approval**: In the absence of an administrative moderation dashboard in this milestone, verified-purchase reviews are created with `status: APPROVED` and `isVerifiedPurchase: true` so genuine buyer feedback reflects immediately. Administrative moderation controls (overriding status, flagging, or bulk approval) are deferred to the admin management milestone.
 - **In-Memory Rate Limiting**: The rate limiter tracks requests in local Node.js process memory. In a clustered or multi-instance deployment behind a load balancer, limits are enforced per instance rather than globally. A distributed store (such as Redis) will be introduced when multi-instance production infrastructure is deployed.
 - **Session Revocation Window**: JWT session tokens have a 7-day lifespan. Logout clears the client cookie, but copied tokens remain cryptographically valid until expiration unless the user account is deactivated in the database (which immediately revokes access via `requireAuth`).
 - **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).

@@ -47,6 +47,17 @@ export class WishlistService {
         displayOrder: img.displayOrder,
         isPrimary: img.isPrimary,
       })),
+      ...(prod.reviews !== undefined
+        ? {
+            averageRating:
+              prod.reviews.length > 0
+                ? Math.round(
+                    (prod.reviews.reduce((acc, r) => acc + r.rating, 0) / prod.reviews.length) * 10
+                  ) / 10
+                : null,
+            totalReviews: prod.reviews.length,
+          }
+        : {}),
       createdAt: prod.createdAt.toISOString(),
     };
   }

@@ -11,10 +11,11 @@ import {
 } from '@/components/ui';
 import { ProductImageGallery } from '@/components/catalog';
 import { WishlistButton } from '@/components/wishlist';
+import { ProductReviewsSection, StarRating } from '@/components/reviews';
 import { fetchProductBySlug } from '@/services';
 import { formatPrice, formatWeight, getAvailabilityInfo } from '@/utils';
 import { useCart } from '@/context';
-import type { ProductDetailDto } from '@/types';
+import type { ProductDetailDto, RatingSummaryDto } from '@/types';
 
 export function ProductDetailPage(): ReactNode {
   const { slug } = useParams<{ slug: string }>();
@@ -22,6 +23,7 @@ export function ProductDetailPage(): ReactNode {
   const { addItem } = useCart();
 
   const [product, setProduct] = useState<ProductDetailDto | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<RatingSummaryDto | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
@@ -207,14 +209,37 @@ export function ProductDetailPage(): ReactNode {
                 </div>
               </div>
 
-              {/* Product Title */}
+              {/* Product Title & Reviews Preview */}
               <div>
                 <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-art-charcoal leading-tight">
                   {product.name}
                 </h1>
-                <p className="mt-1.5 text-xs text-stone-600">
-                  Item SKU: <span className="font-mono">{product.sku}</span>
-                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-stone-600">
+                  <div className="flex items-center gap-1.5">
+                    <StarRating
+                      rating={reviewSummary?.averageRating ?? product.averageRating ?? 0}
+                      size="sm"
+                    />
+                    <span className="font-bold text-art-charcoal text-xs">
+                      {(reviewSummary?.totalReviews ?? product.totalReviews ?? 0) > 0
+                        ? (reviewSummary?.averageRating ?? product.averageRating ?? 0).toFixed(1)
+                        : 'New'}
+                    </span>
+                  </div>
+                  <span className="text-stone-300">·</span>
+                  <a
+                    href="#reviews"
+                    className="font-medium hover:text-art-ochre underline transition-colors"
+                  >
+                    {(reviewSummary?.totalReviews ?? product.totalReviews ?? 0) === 1
+                      ? '1 review'
+                      : `${reviewSummary?.totalReviews ?? product.totalReviews ?? 0} reviews`}
+                  </a>
+                  <span className="text-stone-300">·</span>
+                  <span>
+                    Item SKU: <span className="font-mono text-stone-700">{product.sku}</span>
+                  </span>
+                </div>
               </div>
 
               {/* Price & Availability Banner */}
@@ -436,6 +461,16 @@ export function ProductDetailPage(): ReactNode {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Product Reviews & Ratings Section */}
+          <div className="mt-16 pt-12 border-t border-art-stone">
+            <ProductReviewsSection
+              productId={product.id}
+              productName={product.name}
+              productSlug={product.slug}
+              onSummaryChange={setReviewSummary}
+            />
           </div>
         </Container>
       </Section>

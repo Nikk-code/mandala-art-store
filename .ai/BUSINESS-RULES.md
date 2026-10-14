@@ -122,14 +122,34 @@ This document outlines the core business logic, domain constraints, and calculat
 
 ## 6. Reviews & Ratings Rules
 
-- **Eligibility**:
-  - Verified buyers who have purchased and received an artwork can submit a review with rating (1 to 5 stars), optional title, and text.
-  - Reviews are linked to the specific order for verified-purchase validation.
-  - One review per user per product (enforced by database unique constraint).
-- **Moderation**:
-  - Reviews default to `pending` status. Admin must approve before reviews are visible on the storefront.
-  - Admin can approve, reject, or leave reviews pending.
-  - Review text must be sanitized before storage to prevent XSS.
+- **Verified Purchase Eligibility**:
+  - Only authenticated patrons with an eligible, successfully paid order containing the product may submit a review.
+  - Eligibility requires:
+    - An order associated with the authenticated customer (`order.userId === req.user.id`).
+    - The order must contain an order item for the targeted product (`orderItem.productId === productId`).
+    - The order status must be `CONFIRMED`, `PROCESSING`, `SHIPPED`, or `DELIVERED`.
+    - The associated payment record must have status `CAPTURED`.
+    - Unpaid, pending, failed, cancelled, or refunded orders do not qualify.
+  - Customer identity and eligibility are derived strictly from server-side order and payment data; client-supplied reviewer identities or purchase flags are rejected.
+- **Rating & Content Specifications**:
+  - Rating must be an integer between 1 and 5 stars.
+  - Review title is optional, up to 200 characters.
+  - Review body is required, between 5 and 2000 characters.
+- **Duplicate Prevention**:
+  - One review per customer per product.
+  - Enforced at both the service layer (checking existing reviews) and the database engine layer via the compound unique constraint `@@unique([userId, productId])`.
+  - Duplicate review attempts return HTTP `409 Conflict`.
+- **Moderation & Visibility Lifecycle**:
+  - Verified-purchase customer reviews are created with `status: ReviewStatus.APPROVED` and `isVerifiedPurchase: true` in this milestone, making them immediately visible in storefront calculations and the reviews list.
+  - Only reviews with `APPROVED` status are included in public average ratings, rating distributions, and storefront listings.
+  - Full administrative moderation dashboard (manual review approval/rejection/flagging) is planned for the administrative management milestone.
+- **Customer Review Ownership & Anti-IDOR**:
+  - Customers can edit their rating, title, and body on their existing review (`PUT /api/reviews/:reviewId`).
+  - Customers can delete their own review (`DELETE /api/reviews/:reviewId`).
+  - Any attempt to edit or delete another customer's review—or a nonexistent review—returns HTTP `404 Not Found` (`Review not found.`), preventing resource enumeration.
+- **Server-Authoritative Metrics**:
+  - Rating summaries (average rating, review count, and 1-to-5 star distribution) are computed authoritatively on the server.
+  - Client-supplied rating averages or counts are never trusted or accepted.
 - **Photo Reviews**: [To Be Defined: may be supported as a future extension].
 
 ---

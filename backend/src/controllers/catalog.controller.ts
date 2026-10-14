@@ -85,35 +85,46 @@ export async function getProducts(
       sort: typeof sort === 'string' ? (sort as 'newest' | 'price_asc' | 'price_desc') : undefined,
     });
 
-    const items: PublicProductListItemDto[] = result.items.map(prod => ({
-      id: prod.id,
-      sku: prod.sku,
-      name: prod.name,
-      slug: prod.slug,
-      shortDescription: prod.shortDescription,
-      description: prod.description,
-      price: prod.price,
-      compareAtPrice: prod.compareAtPrice,
-      availability: prod.availability,
-      dimensions: prod.dimensions,
-      material: prod.material,
-      weightGrams: prod.weightGrams,
-      isHandmade: prod.isHandmade,
-      isFeatured: prod.isFeatured,
-      category: {
-        id: prod.category.id,
-        name: prod.category.name,
-        slug: prod.category.slug,
-      },
-      images: prod.images.map(img => ({
-        id: img.id,
-        url: img.url,
-        altText: img.altText,
-        displayOrder: img.displayOrder,
-        isPrimary: img.isPrimary,
-      })),
-      createdAt: prod.createdAt.toISOString(),
-    }));
+    const items: PublicProductListItemDto[] = result.items.map(prod => {
+      const totalReviews = prod.reviews?.length ?? 0;
+      const averageRating =
+        totalReviews > 0
+          ? Math.round((prod.reviews!.reduce((acc, r) => acc + r.rating, 0) / totalReviews) * 10) /
+            10
+          : null;
+
+      return {
+        id: prod.id,
+        sku: prod.sku,
+        name: prod.name,
+        slug: prod.slug,
+        shortDescription: prod.shortDescription,
+        description: prod.description,
+        price: prod.price,
+        compareAtPrice: prod.compareAtPrice,
+        availability: prod.availability,
+        dimensions: prod.dimensions,
+        material: prod.material,
+        weightGrams: prod.weightGrams,
+        isHandmade: prod.isHandmade,
+        isFeatured: prod.isFeatured,
+        category: {
+          id: prod.category.id,
+          name: prod.category.name,
+          slug: prod.category.slug,
+        },
+        images: prod.images.map(img => ({
+          id: img.id,
+          url: img.url,
+          altText: img.altText,
+          displayOrder: img.displayOrder,
+          isPrimary: img.isPrimary,
+        })),
+        averageRating,
+        totalReviews,
+        createdAt: prod.createdAt.toISOString(),
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -135,6 +146,12 @@ export async function getProductBySlug(
   try {
     const { slug } = req.params;
     const prod = await productService.getProductBySlug(slug);
+
+    const totalReviews = prod.reviews?.length ?? 0;
+    const averageRating =
+      totalReviews > 0
+        ? Math.round((prod.reviews!.reduce((acc, r) => acc + r.rating, 0) / totalReviews) * 10) / 10
+        : null;
 
     const data: PublicProductDetailDto = {
       id: prod.id,
@@ -166,6 +183,8 @@ export async function getProductBySlug(
         displayOrder: img.displayOrder,
         isPrimary: img.isPrimary,
       })),
+      averageRating,
+      totalReviews,
       createdAt: prod.createdAt.toISOString(),
       updatedAt: prod.updatedAt.toISOString(),
     };

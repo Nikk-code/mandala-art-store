@@ -73,6 +73,23 @@ describe('ProductDetailPage Integration & State Handling', () => {
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
+        if (url.includes('reviews/product')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  reviews: [],
+                  summary: {
+                    averageRating: 0,
+                    totalReviews: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+                  },
+                },
+              }),
+          } as Response);
+        }
         if (url.includes('products/sacred-sri-yantra-mandala')) {
           return Promise.resolve({
             ok: true,
@@ -149,7 +166,26 @@ describe('ProductDetailPage Integration & State Handling', () => {
 
     vi.stubGlobal(
       'fetch',
-      vi.fn(() => {
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('reviews')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  reviews: [],
+                  summary: {
+                    averageRating: 0,
+                    totalReviews: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+                  },
+                },
+              }),
+          } as Response);
+        }
+
         attempt++;
         if (attempt === 1) {
           return Promise.resolve({
@@ -198,12 +234,30 @@ describe('ProductDetailPage Integration & State Handling', () => {
 
     vi.stubGlobal(
       'fetch',
-      vi.fn(() =>
-        Promise.resolve({
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('reviews')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  reviews: [],
+                  summary: {
+                    averageRating: 0,
+                    totalReviews: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+                  },
+                },
+              }),
+          } as Response);
+        }
+        return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, data: madeToOrderProduct }),
-        } as Response)
-      )
+        } as Response);
+      })
     );
 
     renderWithRouter();
@@ -224,12 +278,30 @@ describe('ProductDetailPage Integration & State Handling', () => {
   it('adds item to cart and displays confirmation with View Cart link', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() =>
-        Promise.resolve({
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('reviews')) {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                success: true,
+                data: {
+                  reviews: [],
+                  summary: {
+                    averageRating: 0,
+                    totalReviews: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+                  },
+                },
+              }),
+          } as Response);
+        }
+        return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, data: mockProductDetail }),
-        } as Response)
-      )
+        } as Response);
+      })
     );
 
     renderWithRouter();

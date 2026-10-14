@@ -36,6 +36,8 @@ export interface PublicProductListItemDto {
     slug: string;
   };
   images: PublicProductImageDto[];
+  averageRating?: number | null;
+  totalReviews?: number;
   createdAt: string;
 }
 

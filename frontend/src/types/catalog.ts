@@ -38,6 +38,8 @@ export interface ProductListItemDto {
     slug: string;
   };
   images: ProductImageDto[];
+  averageRating?: number | null;
+  totalReviews?: number;
   createdAt: string;
 }
 

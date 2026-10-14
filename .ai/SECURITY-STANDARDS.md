@@ -110,3 +110,40 @@
 
 - Delivery addresses captured at checkout are stored directly on the `orders` table as snapshot fields.
 - Address mutations or deletions in the customer address book never mutate existing order records or historical receipts.
+
+---
+
+## 9. Product Reviews & Ratings Security Standards (Step 20 Standards)
+
+### 9.1 Zero-Trust Client & Customer Identity Derivation
+
+- **Server-Derived Identity**: The customer ID is strictly extracted from `req.user.id` via verified JWT authentication (`requireAuth`). Client-supplied `userId`, `authorName`, or `customerName` fields are completely ignored.
+- **Reviewer Display Name**: Storefront author names are derived directly from the authenticated `User` record (`firstName` or `User.name`), preventing impersonation or spoofed reviewer identities.
+
+### 9.2 Authoritative Verified Purchase Authorization
+
+- **Authoritative Backend Query**: Review creation (`POST /api/reviews`) and eligibility checks (`GET /api/reviews/eligibility/:productId`) verify that the authenticated customer has completed an order for the product with `status` in (`CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`) and payment `status === 'CAPTURED'`.
+- **Rejection of Unverified Claims**: Any review submission from a customer without an eligible verified purchase is rejected with HTTP `403 Forbidden` (`Only customers with a verified purchase of this product may submit a review.`). Unauthenticated visitors receive HTTP `401 Unauthorized`.
+- **Product Verification**: The product must exist and be active (`product.isActive === true`). Missing or inactive products reject review submissions with HTTP `404 Not Found`.
+
+### 9.3 Anti-IDOR & Anti-Enumeration Protections
+
+- **Uniform 404 Responses**: Review update (`PUT /api/reviews/:reviewId`) and review deletion (`DELETE /api/reviews/:reviewId`) query exclusively by `id === reviewId AND userId === req.user.id`.
+- If another customer's review ID or a non-existent UUID is passed, the server returns a uniform HTTP `404 Not Found` (`Review not found.`), completely preventing attackers from enumerating reviews or probing whether a review ID exists.
+
+### 9.4 Duplicate Prevention & Database Invariants
+
+- **Compound Unique Invariant**: The PostgreSQL database enforces `@@unique([userId, productId])` on the `reviews` table.
+- **Graceful Error Handling**: In addition to checking for existing reviews in the service layer, Prisma unique violation error `P2002` is caught and safely mapped to HTTP `409 Conflict` (`You have already reviewed this product.`), preventing unhandled server crashes during concurrent submissions.
+
+### 9.5 Strict Server-Side Input Validation
+
+- **Rating**: Must be an integer between 1 and 5 (inclusive). Non-integers, floats, negative values, and numbers > 5 are rejected with HTTP `400 Bad Request`.
+- **Title**: Optional, trimmed string up to 200 characters.
+- **Body**: Required, trimmed string between 5 and 2000 characters. Empty strings or strings outside this range are rejected with HTTP `400 Bad Request`.
+- **UUID Validation**: Product IDs and Review IDs must strictly match standard UUID v4 format (`/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i`).
+
+### 9.6 Server-Authoritative Rating Aggregation
+
+- **No Frontend Overrides**: Star rating averages, total review counts, and rating distribution breakdowns are computed directly on the backend using SQL aggregation of `APPROVED` reviews.
+- Frontend clients cannot inject or override rating averages, counts, or verification flags.

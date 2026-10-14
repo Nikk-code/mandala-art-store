@@ -15,6 +15,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.23.0] - 2026-10-14
+
+### Added
+
+- **Step 20: Product Reviews & Ratings**:
+  - **Database & Schema Invariant**:
+    - Reused existing PostgreSQL `reviews` table and `ReviewStatus` enum (`PENDING`, `APPROVED`, `REJECTED`) from initial schema migration (`20261004153500_init_ecommerce_schema`) with zero unnecessary migrations.
+    - Maintained compound unique constraint `@@unique([userId, productId])` and foreign key cascade deletion.
+  - **Backend Domain, Verified Purchase Eligibility & Anti-IDOR Endpoints**:
+    - Created `backend/src/types/review.ts` defining `ReviewDto`, `ReviewAuthorDto`, `RatingDistributionDto`, `RatingSummaryDto`, `ReviewListResponseData`, `CreateReviewInput`, `UpdateReviewInput`, and `ReviewEligibilityDto`.
+    - Created `backend/src/utils/review-validation.ts` validating integer ratings (1–5), optional title (<= 200 chars), review body (5–2000 chars), and standard UUID v4 format.
+    - Created `ReviewRepository` and `ReviewService` with authoritative verified-purchase eligibility verification (`findEligiblePurchase` verifying customer order in `CONFIRMED`/`PROCESSING`/`SHIPPED`/`DELIVERED` with `CAPTURED` payment).
+    - Enforced single review invariant with Prisma `P2002` conflict handling returning `409 Conflict`.
+    - Created `ReviewController` and `review.routes.ts` mounted at `/api/reviews`:
+      - `GET /api/reviews/product/:productId`: Public endpoint returning visible `APPROVED` reviews and server-calculated rating summary.
+      - `GET /api/reviews/eligibility/:productId`: Authenticated endpoint returning verified purchase review eligibility.
+      - `POST /api/reviews`: Authenticated endpoint creating a review (strictly deriving reviewer identity from `req.user.id`).
+      - `PUT /api/reviews/:reviewId`: Authenticated endpoint editing customer's own review with strict anti-IDOR owner enforcement (404 on absent or unauthorized review).
+      - `DELETE /api/reviews/:reviewId`: Authenticated endpoint deleting customer's own review with strict anti-IDOR owner enforcement.
+    - Updated `CatalogController` and `ProductRepository` to aggregate server-authoritative `averageRating` and `totalReviews` into `PublicProductListItemDto` on catalog listings.
+  - **Frontend Components & Storefront Presentation**:
+    - Created `frontend/src/types/review.ts` and `frontend/src/services/review-service.ts`.
+    - Extended `api-client.ts` with `apiPut<T>` helper.
+    - Created `StarRating.tsx` accessible rating component with interactive radio group controls and read-only star presentation.
+    - Created `RatingSummary.tsx` rendering overall score, stars, review count, and 5-tier percentage distribution progress bars.
+    - Created `ReviewCard.tsx` rendering reviewer name, verified buyer badge, relative review date, and owner edit/delete actions.
+    - Created `ReviewForm.tsx` with live character counter, field validation, and responsive submission state.
+    - Created `ProductReviewsSection.tsx` orchestrating summary, eligibility banner with sign-in link, review submission/edit, and review list.
+    - Updated `ProductCard.tsx` to display subtle rating preview when reviews exist.
+    - Updated `ProductDetailPage.tsx` to include header rating preview anchor linking smoothly to `#reviews` and embedded `ProductReviewsSection`.
+  - **Automated Tests**:
+    - Created `backend/tests/review.service.test.ts` (20 unit tests covering domain logic, eligibility, duplicate prevention, and IDOR protection).
+    - Created `backend/tests/review.api.test.ts` (13 integration tests covering public endpoints, auth guards, verified purchase validation, duplicate prevention, and owner update/delete).
+    - Created `frontend/tests/review-service.test.ts` (5 client service unit tests).
+    - Created `frontend/tests/StarRating.test.tsx` (4 component unit tests for accessibility and keyboard navigation).
+    - Created `frontend/tests/ProductReviewsSection.test.tsx` (7 component integration tests for summary, eligibility banners, form submission, empty state, and deletion).
+    - Updated `frontend/tests/ProductDetailPage.test.tsx` and catalog tests.
+  - **Documentation & Decisions**:
+    - Recorded `ADR-022: Product Reviews & Ratings Architecture, Verified Purchase Eligibility & Storefront Integration` in `.ai/DECISIONS.md`.
+    - Updated `.ai/CURRENT-STATUS.md`, `.ai/BUSINESS-RULES.md`, and `.ai/SECURITY-STANDARDS.md`.
+
+---
+
 ## [0.22.0] - 2026-10-13
 
 ### Added

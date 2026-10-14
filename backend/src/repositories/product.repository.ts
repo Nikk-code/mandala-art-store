@@ -6,7 +6,9 @@ export type ProductWithDetails = Prisma.ProductGetPayload<{
     category: true;
     images: true;
   };
-}>;
+}> & {
+  reviews?: Array<{ rating: number }>;
+};
 
 export interface FindActiveProductsPaginatedParams {
   filter?: {
@@ -30,6 +32,10 @@ export class ProductRepository {
         images: {
           orderBy: { displayOrder: 'asc' },
         },
+        reviews: {
+          where: { status: 'APPROVED' },
+          select: { rating: true },
+        },
       },
     });
   }
@@ -42,6 +48,10 @@ export class ProductRepository {
         images: {
           orderBy: { displayOrder: 'asc' },
         },
+        reviews: {
+          where: { status: 'APPROVED' },
+          select: { rating: true },
+        },
       },
     });
   }
@@ -53,6 +63,10 @@ export class ProductRepository {
         category: true,
         images: {
           orderBy: { displayOrder: 'asc' },
+        },
+        reviews: {
+          where: { status: 'APPROVED' },
+          select: { rating: true },
         },
       },
     });
@@ -72,6 +86,10 @@ export class ProductRepository {
         category: true,
         images: {
           orderBy: { displayOrder: 'asc' },
+        },
+        reviews: {
+          where: { status: 'APPROVED' },
+          select: { rating: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -109,6 +127,10 @@ export class ProductRepository {
           category: true,
           images: {
             orderBy: { displayOrder: 'asc' },
+          },
+          reviews: {
+            where: { status: 'APPROVED' },
+            select: { rating: true },
           },
         },
         orderBy,
