@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma';
+import { PrismaClient } from '@prisma/client';
 import {
   orderRepository,
   type OrderRepository,
@@ -23,12 +24,14 @@ interface IdempotencyEntry {
 
 export class OrderService {
   private readonly repository: OrderRepository;
+  private readonly prismaClient: PrismaClient;
   private readonly idempotencyCache = new Map<string, IdempotencyEntry>();
   private readonly inFlightRequests = new Map<string, Promise<OrderResponseDto>>();
   private readonly IDEMPOTENCY_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-  constructor(repository: OrderRepository = orderRepository) {
+  constructor(repository: OrderRepository = orderRepository, prismaClient: PrismaClient = prisma) {
     this.repository = repository;
+    this.prismaClient = prismaClient;
   }
 
   /**
@@ -106,7 +109,7 @@ export class OrderService {
     request: CreateOrderRequest,
     userId: string | null
   ): Promise<OrderResponseDto> {
-    const createdOrder = await prisma.$transaction(async tx => {
+    const createdOrder = await this.prismaClient.$transaction(async tx => {
       let authoritativeSubtotal = 0;
       const orderItemSnapshots: Array<{
         productId: string | null;
@@ -170,6 +173,18 @@ export class OrderService {
               `Unable to reserve stock for "${product.name}". The item may have just sold out.`
             );
           }
+
+          // Automatically transition to SOLD_OUT if inventory reached 0
+          await tx.product.updateMany({
+            where: {
+              id: product.id,
+              stockQuantity: 0,
+              availability: 'IN_STOCK',
+            },
+            data: {
+              availability: 'SOLD_OUT',
+            },
+          });
         } else if (product.availability === 'MADE_TO_ORDER') {
           // MADE_TO_ORDER does not track/decrement physical stockQuantity
         }

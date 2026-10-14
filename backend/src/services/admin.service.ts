@@ -42,7 +42,7 @@ export class AdminService {
           name: 'Art Catalog Management',
           description:
             'Create, edit, and organize sacred mandala artworks, Lippan art categories, pricing, and visual galleries.',
-          status: 'PLANNED',
+          status: 'AVAILABLE',
           path: '/admin/products',
         },
         {
@@ -74,7 +74,7 @@ export class AdminService {
           name: 'Inventory & Stock Allocation',
           description:
             'Manage artwork stock quantities, reserved inventory states, and made-to-order preparation queues.',
-          status: 'PLANNED',
+          status: 'AVAILABLE',
           path: '/admin/inventory',
         },
       ],

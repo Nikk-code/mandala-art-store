@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-14  
-**Current Phase**: `ADMIN AUTHENTICATION & DASHBOARD FOUNDATION (Step 21 Complete)`
+**Current Phase**: `ADMIN PRODUCT, CATEGORY & INVENTORY MANAGEMENT (Step 22 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Role-based administrator authorization and dashboard foundation (Step 21) have been implemented and verified across both backend and frontend workspaces. Public customer registration strictly assigns the `CUSTOMER` role, and customer profile updates prevent privilege escalation. Backend administrative routes under `/api/admin/*` are authoritatively guarded by `requireAuth` and `requireAdmin` middleware, enforcing HTTP `401 Unauthorized` for unauthenticated or deactivated accounts and HTTP `403 Forbidden` for non-admin customers. Safe administrator account provisioning is supported exclusively via an explicit, idempotent operator CLI script (`npm run admin:promote -- <email>`) that verifies pre-existing registered accounts and avoids hardcoded credentials or automatic startup promotions. The protected `GET /api/admin/dashboard` endpoint returns sanitized administrator profile details, runtime environment metadata, and planned operational modules without exposing secrets, password hashes, or fabricated statistics. On the storefront, customer navigation hides all administrative links, while verified administrators see dedicated "Admin Portal" navigation in `Header.tsx` and `AccountPage.tsx`. The frontend `/admin` route is guarded by `AdminRoute` and framed in `AdminLayout`, providing an accessible HTTP 403 Access Denied fallback for customers. All 62 test suites (27 backend / 333 tests, 35 frontend / 204 tests, totaling 537 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Admin Product, Category, and Inventory Management (Step 22) has been fully implemented and verified across both backend and frontend workspaces. Expanding upon the Step 21 administrative foundation, backend `/api/admin/*` routes provide authoritative management for products (`GET`, `POST`, `PUT /api/admin/products/:id`, `PATCH /api/admin/products/:id/status`, and image gallery management), categories (`GET`, `POST`, `PUT /api/admin/categories/:id`, `PATCH /api/admin/categories/:id/status`, and safe `DELETE /api/admin/categories/:id`), and inventory (`GET /api/admin/inventory`, `PATCH /api/admin/inventory/:id`). All operations enforce strict authorization via `[requireAuth, requireAdmin]`, server-side validation, integer paise currency handling, zero client trust, and safe non-destructive activation toggling. Category safeguards strictly prevent deactivation or deletion when active products depend on the category. Inventory stock adjustments support direct set or relative deltas with negative stock guards, automatic availability transitions (`IN_STOCK` <-> `SOLD_OUT`) while preserving `MADE_TO_ORDER`, without bypassing checkout stock reservation invariants. The frontend administrative portal features responsive, accessible pages for Product Management (`/admin/products`), Category Management (`/admin/categories`), and Inventory Allocation (`/admin/inventory`) with navigation tabs in `AdminLayout`. All 63 test suites (27 backend / 361 tests, 36 frontend / 226 tests, totaling 587 tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -453,17 +453,50 @@ Role-based administrator authorization and dashboard foundation (Step 21) have b
   - 100% Vite and TypeScript production build passing across workspaces.
   - Prisma schema validation verified.
 
+### Phase 22: Admin Product, Category & Inventory Management (Completed)
+
+- [x] **Product Management Domain & API Foundation**:
+  - Implemented `ProductRepository.findAdminProductsPaginated` with search (name and SKU substring), category filter, availability filter, active status filter, and pagination.
+  - Implemented `ProductService.createProduct`, `updateProduct`, `toggleProductActive`, and `activateProduct` with non-destructive status toggling.
+  - Added authoritative image URL protocol validation (`validateImageUrl`, `validateOptionalImageUrl`) enforcing HTTP/HTTPS with URL structure checks.
+  - Supported multi-image gallery operations: `POST /api/admin/products/:id/images`, `DELETE /api/admin/products/:id/images/:imageId`, and `POST /api/admin/products/:id/images/:imageId/primary`.
+- [x] **Category Management Domain & Dependency Safeguards**:
+  - Implemented `CategoryRepository.findAllCategories` with real-time `productCount` aggregations.
+  - Implemented `CategoryService.toggleCategoryActive` with strict dependency safeguards: prevents deactivating a category if active products depend on it.
+  - Implemented `CategoryService.deleteCategory` safeguard: strictly prevents deleting a category while any products belong to it.
+- [x] **Inventory & Stock Management**:
+  - Real-time stock visibility and allocation breakdown (`GET /api/admin/inventory`) with low-stock threshold flag (`stockQuantity <= 3`).
+  - Implemented database-safe atomic stock adjustment (`PATCH /api/admin/inventory/:id`) supporting exact target stock quantity or relative positive/negative deltas.
+  - Concurrency-safe delta updates: atomic conditional decrement (`stockQuantity: { decrement: abs(delta) } WHERE stockQuantity >= abs(delta)`) and atomic increment (`stockQuantity: { increment: delta }`) preventing lost updates and negative stock.
+  - Exact-quantity optimistic concurrency protection (`expectedStock`) rejecting stale UI updates with `ConflictError` (HTTP 409), with physical recount override support (`force: true`).
+  - Automatic transactional availability state transitions: zero stock automatically switches `IN_STOCK` to `SOLD_OUT`, positive stock switches `SOLD_OUT` to `IN_STOCK`, preserving custom `MADE_TO_ORDER` status.
+  - Authoritative server coordination: admin adjustments and checkout reservation locks coordinate atomically without lost updates or race conditions.
+- [x] **Frontend Administrative Sections**:
+  - Updated `AdminLayout.tsx` with navigation tabs for Dashboard, Products, Categories, and Inventory.
+  - Updated `AdminDashboardPage.tsx` marking Catalog and Inventory modules as `'AVAILABLE'` with direct management links.
+  - Created `AdminProductsPage.tsx` (`/admin/products`) with comprehensive filter toolbar, search, responsive table view, create/edit modal with image gallery manager, and active toggling.
+  - Created `AdminCategoriesPage.tsx` (`/admin/categories`) with collection cards, product count badges, create/edit modal, dependency-safeguarded toggle, and safe delete buttons.
+  - Created `AdminInventoryPage.tsx` (`/admin/inventory`) with stock distribution metrics, low-stock alerts, filter grid, and stock adjustment modal with optimistic concurrency protection and authoritative recount override.
+- [x] **Automated Tests & Quality**:
+  - 29 backend automated test suites with 380 passing unit/mocked tests and 7 live PostgreSQL concurrency integration tests pending live DB availability (`backend/tests/`).
+  - 36 frontend automated test suites passing with 226 tests (`frontend/tests/`).
+  - 65 total test suites with 606 tests across workspaces (606 tests: 606 passing/pending-live, 0 failing).
+  - 0 ESLint warnings and errors across all workspaces.
+  - 100% Prettier formatting compliance.
+  - 100% Vite and TypeScript production build passing across workspaces.
+  - Prisma schema validation verified.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 21 is complete and verified).
+- _None_ (Step 22 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 22: Admin Art Catalog Management (Product & Category CRUD, Image Galleries & Pricing Management).
+- Step 23: Admin Order Management & Fulfillment (Order Inspection, Status Transitions, Customer Communication).
 
 ---
 

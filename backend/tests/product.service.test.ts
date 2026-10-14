@@ -74,9 +74,13 @@ describe('ProductService Domain Logic', () => {
       findBySlug: vi.fn(),
       findBySku: vi.fn(),
       findActiveProducts: vi.fn(),
+      findActiveProductsPaginated: vi.fn(),
+      findAdminProductsPaginated: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       deactivate: vi.fn(),
+      activate: vi.fn(),
+      adjustStock: vi.fn(),
       addImage: vi.fn(),
       removeImage: vi.fn(),
       findImageById: vi.fn(),
@@ -425,6 +429,194 @@ describe('ProductService Domain Logic', () => {
       const result = await service.setPrimaryImage('prod-123', 'img-1');
       expect(result).toEqual(sampleImage);
       expect(mockProductRepo.setPrimaryImage).toHaveBeenCalledWith('prod-123', 'img-1');
+    });
+  });
+
+  describe('listAdminProductsPaginated', () => {
+    it('queries products with search, pagination, and active status filters', async () => {
+      vi.spyOn(mockProductRepo, 'findAdminProductsPaginated').mockResolvedValue({
+        items: [sampleProduct],
+        totalItems: 1,
+      });
+
+      const result = await service.listAdminProductsPaginated({
+        page: 1,
+        pageSize: 10,
+        search: 'Lotus',
+        isActive: true,
+      });
+
+      expect(mockProductRepo.findAdminProductsPaginated).toHaveBeenCalledWith({
+        filter: {
+          search: 'Lotus',
+          categoryId: undefined,
+          availability: undefined,
+          isActive: true,
+        },
+        pagination: {
+          skip: 0,
+          take: 10,
+        },
+        sort: undefined,
+      });
+      expect(result.items).toHaveLength(1);
+      expect(result.pagination.totalItems).toBe(1);
+      expect(result.pagination.totalPages).toBe(1);
+    });
+
+    it('rejects invalid sort option with ValidationError', async () => {
+      await expect(
+        service.listAdminProductsPaginated({
+          // @ts-expect-error Testing invalid sort value
+          sort: 'invalid_sort',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
+  describe('toggleProductActive', () => {
+    it('activates a product', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue({
+        ...sampleProduct,
+        isActive: false,
+      });
+      vi.spyOn(mockProductRepo, 'activate').mockResolvedValue({
+        ...sampleProduct,
+        isActive: true,
+      });
+
+      const result = await service.toggleProductActive('prod-123', true);
+      expect(result.isActive).toBe(true);
+      expect(mockProductRepo.activate).toHaveBeenCalledWith('prod-123');
+    });
+
+    it('deactivates a product', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue(sampleProduct);
+      vi.spyOn(mockProductRepo, 'deactivate').mockResolvedValue({
+        ...sampleProduct,
+        isActive: false,
+      });
+
+      const result = await service.toggleProductActive('prod-123', false);
+      expect(result.isActive).toBe(false);
+      expect(mockProductRepo.deactivate).toHaveBeenCalledWith('prod-123');
+    });
+  });
+
+  describe('adjustStock', () => {
+    it('sets stock quantity directly and updates availability to IN_STOCK if > 0', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 0,
+        availability: ProductAvailability.SOLD_OUT,
+      });
+      vi.spyOn(mockProductRepo, 'adjustStock').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 5,
+        availability: ProductAvailability.IN_STOCK,
+      });
+
+      const result = await service.adjustStock('prod-123', { stockQuantity: 5 });
+      expect(mockProductRepo.adjustStock).toHaveBeenCalledWith('prod-123', {
+        stockQuantity: 5,
+        availability: ProductAvailability.IN_STOCK,
+      });
+      expect(result.stockQuantity).toBe(5);
+    });
+
+    it('auto-transitions to SOLD_OUT when stock quantity is reduced to 0', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 3,
+        availability: ProductAvailability.IN_STOCK,
+      });
+      vi.spyOn(mockProductRepo, 'adjustStock').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 0,
+        availability: ProductAvailability.SOLD_OUT,
+      });
+
+      await service.adjustStock('prod-123', { adjustment: -3 });
+      expect(mockProductRepo.adjustStock).toHaveBeenCalledWith(
+        'prod-123',
+        expect.objectContaining({
+          adjustment: -3,
+        })
+      );
+    });
+
+    it('rejects inventory adjustment that would result in negative stock', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 2,
+        availability: ProductAvailability.IN_STOCK,
+      });
+
+      await expect(service.adjustStock('prod-123', { adjustment: -5 })).rejects.toThrow(
+        ValidationError
+      );
+    });
+
+    it('preserves MADE_TO_ORDER availability when stock is adjusted', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 0,
+        availability: ProductAvailability.MADE_TO_ORDER,
+      });
+      vi.spyOn(mockProductRepo, 'adjustStock').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 4,
+        availability: ProductAvailability.MADE_TO_ORDER,
+      });
+
+      await service.adjustStock('prod-123', { stockQuantity: 4 });
+      expect(mockProductRepo.adjustStock).toHaveBeenCalledWith(
+        'prod-123',
+        expect.objectContaining({
+          stockQuantity: 4,
+          availability: ProductAvailability.MADE_TO_ORDER,
+        })
+      );
+    });
+
+    it('delegates expectedStock and force flags to repository for optimistic concurrency control', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 10,
+        availability: ProductAvailability.IN_STOCK,
+      });
+      vi.spyOn(mockProductRepo, 'adjustStock').mockResolvedValue({
+        ...sampleProduct,
+        stockQuantity: 8,
+        availability: ProductAvailability.IN_STOCK,
+      });
+
+      await service.adjustStock('prod-123', {
+        stockQuantity: 8,
+        expectedStock: 10,
+        force: true,
+      });
+
+      expect(mockProductRepo.adjustStock).toHaveBeenCalledWith(
+        'prod-123',
+        expect.objectContaining({
+          stockQuantity: 8,
+          expectedStock: 10,
+          force: true,
+        })
+      );
+    });
+
+    it('rejects adjustment of 0 or invalid combinations', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue(sampleProduct);
+
+      await expect(service.adjustStock('prod-123', { adjustment: 0 })).rejects.toThrow(
+        ValidationError
+      );
+      await expect(service.adjustStock('prod-123', {})).rejects.toThrow(ValidationError);
+      await expect(
+        service.adjustStock('prod-123', { stockQuantity: 5, adjustment: 2 })
+      ).rejects.toThrow(ValidationError);
     });
   });
 });

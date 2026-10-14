@@ -1,10 +1,17 @@
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
 
 export interface AdminLayoutProps {
   children: ReactNode;
 }
+
+const navItems = [
+  { label: 'Overview', to: '/admin', end: true },
+  { label: 'Products', to: '/admin/products', end: false },
+  { label: 'Categories', to: '/admin/categories', end: false },
+  { label: 'Inventory', to: '/admin/inventory', end: false },
+];
 
 export function AdminLayout({ children }: AdminLayoutProps): ReactNode {
   const { user, logout } = useAuth();
@@ -76,6 +83,28 @@ export function AdminLayout({ children }: AdminLayoutProps): ReactNode {
                 </div>
               ) : null}
             </div>
+          </div>
+        </div>
+
+        {/* Secondary Module Navigation Bar */}
+        <div className="bg-stone-900/80 border-t border-stone-800/80 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto flex space-x-1 sm:space-x-4 overflow-x-auto py-2 scrollbar-none">
+            {navItems.map(item => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'bg-art-ochre text-art-charcoal font-semibold shadow-sm'
+                      : 'text-stone-300 hover:text-white hover:bg-stone-800'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </div>
         </div>
       </header>

@@ -501,3 +501,71 @@ This document tracks significant architectural, technical, and governance decisi
   - _Automatic promotion of first user on startup_: Rejected as insecure in production environments.
   - _Frontend-only role hiding_: Rejected because client route guards are purely for UX; backend middleware must authoritatively enforce access.
 - **Consequences**: Secure, tamper-proof administrative foundation, zero privilege escalation vectors, clean operator provisioning, accessible UX with dedicated admin shell, and 100% test coverage.
+
+---
+
+### ADR-024: Admin Product, Category, and Inventory Architecture
+
+- **Date**: 2026-10-14
+- **Status**: Accepted
+- **Context**: Having established the administrative foundation and role-based authorization in Step 21, the store requires administrative control over artworks (products), collections (categories), and stock levels (inventory). The implementation must adhere strictly to existing domain models (`Product`, `Category`, `ProductImage`, and `ProductAvailability`), reuse existing services/repositories, maintain integer paise financial values, protect against orphaned catalog records and unsafe category deactivations, guarantee inventory consistency, and prevent negative stock without bypassing checkout reservation rules.
+- **Decision**:
+  1. **Administrative Endpoints Protected Authoritatively**:
+     - All routes mounted under `/api/admin/*` are strictly protected by `[requireAuth, requireAdmin]`.
+     - Zero reliance on client-supplied user roles or client-side guards; unauthorized requests return HTTP 401 and non-admin requests return HTTP 403.
+  2. **Product Management**:
+     - Paginated product list (`GET /api/admin/products`) supporting search across name and SKU substrings, category filter, availability filter, active status filter, and multiple sort orders.
+     - Product creation (`POST /api/admin/products`) and updates (`PUT /api/admin/products/:id`) validate SKU uniqueness, price in integer paise, and optional dimensions/weight.
+     - Image gallery operations (`POST /api/admin/products/:id/images`, `DELETE /api/admin/products/:id/images/:imageId`, `POST /api/admin/products/:id/images/:imageId/primary`) validate URL protocols strictly requiring `http:` or `https:`.
+     - Activation toggling (`PATCH /api/admin/products/:id/status`) provides non-destructive toggling between active and deactivated states, preserving historical orders and reviews while preventing deactivated products from being newly purchased or wishlisted.
+  3. **Category Management & Dependency Safeguards**:
+     - Listing (`GET /api/admin/categories`) returns all categories with real-time active product count aggregations.
+     - Category status toggle (`PATCH /api/admin/categories/:id/status`) checks dependent active products: deactivating a category with active products is strictly rejected (`400 Bad Request`).
+     - Category deletion (`DELETE /api/admin/categories/:id`) checks whether any products exist for the category: deletion is strictly rejected if any products are associated with the category.
+  4. **Inventory & Availability Management**:
+     - Real-time stock visibility (`GET /api/admin/inventory`) flags low-stock items (`stockQuantity <= 3`).
+     - Atomic stock adjustment (`PATCH /api/admin/inventory/:id`) supports exact quantity setting or relative deltas with negative stock guards (`stockQuantity >= 0`).
+     - Automatic availability state transitions: adjusting stock to 0 automatically transitions `IN_STOCK` products to `SOLD_OUT`; adjusting stock above 0 automatically transitions `SOLD_OUT` products to `IN_STOCK`; custom `MADE_TO_ORDER` availability states are preserved.
+     - Admin adjustments never bypass or overwrite checkout reservation invariants.
+  5. **Responsive Administrative UI**:
+     - `AdminLayout`: Clean navigation tabs across Overview (`/admin`), Products (`/admin/products`), Categories (`/admin/categories`), and Inventory (`/admin/inventory`).
+     - `AdminProductsPage`: Artworks table, search and filters, create/edit modal with image gallery manager, and status toggles.
+     - `AdminCategoriesPage`: Category cards, live product count badges, create/edit modal, dependency-safeguarded toggle, and safe delete buttons.
+     - `AdminInventoryPage`: KPI metric summary tiles (healthy stock, low stock alert, sold out, made to order), filter grid, and stock adjustment modal.
+- **Alternatives Considered**:
+  - _Destructive deletion of products_: Rejected to preserve historical order snapshots, customer order history, and product reviews.
+  - _Unchecked category deletion (CASCADE)_: Rejected because deleting a category would either orphan artworks or inadvertently delete active store products.
+  - _Frontend-calculated availability_: Rejected because availability transitions must be authoritative on the server and synchronized with checkout validation.
+- **Consequences**: Safe, non-destructive catalog lifecycle, zero accidental category orphanings, real-time inventory visibility and adjustment with negative stock prevention, and 100% test coverage.
+
+---
+
+### ADR-025: Inventory Concurrency Control, Atomic Conditional Updates, and Optimistic Verification Strategy
+
+- **Date**: 2026-10-14
+- **Status**: Accepted
+- **Context**: In high-concurrency environments, multiple checkout stock reservations and administrative stock adjustments can target the same product concurrently. In-memory read-modify-write patterns create race conditions: lost delta increments/decrements, silent overwrites of checkout reservations, and potential negative inventory.
+- **Decision**:
+  1. **Atomic Conditional Decrements**:
+     - Both checkout reservations (`order.service.ts`) and administrative delta decrements (`product.repository.ts`) execute database-level atomic conditional updates:
+       `UPDATE products SET stock_quantity = stock_quantity - :qty WHERE id = :id AND stock_quantity >= :qty`
+       via Prisma `tx.product.updateMany({ where: { id, stockQuantity: { gte: abs(delta) } }, data: { stockQuantity: { decrement: abs(delta) } } })`.
+     - In PostgreSQL Read Committed isolation, the conditional update automatically acquires an exclusive row-level write lock. If concurrent decrements race, each evaluates the committed remaining stock. If remaining stock is insufficient, `count === 0` and the decrement is rejected with a `409 ConflictError` (or `400 ValidationError` if statically invalid), guaranteeing stock never drops below 0.
+  2. **Atomic Increments**:
+     - Administrative delta increments execute atomic database increments:
+       `tx.product.update({ where: { id }, data: { stockQuantity: { increment: delta } } })`.
+     - Concurrent increments serialize cleanly without losing updates or overwriting concurrent checkout reservations.
+  3. **Transactional Availability Transitions**:
+     - Within the same interactive database transaction (`prisma.$transaction`), after the atomic decrement/increment, the resulting stock is inspected to synchronize availability:
+       - If stock hits 0 and availability is `IN_STOCK`, availability transitions atomically to `SOLD_OUT`.
+       - If stock becomes > 0 and availability is `SOLD_OUT`, availability transitions atomically to `IN_STOCK`.
+       - `MADE_TO_ORDER` products are strictly preserved and never auto-transitioned.
+     - Checkout in `order.service.ts` also executes an atomic transition to `SOLD_OUT` when an order depletes inventory to 0 within its reservation transaction.
+  4. **Optimistic Concurrency Protection on Exact-Quantity (`set`) Adjustments**:
+     - When the administrative UI opens the stock adjustment modal, it captures the displayed stock (`expectedStock`).
+     - Upon submission in `set` mode, `expectedStock` is transmitted to the server. If a concurrent checkout or stock update modified `stockQuantity` in the database between modal open and save, the server detects the mismatch and rejects the update with `409 ConflictError`.
+     - To preserve the business meaning of an intentional physical stock recount, the admin can check "Authoritative physical recount (override concurrent checkouts/changes)" which transmits `force: true` to bypass the optimistic conflict check.
+  5. **Limitations & Disclosures**:
+     - Automated unit tests (`backend/tests/inventory-concurrency.test.ts`, `backend/tests/product.service.test.ts`, `backend/tests/admin.api.test.ts`) mock Prisma transactions and verify the generated atomic conditional query parameters, optimistic conflict checks, and error responses.
+     - Because a live PostgreSQL database server was not active in the local testing environment, real database-level thread/connection concurrency was simulated rather than executed against a live PostgreSQL server.
+- **Consequences**: Zero lost updates under concurrent delta adjustments, zero risk of negative stock, safe coordination between admin updates and checkout reservations, clear conflict feedback on stale UI counts, and explicit support for physical inventory recounts.

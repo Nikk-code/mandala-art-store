@@ -183,3 +183,29 @@
 - **Minimal Dashboard Payload**: The administrative endpoint `GET /api/admin/dashboard` returns only public operator details (`id`, `email`, `firstName`, `lastName`, `role`), runtime environment metadata, and planned operational module definitions.
 - **No Sensitive Leakage**: Passwords, password hashes (`passwordHash`), secret keys, and JWT tokens are never included in admin API responses.
 - **No Fabricated Data**: The dashboard foundation does not invent business numbers or display simulated financial statistics.
+
+---
+
+## 11. Admin Product, Category & Inventory Security Standards (Step 22 Standards)
+
+### 11.1 Authoritative Endpoint Access Control
+
+- Every admin product, category, and inventory route under `/api/admin/*` is strictly guarded by `requireAuth` and `requireAdmin`.
+- Access is denied authoritatively on the backend before running any controller logic, database queries, or mutations.
+
+### 11.2 Server-Side Input Validation & Sanitization
+
+- **Currency & Pricing**: Product prices (`price` and optional `compareAtPrice`) must be non-negative integers representing currency in paise (`price >= 0`). Floats and negative values are rejected with HTTP `400 Bad Request`.
+- **SKU & Slug Integrity**: SKUs are uppercase trimmed strings adhering to `/^[A-Z0-9_-]{3,50}$/`. Unique constraint conflicts (`P2002`) are caught safely and return HTTP `409 Conflict`.
+- **Image Protocol & URL Security**: All image URLs (`url`) are strictly validated using `validateImageUrl`. Only `http:` and `https:` protocols are permitted. Arbitrary file path uploads, `javascript:` URIs, or local file schemes (`file://`) are strictly rejected.
+- **UUID Validation**: Product IDs, Category IDs, and Image IDs are strictly checked against standard UUID format before querying the database.
+
+### 11.3 Category Dependency Safeguards & Orphan Prevention
+
+- **Deactivation Safeguard**: An administrator cannot deactivate a category if active products depend on it. The backend checks active product counts and returns HTTP `400 Bad Request`.
+- **Deletion Safeguard**: An administrator cannot delete a category if any products (active or inactive) are assigned to it, preventing catalog orphan states.
+
+### 11.4 Atomic Inventory & Negative Stock Prevention
+
+- **Authoritative Quantity Updates**: Stock adjustments validate that the resulting quantity is a non-negative integer (`stockQuantity >= 0`). Requests causing negative stock are rejected with HTTP `400 Bad Request`.
+- **Reservation Invariant Preservation**: Admin inventory operations only adjust raw store inventory and never overwrite or invalidate active checkout stock reservations.

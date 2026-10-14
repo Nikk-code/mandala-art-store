@@ -10,3 +10,6 @@ export * from './RegisterPage';
 export * from './AccountPage';
 export * from './WishlistPage';
 export * from './admin/AdminDashboardPage';
+export * from './admin/AdminProductsPage';
+export * from './admin/AdminCategoriesPage';
+export * from './admin/AdminInventoryPage';

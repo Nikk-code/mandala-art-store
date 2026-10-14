@@ -1,7 +1,12 @@
 import type { Category } from '@prisma/client';
 import { categoryRepository, type CategoryRepository } from '../repositories/category.repository';
 import { ConflictError, NotFoundError } from '../errors';
-import { validateCategoryName, validateSlug, generateSlug } from '../utils/catalog-validation';
+import {
+  validateCategoryName,
+  validateSlug,
+  generateSlug,
+  validateOptionalImageUrl,
+} from '../utils/catalog-validation';
 
 export interface CreateCategoryInput {
   name: string;
@@ -21,12 +26,17 @@ export interface UpdateCategoryInput {
   isActive?: boolean;
 }
 
+export interface CategoryWithProductCount extends Category {
+  productCount: number;
+}
+
 export class CategoryService {
   constructor(private readonly repo: CategoryRepository = categoryRepository) {}
 
   async createCategory(input: CreateCategoryInput): Promise<Category> {
     const name = validateCategoryName(input.name);
     const slug = input.slug ? validateSlug(input.slug, 120) : generateSlug(name);
+    const imageUrl = validateOptionalImageUrl(input.imageUrl, 'Category image URL');
 
     // Uniqueness validation
     const existingByName = await this.repo.findByName(name);
@@ -43,7 +53,7 @@ export class CategoryService {
       name,
       slug,
       description: input.description ?? null,
-      imageUrl: input.imageUrl ?? null,
+      imageUrl,
       displayOrder: input.displayOrder ?? 0,
       isActive: input.isActive ?? true,
     });
@@ -68,6 +78,22 @@ export class CategoryService {
 
   async listActiveCategories(): Promise<Category[]> {
     return this.repo.findActiveCategories();
+  }
+
+  async listAllCategories(): Promise<CategoryWithProductCount[]> {
+    const categories = await this.repo.findAllCategories();
+    return categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description,
+      imageUrl: cat.imageUrl,
+      displayOrder: cat.displayOrder,
+      isActive: cat.isActive,
+      createdAt: cat.createdAt,
+      updatedAt: cat.updatedAt,
+      productCount: cat._count.products,
+    }));
   }
 
   async updateCategory(id: string, input: UpdateCategoryInput): Promise<Category> {
@@ -95,19 +121,71 @@ export class CategoryService {
       }
     }
 
+    let updatedImageUrl: string | null | undefined;
+    if (input.imageUrl !== undefined) {
+      updatedImageUrl = validateOptionalImageUrl(input.imageUrl, 'Category image URL');
+    }
+
+    // Check safeguard if deactivating
+    if (input.isActive === false && existing.isActive) {
+      const activeProductCount = this.repo.countActiveProductsByCategoryId
+        ? await this.repo.countActiveProductsByCategoryId(id)
+        : 0;
+      if (activeProductCount > 0) {
+        throw new ConflictError(
+          `Cannot deactivate category "${existing.name}" because ${activeProductCount} active product(s) belong to it. Deactivate or reassign those products first.`
+        );
+      }
+    }
+
     return this.repo.update(id, {
       ...(updatedName !== undefined ? { name: updatedName } : {}),
       ...(updatedSlug !== undefined ? { slug: updatedSlug } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
-      ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
+      ...(input.imageUrl !== undefined ? { imageUrl: updatedImageUrl } : {}),
       ...(input.displayOrder !== undefined ? { displayOrder: input.displayOrder } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     });
   }
 
+  async toggleCategoryActive(id: string, isActive: boolean): Promise<Category> {
+    const existing = await this.getCategoryById(id);
+
+    if (existing.isActive === isActive) {
+      return existing;
+    }
+
+    if (!isActive) {
+      const activeProductCount = this.repo.countActiveProductsByCategoryId
+        ? await this.repo.countActiveProductsByCategoryId(id)
+        : 0;
+      if (activeProductCount > 0) {
+        throw new ConflictError(
+          `Cannot deactivate category "${existing.name}" because ${activeProductCount} active product(s) belong to it. Deactivate or reassign those products first.`
+        );
+      }
+      return this.repo.deactivate(id);
+    }
+
+    return this.repo.activate(id);
+  }
+
   async deactivateCategory(id: string): Promise<Category> {
-    await this.getCategoryById(id);
-    return this.repo.deactivate(id);
+    return this.toggleCategoryActive(id, false);
+  }
+
+  async deleteCategory(id: string): Promise<Category> {
+    const existing = await this.getCategoryById(id);
+    const totalProducts = this.repo.countAllProductsByCategoryId
+      ? await this.repo.countAllProductsByCategoryId(id)
+      : 0;
+    if (totalProducts > 0) {
+      throw new ConflictError(
+        `Cannot delete category "${existing.name}" because ${totalProducts} product(s) are associated with it.`
+      );
+    }
+
+    return this.repo.delete(id);
   }
 }
 

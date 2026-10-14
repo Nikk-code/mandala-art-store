@@ -15,6 +15,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.25.0] - 2026-10-14
+
+### Added
+
+- **Step 22: Admin Product, Category & Inventory Management**:
+  - **Backend Product Management APIs**:
+    - Created administrative product routes under `/api/admin/products`:
+      - `GET /api/admin/products`: paginated listing with search (name and SKU substring), category filter, availability filter, active status filter, and sort options.
+      - `GET /api/admin/products/:id`: authoritative full product retrieval including category and image details.
+      - `POST /api/admin/products`: artwork creation with server-side validation of name, SKU uniqueness, integer paise pricing, and image URLs.
+      - `PUT /api/admin/products/:id`: artwork updates preserving existing orders and historical order snapshots.
+      - `PATCH /api/admin/products/:id/status`: non-destructive activation/deactivation toggle.
+      - `POST /api/admin/products/:id/images`: image addition with HTTP/HTTPS protocol validation.
+      - `DELETE /api/admin/products/:id/images/:imageId`: image removal.
+      - `POST /api/admin/products/:id/images/:imageId/primary`: primary display image designation.
+  - **Backend Category Management APIs & Dependency Safeguards**:
+    - Created administrative category routes under `/api/admin/categories`:
+      - `GET /api/admin/categories`: full category list including real-time active product count.
+      - `GET /api/admin/categories/:id`: single category details.
+      - `POST /api/admin/categories`: category creation.
+      - `PUT /api/admin/categories/:id`: category updates.
+      - `PATCH /api/admin/categories/:id/status`: category status toggle guarded against deactivating categories when active products depend on them.
+      - `DELETE /api/admin/categories/:id`: safe deletion strictly blocked if any products are associated with the category.
+  - **Backend Inventory Management & Stock Synchronization**:
+    - Created inventory routes under `/api/admin/inventory`:
+      - `GET /api/admin/inventory`: real-time inventory allocation listing with low-stock flags (`stockQuantity <= 3`).
+      - `PATCH /api/admin/inventory/:id`: database-safe atomic stock adjustments (exact quantity set or relative +/- delta) with atomic conditional decrements (`stockQuantity: { decrement: abs(delta) } WHERE stockQuantity >= abs(delta)`), atomic increments (`stockQuantity: { increment: delta }`), optimistic concurrency checks (`expectedStock`) with recount override (`force: true`), negative stock prevention, and automatic availability transitions between `IN_STOCK` and `SOLD_OUT` while strictly preserving `MADE_TO_ORDER`.
+  - **Frontend Admin Sections**:
+    - Added navigation tabs in `AdminLayout.tsx` for Overview, Products, Categories, and Inventory.
+    - Updated `AdminDashboardPage.tsx` with active module cards linking directly to `/admin/products`, `/admin/categories`, and `/admin/inventory`.
+    - Created `AdminProductsPage.tsx` (`/admin/products`): searchable, filterable table view, pagination, create/edit modal with image gallery manager, and activation toggling.
+    - Created `AdminCategoriesPage.tsx` (`/admin/categories`): category grid with product count badges, create/edit modal, dependency-safeguarded toggle, and safe delete action.
+    - Created `AdminInventoryPage.tsx` (`/admin/inventory`): stock distribution KPI tiles, low-stock alerts, filter grid, and stock adjustment modal with optimistic concurrency protection and authoritative physical recount override.
+  - **Automated Tests**:
+    - Expanded `backend/tests/category.service.test.ts` (13 tests including active product dependency safeguards).
+    - Expanded `backend/tests/product.service.test.ts` (34 tests including pagination, stock adjustments, image URL validation, and availability transitions).
+    - Created `backend/tests/inventory-concurrency.test.ts` (13 tests covering atomic conditional exact-quantity checks, atomic decrements, increments, and anti-race availability transitions).
+    - Created `backend/tests/inventory-concurrency.integration.test.ts` (repeatable live PostgreSQL 16 concurrency integration suite covering 7 multi-session concurrent operations with automatic skip probe).
+    - Expanded `backend/tests/admin.api.test.ts` (25 tests covering RBAC rejection, product CRUD, category CRUD, inventory adjustments, and optimistic concurrency conflicts).
+    - Expanded `frontend/tests/admin-service.test.ts` (18 client service tests).
+    - Created `frontend/tests/AdminPages.test.tsx` (6 component integration tests).
+  - **Documentation & Decisions**:
+    - Recorded `ADR-024: Admin Product, Category, and Inventory Architecture` and `ADR-025: Inventory Concurrency Control, Atomic Conditional Updates, and Optimistic Verification Strategy` in `.ai/DECISIONS.md`.
+    - Updated `.ai/CURRENT-STATUS.md`, `.ai/BUSINESS-RULES.md`, and `.ai/SECURITY-STANDARDS.md`.
+
+---
+
 ## [0.24.0] - 2026-10-14
 
 ### Added

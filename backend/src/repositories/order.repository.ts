@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma';
 import type { Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 export type OrderWithDetails = Prisma.OrderGetPayload<{
   include: {
@@ -42,8 +43,14 @@ export interface CreateOrderData {
 }
 
 export class OrderRepository {
+  private readonly prismaClient: PrismaClient;
+
+  constructor(prismaClient: PrismaClient = prisma) {
+    this.prismaClient = prismaClient;
+  }
+
   async findById(id: string): Promise<OrderWithDetails | null> {
-    return prisma.order.findUnique({
+    return this.prismaClient.order.findUnique({
       where: { id },
       include: {
         items: true,
@@ -53,7 +60,7 @@ export class OrderRepository {
   }
 
   async findByOrderNumber(orderNumber: string): Promise<OrderWithDetails | null> {
-    return prisma.order.findUnique({
+    return this.prismaClient.order.findUnique({
       where: { orderNumber },
       include: {
         items: true,
@@ -70,7 +77,7 @@ export class OrderRepository {
     options: { skip: number; take: number }
   ): Promise<{ orders: OrderWithDetails[]; total: number }> {
     const [orders, total] = await Promise.all([
-      prisma.order.findMany({
+      this.prismaClient.order.findMany({
         where: { userId },
         include: {
           items: true,
@@ -80,7 +87,7 @@ export class OrderRepository {
         skip: options.skip,
         take: options.take,
       }),
-      prisma.order.count({
+      this.prismaClient.order.count({
         where: { userId },
       }),
     ]);
@@ -150,7 +157,7 @@ export class OrderRepository {
     paymentId: string,
     providerOrderId: string
   ): Promise<Prisma.PaymentGetPayload<Record<string, never>>> {
-    return prisma.payment.update({
+    return this.prismaClient.payment.update({
       where: { id: paymentId },
       data: { providerOrderId },
     });
@@ -164,7 +171,7 @@ export class OrderRepository {
   ): Promise<
     (Prisma.PaymentGetPayload<Record<string, never>> & { order: OrderWithDetails }) | null
   > {
-    return prisma.payment.findFirst({
+    return this.prismaClient.payment.findFirst({
       where: { providerOrderId },
       include: {
         order: {
@@ -189,7 +196,7 @@ export class OrderRepository {
     order: OrderWithDetails;
     payment: Prisma.PaymentGetPayload<Record<string, never>>;
   }> {
-    return prisma.$transaction(async tx => {
+    return this.prismaClient.$transaction(async tx => {
       const updatedPayment = await tx.payment.update({
         where: { id: paymentId },
         data: {
@@ -223,7 +230,7 @@ export class OrderRepository {
     failureReason: string,
     providerPaymentId?: string
   ): Promise<Prisma.PaymentGetPayload<Record<string, never>>> {
-    return prisma.payment.update({
+    return this.prismaClient.payment.update({
       where: { id: paymentId },
       data: {
         status: 'FAILED',

@@ -27,6 +27,34 @@ export class CategoryRepository {
     });
   }
 
+  async findAllCategories(): Promise<Array<Category & { _count: { products: number } }>> {
+    return prisma.category.findMany({
+      include: {
+        _count: {
+          select: { products: true },
+        },
+      },
+      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async countActiveProductsByCategoryId(categoryId: string): Promise<number> {
+    return prisma.product.count({
+      where: {
+        categoryId,
+        isActive: true,
+      },
+    });
+  }
+
+  async countAllProductsByCategoryId(categoryId: string): Promise<number> {
+    return prisma.product.count({
+      where: {
+        categoryId,
+      },
+    });
+  }
+
   async create(data: Prisma.CategoryCreateInput): Promise<Category> {
     return prisma.category.create({
       data,
@@ -44,6 +72,19 @@ export class CategoryRepository {
     return prisma.category.update({
       where: { id },
       data: { isActive: false },
+    });
+  }
+
+  async activate(id: string): Promise<Category> {
+    return prisma.category.update({
+      where: { id },
+      data: { isActive: true },
+    });
+  }
+
+  async delete(id: string): Promise<Category> {
+    return prisma.category.delete({
+      where: { id },
     });
   }
 }

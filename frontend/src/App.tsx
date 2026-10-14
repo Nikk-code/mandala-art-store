@@ -14,7 +14,11 @@ import {
   AccountPage,
   WishlistPage,
   AdminDashboardPage,
+  AdminProductsPage,
+  AdminCategoriesPage,
+  AdminInventoryPage,
 } from '@/pages';
+
 import { AdminRoute } from '@/components/admin';
 import { CartProvider, AuthProvider, WishlistProvider } from '@/context';
 
@@ -42,12 +46,36 @@ export function App(): ReactNode {
         <CartProvider>
           <BrowserRouter>
             <Routes>
-              {/* Protected Administrator Dashboard Area */}
+              {/* Protected Administrator Dashboard & Management Area */}
               <Route
                 path="admin"
                 element={
                   <AdminRoute>
                     <AdminDashboardPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="admin/products"
+                element={
+                  <AdminRoute>
+                    <AdminProductsPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="admin/categories"
+                element={
+                  <AdminRoute>
+                    <AdminCategoriesPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="admin/inventory"
+                element={
+                  <AdminRoute>
+                    <AdminInventoryPage />
                   </AdminRoute>
                 }
               />

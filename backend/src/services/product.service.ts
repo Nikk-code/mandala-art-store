@@ -14,6 +14,7 @@ import {
   validatePriceInPaise,
   validateStockQuantity,
   validateAvailability,
+  validateImageUrl,
 } from '../utils/catalog-validation';
 
 export interface CreateProductImageInput {
@@ -73,6 +74,24 @@ export interface ListProductsQuery {
   availability?: ProductAvailability;
   featured?: boolean;
   sort?: 'newest' | 'price_asc' | 'price_desc';
+}
+
+export interface ListAdminProductsQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  categoryId?: string;
+  availability?: ProductAvailability;
+  isActive?: boolean;
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc' | 'stock_asc' | 'stock_desc';
+}
+
+export interface AdjustStockInput {
+  stockQuantity?: number;
+  adjustment?: number;
+  availability?: ProductAvailability;
+  expectedStock?: number;
+  force?: boolean;
 }
 
 export interface PaginatedProductsResult {
@@ -144,11 +163,9 @@ export class ProductService {
 
     // Prepare images creation
     const imageCreateData = input.images?.map((img, index) => {
-      if (!img.url || typeof img.url !== 'string') {
-        throw new ValidationError('Product image URL is required');
-      }
+      const validUrl = validateImageUrl(img.url, 'Product image URL');
       return {
-        url: img.url.trim(),
+        url: validUrl,
         altText: img.altText ?? null,
         displayOrder: img.displayOrder ?? index,
         isPrimary: img.isPrimary ?? index === 0,
@@ -286,6 +303,66 @@ export class ProductService {
     };
   }
 
+  async listAdminProductsPaginated(
+    query: ListAdminProductsQuery
+  ): Promise<PaginatedProductsResult> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+
+    if (!Number.isInteger(page) || page < 1) {
+      throw new ValidationError('Page must be a positive integer greater than or equal to 1');
+    }
+
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+      throw new ValidationError('Page size must be a positive integer between 1 and 100');
+    }
+
+    let availability: ProductAvailability | undefined;
+    if (query.availability) {
+      availability = validateAvailability(query.availability);
+    }
+
+    const validSorts = ['newest', 'price_asc', 'price_desc', 'name_asc', 'stock_asc', 'stock_desc'];
+    if (query.sort !== undefined && !validSorts.includes(query.sort)) {
+      throw new ValidationError(`Invalid sort option. Must be one of: ${validSorts.join(', ')}`);
+    }
+
+    let categoryId: string | undefined;
+    if (query.categoryId) {
+      const category = await this.categoryRepo.findById(query.categoryId);
+      if (!category) {
+        throw new NotFoundError(`Category not found with ID: ${query.categoryId}`);
+      }
+      categoryId = category.id;
+    }
+
+    const { items, totalItems } = await this.repo.findAdminProductsPaginated({
+      filter: {
+        search: query.search ? query.search.trim() : undefined,
+        categoryId,
+        availability,
+        isActive: query.isActive,
+      },
+      pagination: {
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      },
+      sort: query.sort,
+    });
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return {
+      items,
+      pagination: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+      },
+    };
+  }
+
   async updateProduct(id: string, input: UpdateProductInput): Promise<ProductWithDetails> {
     const existing = await this.getProductById(id);
 
@@ -391,17 +468,104 @@ export class ProductService {
     return this.repo.deactivate(id);
   }
 
+  async activateProduct(id: string): Promise<Product> {
+    await this.getProductById(id);
+    return this.repo.activate(id);
+  }
+
+  async toggleProductActive(id: string, isActive: boolean): Promise<Product> {
+    await this.getProductById(id);
+    if (isActive) {
+      return this.repo.activate(id);
+    }
+    return this.repo.deactivate(id);
+  }
+
+  async adjustStock(id: string, input: AdjustStockInput): Promise<ProductWithDetails> {
+    const existing = await this.getProductById(id);
+
+    if (
+      input.stockQuantity === undefined &&
+      input.adjustment === undefined &&
+      input.availability === undefined
+    ) {
+      throw new ValidationError(
+        'Either stockQuantity, adjustment, or availability must be provided'
+      );
+    }
+
+    if (input.stockQuantity !== undefined && input.adjustment !== undefined) {
+      throw new ValidationError('Cannot provide both stockQuantity and adjustment');
+    }
+
+    let validatedStockQuantity: number | undefined;
+    if (input.stockQuantity !== undefined) {
+      validatedStockQuantity = validateStockQuantity(input.stockQuantity);
+      if (input.expectedStock !== undefined) {
+        validateStockQuantity(input.expectedStock);
+      }
+    }
+
+    if (input.adjustment !== undefined) {
+      if (!Number.isInteger(input.adjustment)) {
+        throw new ValidationError('Inventory adjustment must be an integer');
+      }
+      if (input.adjustment === 0) {
+        throw new ValidationError('Inventory adjustment cannot be 0');
+      }
+      if (existing.stockQuantity + input.adjustment < 0) {
+        throw new ValidationError(
+          `Cannot reduce stock by ${Math.abs(input.adjustment)}. Current stock is ${existing.stockQuantity}, minimum allowed is 0.`
+        );
+      }
+    }
+
+    let targetAvailability: ProductAvailability | undefined;
+    if (input.availability !== undefined) {
+      targetAvailability = validateAvailability(input.availability);
+    } else if (validatedStockQuantity !== undefined) {
+      if (existing.availability === ProductAvailability.MADE_TO_ORDER) {
+        targetAvailability = ProductAvailability.MADE_TO_ORDER;
+      } else if (validatedStockQuantity === 0) {
+        targetAvailability = ProductAvailability.SOLD_OUT;
+      } else if (
+        existing.availability === ProductAvailability.SOLD_OUT &&
+        validatedStockQuantity > 0
+      ) {
+        targetAvailability = ProductAvailability.IN_STOCK;
+      } else {
+        targetAvailability = existing.availability;
+      }
+    }
+
+    // Consistency check against business rules (.ai/BUSINESS-RULES.md)
+    if (validatedStockQuantity !== undefined && targetAvailability !== undefined) {
+      if (targetAvailability === ProductAvailability.SOLD_OUT && validatedStockQuantity > 0) {
+        throw new ValidationError('A SOLD_OUT product cannot have stock quantity greater than 0');
+      }
+      if (targetAvailability === ProductAvailability.IN_STOCK && validatedStockQuantity === 0) {
+        throw new ValidationError('An IN_STOCK product must have a stock quantity greater than 0');
+      }
+    }
+
+    return this.repo.adjustStock(id, {
+      stockQuantity: validatedStockQuantity,
+      adjustment: input.adjustment,
+      availability: targetAvailability,
+      expectedStock: input.expectedStock,
+      force: input.force,
+    });
+  }
+
   // --- Product Image Management Logic ---
 
   async addImage(productId: string, input: CreateProductImageInput): Promise<ProductImage> {
     await this.getProductById(productId);
 
-    if (!input.url || typeof input.url !== 'string' || !input.url.trim()) {
-      throw new ValidationError('Image URL is required');
-    }
+    const validUrl = validateImageUrl(input.url, 'Product image URL');
 
     return this.repo.addImage(productId, {
-      url: input.url.trim(),
+      url: validUrl,
       altText: input.altText ?? null,
       displayOrder: input.displayOrder ?? 0,
       isPrimary: input.isPrimary ?? false,

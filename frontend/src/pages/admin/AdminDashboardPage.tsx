@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { fetchAdminDashboard } from '@/services/admin-service';
 import type { AdminDashboardResponseData } from '@/types';
 import { LoadingState, ErrorState } from '@/components/ui';
@@ -132,27 +133,48 @@ export function AdminDashboardPage(): ReactNode {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.modules.map(module => (
-            <div
-              key={module.id}
-              className="bg-white rounded-xl border border-stone-200/80 p-5 shadow-sm hover:border-art-ochre/60 transition-colors flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h3 className="font-semibold text-sm text-art-charcoal">{module.name}</h3>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-stone-100 text-stone-600 border border-stone-200">
-                    Planned
-                  </span>
-                </div>
-                <p className="text-xs text-stone-600 leading-relaxed mb-4">{module.description}</p>
-              </div>
+          {data.modules.map(module => {
+            const isAvailable = module.status === 'AVAILABLE';
 
-              <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                <span className="font-mono text-[10px]">{module.path || 'Pending'}</span>
-                <span className="italic text-[10px]">Upcoming Milestone</span>
+            return (
+              <div
+                key={module.id}
+                className="bg-white rounded-xl border border-stone-200/80 p-5 shadow-sm hover:border-art-ochre/60 transition-colors flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h3 className="font-semibold text-sm text-art-charcoal">{module.name}</h3>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        isAvailable
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-stone-100 text-stone-600 border border-stone-200'
+                      }`}
+                    >
+                      {isAvailable ? 'Active' : 'Planned'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-600 leading-relaxed mb-4">
+                    {module.description}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
+                  <span className="font-mono text-[10px]">{module.path || 'Pending'}</span>
+                  {isAvailable && module.path ? (
+                    <Link
+                      to={module.path}
+                      className="font-semibold text-art-charcoal hover:text-amber-700 transition-colors"
+                    >
+                      Open Module →
+                    </Link>
+                  ) : (
+                    <span className="italic text-[10px]">Upcoming Milestone</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

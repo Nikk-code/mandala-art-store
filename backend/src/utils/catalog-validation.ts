@@ -117,3 +117,52 @@ export function validateProductName(name: string): string {
 
   return trimmed;
 }
+
+export function validateImageUrl(url: unknown, fieldName = 'Image URL'): string {
+  if (!url || typeof url !== 'string') {
+    throw new ValidationError(`${fieldName} is required`);
+  }
+
+  const trimmed = url.trim();
+  if (trimmed.length < 5 || trimmed.length > 500) {
+    throw new ValidationError(`${fieldName} must be between 5 and 500 characters`);
+  }
+
+  // Allow root-relative paths like /images/lotus.jpg or valid http/https URLs
+  if (trimmed.startsWith('/')) {
+    if (trimmed.startsWith('//') || trimmed.includes('\\')) {
+      throw new ValidationError(`${fieldName} contains invalid format`);
+    }
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new ValidationError(`${fieldName} must use HTTP or HTTPS protocol`);
+    }
+    if (!parsed.hostname || parsed.hostname.includes(' ')) {
+      throw new ValidationError(`${fieldName} must contain a valid domain`);
+    }
+  } catch {
+    throw new ValidationError(`${fieldName} must be a valid URL`);
+  }
+
+  return trimmed;
+}
+
+export function validateOptionalImageUrl(url: unknown, fieldName = 'Image URL'): string | null {
+  if (url === undefined || url === null || url === '') {
+    return null;
+  }
+  return validateImageUrl(url, fieldName);
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function validateUuid(id: unknown, fieldName = 'ID'): string {
+  if (typeof id !== 'string' || !UUID_REGEX.test(id.trim())) {
+    throw new ValidationError(`Invalid ${fieldName} format.`);
+  }
+  return id.trim();
+}

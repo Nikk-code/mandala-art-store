@@ -92,9 +92,11 @@ This document outlines the core business logic, domain constraints, and calculat
 
 - **Backend Authority**: The frontend displays availability status but the backend is the sole authority for inventory, pricing, and discounts.
 - **Atomic Reservation**: Checkout uses an atomic `UPDATE products SET stock_quantity = stock_quantity - :qty ... WHERE stock_quantity >= :qty AND availability = 'in_stock'` pattern. If 0 rows update, checkout fails cleanly with out-of-stock notification.
+- **Admin Delta Adjustments**: Admin positive/negative stock adjustments execute atomic conditional database queries (`stockQuantity: { increment: delta }` or `stockQuantity: { decrement: abs(delta) } WHERE stockQuantity >= abs(delta)`). Concurrent operations serialize safely without lost updates, and decrements exceeding stock are rejected with `ConflictError` (HTTP 409).
+- **Exact-Quantity (Set) Optimistic Concurrency**: Exact stock updates transmit `expectedStock`. If concurrent orders or stock changes modified inventory between UI load and save, the update is rejected with `ConflictError` (HTTP 409). Physical recounts can override this protection with `force: true`.
 - **Automatic Stock Compensation**: If an order fails payment, is cancelled, or expires without payment, the backend executes an atomic compensation query (`UPDATE products SET stock_quantity = stock_quantity + :qty ...`) to immediately return stock to the store.
-- **Out-of-Stock Protection**: If stock reaches 0, `availability` transitions to `sold_out`.
-- **Made-to-Order**: Items with `availability = 'made_to_order'` are crafted on demand and always purchasable without stock depletion. Production capacity limits can be configured if necessary.
+- **Out-of-Stock Protection**: If stock reaches 0 via checkout or admin decrement, `availability` automatically transitions to `sold_out`. If stock rises above 0, `sold_out` automatically transitions to `in_stock`.
+- **Made-to-Order**: Items with `availability = 'made_to_order'` are crafted on demand and always purchasable without stock depletion. Auto-transitions never alter `made_to_order` availability.
 
 ---
 
@@ -203,3 +205,25 @@ The following areas require explicit business decisions before implementation:
 - **Product Verification**: Wishlist items can only be added for existing, active artworks (`product.isActive = true`). Nonexistent or inactive products return `404 Not Found`. Inactive items are filtered out of public customer views.
 - **Safe Removal**: Customers can remove saved items from their own wishlist. Attempting to remove an absent item returns `404 Not Found`. Customer A cannot access or remove Customer B's wishlist items.
 - **Storefront Synchronization**: Wishlist state is reactively reflected across product cards, product detail pages, header navigation badge count, and the dedicated `/wishlist` patron gallery.
+
+---
+
+## 10. Administrative Product, Category & Inventory Rules
+
+- **Non-Destructive Product Lifecycle**:
+  - Products with historical orders or reviews must NEVER be deleted destructively.
+  - Deactivation (`isActive = false`) hides the product from the public customer catalog, cart addition, and wishlist addition, while preserving historical order snapshots, sales analytics, and existing reviews.
+- **Category Dependency Safeguards**:
+  - A category cannot be deactivated if any active products depend on it. Doing so triggers HTTP `400 Bad Request` with an explicit dependency safeguard error.
+  - A category cannot be deleted if any products (active or inactive) are associated with it. Doing so triggers HTTP `400 Bad Request`.
+- **Authoritative Integer Paise Monetary Values**:
+  - All product prices (`price`, `compareAtPrice`) must be validated and stored exclusively as integer paise (`Math.round(rupees * 100)`). Floating-point currencies are strictly prohibited.
+- **Inventory Consistency & Negative Stock Prevention**:
+  - Stock quantities are non-negative integers (`stockQuantity >= 0`). Adjustments resulting in negative stock are strictly rejected with HTTP `400 Bad Request`.
+  - Admin stock adjustments support both exact quantity assignment (`mode = 'set'`) and relative adjustments (`mode = 'delta'`).
+  - Automatic availability transitions:
+    - If `stockQuantity` is adjusted to `0` and availability is `IN_STOCK`, the system automatically transitions availability to `SOLD_OUT`.
+    - If `stockQuantity` is adjusted to `> 0` and availability is `SOLD_OUT`, the system automatically transitions availability to `IN_STOCK`.
+    - Custom availability states (e.g. `MADE_TO_ORDER`) are preserved during stock adjustments unless explicitly updated by an administrator.
+  - Low-stock threshold is defined at `stockQuantity <= 3`, triggering visual warnings in the administrative inventory dashboard.
+  - Stock adjustments never bypass or violate checkout inventory reservations.

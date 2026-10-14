@@ -26,9 +26,14 @@ describe('CategoryService Domain Logic', () => {
       findBySlug: vi.fn(),
       findByName: vi.fn(),
       findActiveCategories: vi.fn(),
+      findAllCategories: vi.fn(),
+      countActiveProductsByCategoryId: vi.fn().mockResolvedValue(0),
+      countAllProductsByCategoryId: vi.fn().mockResolvedValue(0),
       create: vi.fn(),
       update: vi.fn(),
       deactivate: vi.fn(),
+      activate: vi.fn(),
+      delete: vi.fn(),
     } as unknown as CategoryRepository;
 
     service = new CategoryService(mockCategoryRepo);
@@ -170,9 +175,10 @@ describe('CategoryService Domain Logic', () => {
     });
   });
 
-  describe('deactivateCategory', () => {
-    it('deactivates category after verifying its existence', async () => {
+  describe('deactivateCategory & toggleCategoryActive', () => {
+    it('deactivates category when no active products depend on it', async () => {
       vi.spyOn(mockCategoryRepo, 'findById').mockResolvedValue(sampleCategory);
+      vi.spyOn(mockCategoryRepo, 'countActiveProductsByCategoryId').mockResolvedValue(0);
       vi.spyOn(mockCategoryRepo, 'deactivate').mockResolvedValue({
         ...sampleCategory,
         isActive: false,
@@ -181,6 +187,64 @@ describe('CategoryService Domain Logic', () => {
       const result = await service.deactivateCategory('cat-123');
       expect(result.isActive).toBe(false);
       expect(mockCategoryRepo.deactivate).toHaveBeenCalledWith('cat-123');
+    });
+
+    it('rejects deactivation when active products depend on the category', async () => {
+      vi.spyOn(mockCategoryRepo, 'findById').mockResolvedValue(sampleCategory);
+      vi.spyOn(mockCategoryRepo, 'countActiveProductsByCategoryId').mockResolvedValue(3);
+
+      await expect(service.deactivateCategory('cat-123')).rejects.toThrow(ConflictError);
+      expect(mockCategoryRepo.deactivate).not.toHaveBeenCalled();
+    });
+
+    it('activates category when toggle is set to true', async () => {
+      vi.spyOn(mockCategoryRepo, 'findById').mockResolvedValue({
+        ...sampleCategory,
+        isActive: false,
+      });
+      vi.spyOn(mockCategoryRepo, 'activate').mockResolvedValue({
+        ...sampleCategory,
+        isActive: true,
+      });
+
+      const result = await service.toggleCategoryActive('cat-123', true);
+      expect(result.isActive).toBe(true);
+      expect(mockCategoryRepo.activate).toHaveBeenCalledWith('cat-123');
+    });
+  });
+
+  describe('deleteCategory', () => {
+    it('deletes category when no products depend on it', async () => {
+      vi.spyOn(mockCategoryRepo, 'findById').mockResolvedValue(sampleCategory);
+      vi.spyOn(mockCategoryRepo, 'countAllProductsByCategoryId').mockResolvedValue(0);
+      vi.spyOn(mockCategoryRepo, 'delete').mockResolvedValue(sampleCategory);
+
+      const result = await service.deleteCategory('cat-123');
+      expect(result).toEqual(sampleCategory);
+      expect(mockCategoryRepo.delete).toHaveBeenCalledWith('cat-123');
+    });
+
+    it('rejects deletion with ConflictError when products are associated with category', async () => {
+      vi.spyOn(mockCategoryRepo, 'findById').mockResolvedValue(sampleCategory);
+      vi.spyOn(mockCategoryRepo, 'countAllProductsByCategoryId').mockResolvedValue(2);
+
+      await expect(service.deleteCategory('cat-123')).rejects.toThrow(ConflictError);
+      expect(mockCategoryRepo.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listAllCategories', () => {
+    it('returns categories with mapped productCount', async () => {
+      vi.spyOn(mockCategoryRepo, 'findAllCategories').mockResolvedValue([
+        {
+          ...sampleCategory,
+          _count: { products: 5 },
+        },
+      ]);
+
+      const result = await service.listAllCategories();
+      expect(result).toHaveLength(1);
+      expect(result[0].productCount).toBe(5);
     });
   });
 });

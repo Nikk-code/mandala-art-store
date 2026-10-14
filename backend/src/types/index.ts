@@ -10,6 +10,17 @@ export interface ApiSuccessResponse<T> {
   data: T;
 }
 
+export interface PaginatedResponse<T> {
+  success: true;
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
 export interface ApiErrorResponse {
   success: false;
   error: {
