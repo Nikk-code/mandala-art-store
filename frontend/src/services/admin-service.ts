@@ -14,6 +14,11 @@ import type {
   PaginatedAdminProductsResponse,
   PaginatedAdminInventoryResponse,
   ProductImageDto,
+  AdminOrderListItemDto,
+  AdminOrderDetailsDto,
+  AdminOrderListQuery,
+  UpdateAdminOrderStatusInput,
+  PaginatedAdminOrdersResponse,
 } from '@/types';
 
 /**
@@ -207,6 +212,56 @@ export async function adjustAdminInventory(
 ): Promise<AdminProductDto> {
   const response = await apiPatch<{ success: boolean; data: AdminProductDto }>(
     `admin/inventory/${encodeURIComponent(productId)}`,
+    input
+  );
+  return response.data;
+}
+
+// ============================================================================
+// ORDER MANAGEMENT & FULFILLMENT
+// ============================================================================
+
+export async function fetchAdminOrders(
+  query: AdminOrderListQuery = {}
+): Promise<PaginatedAdminOrdersResponse> {
+  const params = new URLSearchParams();
+  if (query.page) params.set('page', query.page.toString());
+  if (query.pageSize) params.set('pageSize', query.pageSize.toString());
+  if (query.search) params.set('search', query.search);
+  if (query.status) params.set('status', query.status);
+  if (query.paymentStatus) params.set('paymentStatus', query.paymentStatus);
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  if (query.sort) params.set('sort', query.sort);
+
+  const queryString = params.toString();
+  const path = queryString ? `admin/orders?${queryString}` : 'admin/orders';
+
+  const response = await apiGet<{
+    success: boolean;
+    data: AdminOrderListItemDto[];
+    pagination: PaginatedAdminOrdersResponse['pagination'];
+  }>(path);
+
+  return {
+    items: response.data,
+    pagination: response.pagination,
+  };
+}
+
+export async function fetchAdminOrderById(id: string): Promise<AdminOrderDetailsDto> {
+  const response = await apiGet<{ success: boolean; data: AdminOrderDetailsDto }>(
+    `admin/orders/${encodeURIComponent(id)}`
+  );
+  return response.data;
+}
+
+export async function updateAdminOrderStatus(
+  id: string,
+  input: UpdateAdminOrderStatusInput
+): Promise<AdminOrderDetailsDto> {
+  const response = await apiPatch<{ success: boolean; data: AdminOrderDetailsDto }>(
+    `admin/orders/${encodeURIComponent(id)}/status`,
     input
   );
   return response.data;

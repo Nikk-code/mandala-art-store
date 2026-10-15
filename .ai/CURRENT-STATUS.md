@@ -1,13 +1,13 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-14  
-**Current Phase**: `ADMIN PRODUCT, CATEGORY & INVENTORY MANAGEMENT (Step 22 Complete)`
+**Last Updated**: 2026-10-15  
+**Current Phase**: `ADMIN ORDER MANAGEMENT & FULFILLMENT (Step 23 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Admin Product, Category, and Inventory Management (Step 22) has been fully implemented and verified across both backend and frontend workspaces. Expanding upon the Step 21 administrative foundation, backend `/api/admin/*` routes provide authoritative management for products (`GET`, `POST`, `PUT /api/admin/products/:id`, `PATCH /api/admin/products/:id/status`, and image gallery management), categories (`GET`, `POST`, `PUT /api/admin/categories/:id`, `PATCH /api/admin/categories/:id/status`, and safe `DELETE /api/admin/categories/:id`), and inventory (`GET /api/admin/inventory`, `PATCH /api/admin/inventory/:id`). All operations enforce strict authorization via `[requireAuth, requireAdmin]`, server-side validation, integer paise currency handling, zero client trust, and safe non-destructive activation toggling. Category safeguards strictly prevent deactivation or deletion when active products depend on the category. Inventory stock adjustments support direct set or relative deltas with negative stock guards, automatic availability transitions (`IN_STOCK` <-> `SOLD_OUT`) while preserving `MADE_TO_ORDER`, without bypassing checkout stock reservation invariants. The frontend administrative portal features responsive, accessible pages for Product Management (`/admin/products`), Category Management (`/admin/categories`), and Inventory Allocation (`/admin/inventory`) with navigation tabs in `AdminLayout`. All 63 test suites (27 backend / 361 tests, 36 frontend / 226 tests, totaling 587 tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Admin Order Management and Fulfillment (Step 23) has been fully implemented, tested, and verified across both backend and frontend workspaces. Expanding upon the administrative portal foundation, the module introduces authoritative order inspection, multi-field search, status filtering, multi-attempt payment resolution, and concurrency-safe forward fulfillment transitions (`CONFIRMED` → `PROCESSING` → `SHIPPED` → `DELIVERED`). All endpoints are authoritatively protected under `/api/admin/orders` via `[requireAuth, requireAdmin]`. The backend implements an atomic conditional database update pattern that evaluates expected current order status and verifies captured payment evidence before advancing, rejecting stale or racing requests with HTTP 409 Conflict. Manual payment status overrides are strictly prohibited. In accordance with boutique art logistics, transitioning to `SHIPPED` enforces non-empty courier partner and tracking number inputs. Both registered customer orders and guest checkouts (`userId: null`) are handled safely with zero unhandled null pointer exceptions or broken user lookups. The frontend provides a responsive administrative page (`/admin/orders`) with KPI summary metrics, search bar, order and payment status filter pills, sorting options, paginated table, and a comprehensive detail modal (`OrderDetailModal`) presenting immutable historical item snapshots, address snapshots, and payment gateway evidence. All 68 test suites (31 backend / 422 tests, 37 frontend / 235 tests, totaling 657 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -478,25 +478,47 @@ Admin Product, Category, and Inventory Management (Step 22) has been fully imple
   - Created `AdminCategoriesPage.tsx` (`/admin/categories`) with collection cards, product count badges, create/edit modal, dependency-safeguarded toggle, and safe delete buttons.
   - Created `AdminInventoryPage.tsx` (`/admin/inventory`) with stock distribution metrics, low-stock alerts, filter grid, and stock adjustment modal with optimistic concurrency protection and authoritative recount override.
 - [x] **Automated Tests & Quality**:
-  - 29 backend automated test suites with 380 passing unit/mocked tests and 7 live PostgreSQL concurrency integration tests pending live DB availability (`backend/tests/`).
-  - 36 frontend automated test suites passing with 226 tests (`frontend/tests/`).
-  - 65 total test suites with 606 tests across workspaces (606 tests: 606 passing/pending-live, 0 failing).
+  - 31 backend automated test suites with 434 passing unit/mocked tests and 8 live PostgreSQL concurrency integration tests pending live DB availability (`backend/tests/`).
+  - 37 frontend automated test suites passing with 235 tests (`frontend/tests/`).
+  - 68 total test suites with 669 passing tests across workspaces (677 total tests: 669 passing, 8 skipped live-DB, 0 failing).
   - 0 ESLint warnings and errors across all workspaces.
   - 100% Prettier formatting compliance.
   - 100% Vite and TypeScript production build passing across workspaces.
   - Prisma schema validation verified.
 
+### Phase 11: Admin Order Management & Fulfillment (Step 23 Complete)
+
+- [x] **Authoritative Multi-Attempt Payment Semantics & Bijective Relation Filters**:
+  - Authored `resolveEffectivePaymentStatus` evaluating `CAPTURED` > `REFUNDED` > `AUTHORIZED` > `PENDING` > `FAILED`.
+  - Authored `buildPaymentStatusPrismaFilter` with full hierarchical exclusions, guaranteeing 100% bijective consistency between filter queries and displayed statuses across all single and multi-attempt combinations (including refunds).
+  - Documented zero-payment behavior: supported checkout flows atomically create orders with an initial `PENDING` payment; zero-payment orders represent an abnormal state handled defensively without API contract expansion.
+- [x] **Concurrency-Guarded Fulfillment Transition Engine**:
+  - Enforced forward lifecycle transitions strictly: `CONFIRMED` → `PROCESSING` → `SHIPPED` → `DELIVERED`.
+  - Prohibited manual transitions to `CONFIRMED` without cryptographic payment evidence.
+  - Atomic database-level conditional update (`updateMany` with `status: expectedCurrentStatus` and `payments: { some: { status: 'CAPTURED' } }`), acquiring exclusive row lock and rejecting stale or racing updates with HTTP 409 Conflict.
+  - Enforced mandatory `courierName` and `trackingNumber` when advancing an order to `SHIPPED`.
+- [x] **Backend Administrative Orders REST API**:
+  - `GET /api/admin/orders`: Server-side paginated listing with search across order number, customer email, customer phone, recipient name, status filter, payment status filter, date range filter, and sorting.
+  - `GET /api/admin/orders/:id`: Complete immutable order details, line items snapshots, payments array, address snapshot, and fulfillment tracking without customer ownership restrictions.
+  - `PATCH /api/admin/orders/:id/status`: Transition handler enforcing transition matrix and payment evidence verification.
+  - Updated `AdminService.getDashboardData` metadata marking the `orders` module as `'AVAILABLE'`.
+- [x] **Responsive Admin Orders Frontend Experience**:
+  - Updated `AdminLayout.tsx` adding the "Orders" navigation tab.
+  - Authored `AdminOrdersPage.tsx` with search input, order status pills, payment status pills, sorting dropdown, empty state, loading skeleton, and pagination.
+  - Authored `OrderDetailModal.tsx` for inspecting customer contacts (registered patron vs guest checkout badge), immutable address snapshots, line items, payment gateway evidence, and interactive fulfillment transition form with courier tracking input.
+  - Mounted `/admin/orders` route in `App.tsx` guarded by `<AdminRoute>`.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 22 is complete and verified).
+- _None_ (Step 23 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 23: Admin Order Management & Fulfillment (Order Inspection, Status Transitions, Customer Communication).
+- Step 24: Customer Account Management / Customer Reviews Moderation.
 
 ---
 

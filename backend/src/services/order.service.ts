@@ -1,13 +1,20 @@
 import { prisma } from '../db/prisma';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, OrderStatus } from '@prisma/client';
 import {
   orderRepository,
   type OrderRepository,
   type OrderWithDetails,
+  type AdminOrderRecord,
 } from '../repositories/order.repository';
 import { NotFoundError, BadRequestError, ConflictError } from '../errors';
 import { validateCreateOrderRequest } from '../utils/checkout-validation';
 import { generateOrderNumber } from '../utils/order-number';
+import { validateUuid } from '../utils/catalog-validation';
+import {
+  validateAdminOrderListQuery,
+  validateUpdateOrderStatusInput,
+} from '../utils/order-admin-validation';
+import { resolveEffectivePaymentStatus } from '../utils/payment-status';
 import type {
   CreateOrderRequest,
   OrderResponseDto,
@@ -16,6 +23,11 @@ import type {
   OrderHistoryResponseDto,
   OrderHistoryItemDto,
 } from '../types/checkout';
+import type {
+  AdminOrderListItemDto,
+  AdminOrderDetailsDto,
+  PaginatedAdminOrdersResponse,
+} from '../types/admin';
 
 interface IdempotencyEntry {
   response: OrderResponseDto;
@@ -384,6 +396,237 @@ export class OrderService {
       },
       items: itemsDto,
       createdAt: order.createdAt.toISOString(),
+    };
+  }
+
+  // ============================================================================
+  // ADMINISTRATIVE ORDER MANAGEMENT METHODS
+  // ============================================================================
+
+  /**
+   * Retrieves paginated orders for administration with search, status filters, payment filters, and date ranges.
+   */
+  async getAdminOrders(rawQuery: Record<string, unknown>): Promise<PaginatedAdminOrdersResponse> {
+    const validatedQuery = validateAdminOrderListQuery(rawQuery);
+
+    const { orders, total } = await this.repository.findAdminOrders(
+      {
+        search: validatedQuery.search,
+        status: validatedQuery.status,
+        paymentStatus: validatedQuery.paymentStatus,
+        from: validatedQuery.from,
+        to: validatedQuery.to,
+      },
+      {
+        skip: (validatedQuery.page! - 1) * validatedQuery.pageSize!,
+        take: validatedQuery.pageSize!,
+        sort: validatedQuery.sort,
+      }
+    );
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / validatedQuery.pageSize!);
+
+    return {
+      items: orders.map(order => this.mapToAdminOrderListItemDto(order)),
+      pagination: {
+        page: validatedQuery.page!,
+        pageSize: validatedQuery.pageSize!,
+        totalItems: total,
+        totalPages,
+      },
+    };
+  }
+
+  /**
+   * Retrieves complete order details for administration without customer ownership restriction.
+   * Safely handles guest checkout orders and registered patron profiles.
+   */
+  async getAdminOrderById(orderId: string): Promise<AdminOrderDetailsDto> {
+    const cleanOrderId = validateUuid(orderId, 'Order ID');
+
+    const order = await this.repository.findAdminOrderById(cleanOrderId);
+    if (!order) {
+      throw new NotFoundError(`Order with ID "${cleanOrderId}" was not found.`);
+    }
+
+    return this.mapToAdminOrderDetailsDto(order);
+  }
+
+  /**
+   * Authoritatively updates order fulfillment status by an administrator.
+   * Enforces:
+   * 1. Target status must be one of: PROCESSING, SHIPPED, DELIVERED.
+   * 2. Allowed transitions:
+   *    - CONFIRMED -> PROCESSING
+   *    - PROCESSING -> SHIPPED (requires trackingNumber & courierName)
+   *    - SHIPPED -> DELIVERED
+   * 3. Order must possess verified CAPTURED payment evidence.
+   * 4. Conditional database update to prevent lost updates or stale writes under concurrency.
+   */
+  async updateOrderStatusByAdmin(
+    orderId: string,
+    rawInput: unknown
+  ): Promise<AdminOrderDetailsDto> {
+    const cleanOrderId = validateUuid(orderId, 'Order ID');
+    const validatedInput = validateUpdateOrderStatusInput(rawInput);
+
+    // Initial read to inspect current domain state and payment evidence
+    const currentOrder = await this.repository.findAdminOrderById(cleanOrderId);
+    if (!currentOrder) {
+      throw new NotFoundError(`Order with ID "${cleanOrderId}" was not found.`);
+    }
+
+    // 1. Payment Verification Check: Order must possess verified CAPTURED payment evidence
+    const hasCapturedPayment = currentOrder.payments?.some(p => p.status === 'CAPTURED');
+    if (!hasCapturedPayment) {
+      throw new ConflictError(
+        `Cannot advance order "${currentOrder.orderNumber}". Only orders with verified CAPTURED payment can be fulfilled.`
+      );
+    }
+
+    // 2. Strict State Transition Validation
+    const expectedCurrentStatus = this.determineExpectedCurrentStatus(
+      currentOrder.status,
+      validatedInput.status
+    );
+
+    // 3. Concurrency-Guarded Conditional Update
+    const updatedOrder = await this.repository.updateOrderStatusConditionally(
+      cleanOrderId,
+      expectedCurrentStatus,
+      validatedInput.status,
+      {
+        trackingNumber: validatedInput.trackingNumber,
+        courierName: validatedInput.courierName,
+      }
+    );
+
+    if (!updatedOrder) {
+      throw new ConflictError(
+        'Order status could not be updated due to a concurrent state modification. Please refresh and retry.'
+      );
+    }
+
+    return this.mapToAdminOrderDetailsDto(updatedOrder);
+  }
+
+  private determineExpectedCurrentStatus(
+    currentStatus: OrderStatus,
+    targetStatus: OrderStatus
+  ): OrderStatus {
+    switch (targetStatus) {
+      case OrderStatus.PROCESSING:
+        if (currentStatus !== OrderStatus.CONFIRMED) {
+          throw new ConflictError(
+            `Invalid status transition. Orders can only transition to PROCESSING from CONFIRMED (current status is "${currentStatus}").`
+          );
+        }
+        return OrderStatus.CONFIRMED;
+
+      case OrderStatus.SHIPPED:
+        if (currentStatus !== OrderStatus.PROCESSING) {
+          throw new ConflictError(
+            `Invalid status transition. Orders can only transition to SHIPPED from PROCESSING (current status is "${currentStatus}").`
+          );
+        }
+        return OrderStatus.PROCESSING;
+
+      case OrderStatus.DELIVERED:
+        if (currentStatus !== OrderStatus.SHIPPED) {
+          throw new ConflictError(
+            `Invalid status transition. Orders can only transition to DELIVERED from SHIPPED (current status is "${currentStatus}").`
+          );
+        }
+        return OrderStatus.SHIPPED;
+
+      default:
+        throw new BadRequestError(`Unsupported target status "${targetStatus}".`);
+    }
+  }
+
+  private mapToAdminOrderListItemDto(order: AdminOrderRecord): AdminOrderListItemDto {
+    const itemCount = (order.items || []).reduce((sum, item) => sum + item.quantity, 0);
+    const paymentStatus = resolveEffectivePaymentStatus(order.payments);
+
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      shippingRecipientName: order.shippingRecipientName,
+      isGuest: order.userId === null,
+      userId: order.userId,
+      status: order.status,
+      paymentStatus,
+      total: order.total,
+      itemCount,
+      trackingNumber: order.trackingNumber,
+      courierName: order.courierName,
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+    };
+  }
+
+  private mapToAdminOrderDetailsDto(order: AdminOrderRecord): AdminOrderDetailsDto {
+    const paymentStatus = resolveEffectivePaymentStatus(order.payments);
+
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      paymentStatus,
+      subtotal: order.subtotal,
+      discountAmount: order.discountAmount,
+      shippingFee: order.shippingFee,
+      taxAmount: order.taxAmount,
+      total: order.total,
+      currency: 'INR',
+      couponCode: order.couponCode,
+      customer: {
+        userId: order.userId,
+        email: order.customerEmail,
+        phone: order.customerPhone,
+        isGuest: order.userId === null,
+        registeredName: order.user ? `${order.user.firstName} ${order.user.lastName}` : null,
+      },
+      shippingAddress: {
+        recipientName: order.shippingRecipientName,
+        phone: order.shippingPhone,
+        addressLine1: order.shippingAddressLine1,
+        addressLine2: order.shippingAddressLine2,
+        city: order.shippingCity,
+        state: order.shippingState,
+        postalCode: order.shippingPostalCode,
+        country: order.shippingCountry,
+      },
+      items: (order.items || []).map(item => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        productSku: item.productSku,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        total: item.total,
+      })),
+      payments: (order.payments || []).map(payment => ({
+        id: payment.id,
+        provider: payment.provider,
+        providerOrderId: payment.providerOrderId,
+        providerPaymentId: payment.providerPaymentId,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: payment.status,
+        paidAt: payment.paidAt ? payment.paidAt.toISOString() : null,
+        failureReason: payment.failureReason,
+        createdAt: payment.createdAt.toISOString(),
+      })),
+      fulfillment: {
+        trackingNumber: order.trackingNumber,
+        courierName: order.courierName,
+        customerNotes: order.customerNotes,
+      },
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
     };
   }
 }

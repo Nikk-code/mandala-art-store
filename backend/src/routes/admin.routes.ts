@@ -32,4 +32,9 @@ adminRoutes.delete('/categories/:id', adminController.deleteCategory);
 adminRoutes.get('/inventory', adminController.getInventory);
 adminRoutes.patch('/inventory/:productId', adminController.adjustInventory);
 
+// Order Management & Fulfillment
+adminRoutes.get('/orders', adminController.listOrders);
+adminRoutes.get('/orders/:id', adminController.getOrder);
+adminRoutes.patch('/orders/:id/status', adminController.updateOrderStatus);
+
 export default adminRoutes;

@@ -17,6 +17,9 @@ import {
   deleteAdminCategory,
   fetchAdminInventory,
   adjustAdminInventory,
+  fetchAdminOrders,
+  fetchAdminOrderById,
+  updateAdminOrderStatus,
 } from '@/services/admin-service';
 import * as apiClient from '@/services/api-client';
 import type {
@@ -407,6 +410,150 @@ describe('Admin Service', () => {
         availability: 'IN_STOCK',
       });
       expect(res.stockQuantity).toBe(10);
+    });
+  });
+
+  describe('Admin Order Management Service', () => {
+    const mockOrderSummary = {
+      id: 'order-1',
+      orderNumber: 'MAT-20261005-7F2A9C',
+      customerEmail: 'customer@mandala.test',
+      customerPhone: '9876543210',
+      shippingRecipientName: 'Priya Sharma',
+      isGuest: false,
+      userId: 'user-1',
+      status: 'CONFIRMED' as const,
+      paymentStatus: 'CAPTURED' as const,
+      total: 149900,
+      itemCount: 1,
+      trackingNumber: null,
+      courierName: null,
+      createdAt: '2026-10-05T10:00:00.000Z',
+      updatedAt: '2026-10-05T10:05:00.000Z',
+    };
+
+    const mockOrderDetails = {
+      ...mockOrderSummary,
+      subtotal: 149900,
+      discountAmount: 0,
+      shippingFee: 0,
+      taxAmount: 0,
+      currency: 'INR',
+      couponCode: null,
+      customer: {
+        userId: 'user-1',
+        email: 'customer@mandala.test',
+        phone: '9876543210',
+        isGuest: false,
+        registeredName: 'Priya Sharma',
+      },
+      shippingAddress: {
+        recipientName: 'Priya Sharma',
+        phone: '9876543210',
+        addressLine1: 'Flat 101, Lotus Apts',
+        addressLine2: null,
+        city: 'Bengaluru',
+        state: 'Karnataka',
+        postalCode: '560001',
+        country: 'India',
+      },
+      items: [
+        {
+          id: 'item-1',
+          productId: 'prod-1',
+          productName: 'Sacred Lotus Mandala',
+          productSku: 'MND-LOTUS-01',
+          unitPrice: 149900,
+          quantity: 1,
+          total: 149900,
+        },
+      ],
+      payments: [
+        {
+          id: 'pay-1',
+          provider: 'razorpay',
+          providerOrderId: 'order_123',
+          providerPaymentId: 'pay_123',
+          amount: 149900,
+          currency: 'INR',
+          status: 'CAPTURED' as const,
+          paidAt: '2026-10-05T10:05:00.000Z',
+          failureReason: null,
+          createdAt: '2026-10-05T10:00:00.000Z',
+        },
+      ],
+      fulfillment: {
+        trackingNumber: null,
+        courierName: null,
+        customerNotes: null,
+      },
+    };
+
+    it('fetchAdminOrders calls GET admin/orders with query parameters', async () => {
+      const getSpy = vi.spyOn(apiClient, 'apiGet').mockResolvedValue({
+        success: true,
+        data: [mockOrderSummary],
+        pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+      });
+
+      const res = await fetchAdminOrders({
+        page: 1,
+        pageSize: 20,
+        search: 'MAT',
+        status: 'CONFIRMED',
+        paymentStatus: 'CAPTURED',
+      });
+
+      expect(getSpy).toHaveBeenCalledWith(expect.stringContaining('admin/orders?'));
+      const urlArg = getSpy.mock.calls[0][0];
+      expect(urlArg).toContain('page=1');
+      expect(urlArg).toContain('pageSize=20');
+      expect(urlArg).toContain('search=MAT');
+      expect(urlArg).toContain('status=CONFIRMED');
+      expect(urlArg).toContain('paymentStatus=CAPTURED');
+      expect(res.items).toHaveLength(1);
+      expect(res.items[0].orderNumber).toBe('MAT-20261005-7F2A9C');
+    });
+
+    it('fetchAdminOrderById calls GET admin/orders/:id', async () => {
+      const getSpy = vi.spyOn(apiClient, 'apiGet').mockResolvedValue({
+        success: true,
+        data: mockOrderDetails,
+      });
+
+      const res = await fetchAdminOrderById('order-1');
+      expect(getSpy).toHaveBeenCalledWith('admin/orders/order-1');
+      expect(res.id).toBe('order-1');
+      expect(res.customer.email).toBe('customer@mandala.test');
+    });
+
+    it('updateAdminOrderStatus calls PATCH admin/orders/:id/status', async () => {
+      const patchSpy = vi.spyOn(apiClient, 'apiPatch').mockResolvedValue({
+        success: true,
+        data: {
+          ...mockOrderDetails,
+          status: 'SHIPPED',
+          fulfillment: {
+            trackingNumber: 'TRK-98765',
+            courierName: 'Delhivery',
+            customerNotes: null,
+          },
+        },
+      });
+
+      const res = await updateAdminOrderStatus('order-1', {
+        status: 'SHIPPED',
+        trackingNumber: 'TRK-98765',
+        courierName: 'Delhivery',
+      });
+
+      expect(patchSpy).toHaveBeenCalledWith('admin/orders/order-1/status', {
+        status: 'SHIPPED',
+        trackingNumber: 'TRK-98765',
+        courierName: 'Delhivery',
+      });
+      expect(res.status).toBe('SHIPPED');
+      expect(res.fulfillment.courierName).toBe('Delhivery');
     });
   });
 });

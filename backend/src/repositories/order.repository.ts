@@ -1,6 +1,7 @@
 import { prisma } from '../db/prisma';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, OrderStatus, PaymentStatus } from '@prisma/client';
 import { PrismaClient } from '@prisma/client';
+import { buildPaymentStatusPrismaFilter } from '../utils/payment-status';
 
 export type OrderWithDetails = Prisma.OrderGetPayload<{
   include: {
@@ -8,6 +9,35 @@ export type OrderWithDetails = Prisma.OrderGetPayload<{
     payments: true;
   };
 }>;
+
+export type AdminOrderRecord = Prisma.OrderGetPayload<{
+  include: {
+    items: true;
+    payments: true;
+    user: {
+      select: {
+        id: true;
+        email: true;
+        firstName: true;
+        lastName: true;
+      };
+    };
+  };
+}>;
+
+export interface FindAdminOrdersFilters {
+  search?: string;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  from?: string;
+  to?: string;
+}
+
+export interface FindAdminOrdersOptions {
+  skip: number;
+  take: number;
+  sort?: 'newest' | 'oldest' | 'total_desc' | 'total_asc';
+}
 
 export interface CreateOrderData {
   orderNumber: string;
@@ -237,6 +267,164 @@ export class OrderRepository {
         failureReason,
         ...(providerPaymentId ? { providerPaymentId } : {}),
       },
+    });
+  }
+
+  /**
+   * Retrieves paginated orders for administration with search, status filters, payment filters, and date ranges.
+   */
+  async findAdminOrders(
+    filters: FindAdminOrdersFilters,
+    options: FindAdminOrdersOptions
+  ): Promise<{ orders: AdminOrderRecord[]; total: number }> {
+    const where: Prisma.OrderWhereInput = {};
+
+    // Multi-field search
+    if (filters.search && filters.search.trim()) {
+      const term = filters.search.trim();
+      where.OR = [
+        { orderNumber: { contains: term, mode: 'insensitive' } },
+        { customerEmail: { contains: term, mode: 'insensitive' } },
+        { customerPhone: { contains: term, mode: 'insensitive' } },
+        { shippingRecipientName: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    // Order status filter
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    // Authoritative payment status filter via Payments relation
+    if (filters.paymentStatus) {
+      where.payments = buildPaymentStatusPrismaFilter(filters.paymentStatus);
+    }
+
+    // Date range filter
+    if (filters.from || filters.to) {
+      where.createdAt = {};
+      if (filters.from) {
+        where.createdAt.gte = new Date(filters.from);
+      }
+      if (filters.to) {
+        where.createdAt.lte = new Date(filters.to);
+      }
+    }
+
+    // Sorting strategy
+    let orderBy: Prisma.OrderOrderByWithRelationInput = { createdAt: 'desc' };
+    if (options.sort === 'oldest') {
+      orderBy = { createdAt: 'asc' };
+    } else if (options.sort === 'total_desc') {
+      orderBy = { total: 'desc' };
+    } else if (options.sort === 'total_asc') {
+      orderBy = { total: 'asc' };
+    }
+
+    const [orders, total] = await Promise.all([
+      this.prismaClient.order.findMany({
+        where,
+        include: {
+          items: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+          },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy,
+        skip: options.skip,
+        take: options.take,
+      }),
+      this.prismaClient.order.count({ where }),
+    ]);
+
+    return { orders, total };
+  }
+
+  /**
+   * Retrieves complete order details for administration without customer ownership restriction.
+   */
+  async findAdminOrderById(id: string): Promise<AdminOrderRecord | null> {
+    return this.prismaClient.order.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        payments: {
+          orderBy: { createdAt: 'desc' },
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Atomically and conditionally transitions order status in the database:
+   * Guarded by expectedCurrentStatus and requiring captured payment evidence (payments.some.status === 'CAPTURED').
+   * If the order was concurrently modified, returns null (count === 0) to signal a 409 Conflict.
+   */
+  async updateOrderStatusConditionally(
+    orderId: string,
+    expectedCurrentStatus: OrderStatus,
+    newStatus: OrderStatus,
+    fulfillmentData: { trackingNumber?: string | null; courierName?: string | null }
+  ): Promise<AdminOrderRecord | null> {
+    return this.prismaClient.$transaction(async tx => {
+      const updateResult = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          status: expectedCurrentStatus,
+          payments: {
+            some: {
+              status: 'CAPTURED',
+            },
+          },
+        },
+        data: {
+          status: newStatus,
+          ...(fulfillmentData.trackingNumber !== undefined
+            ? { trackingNumber: fulfillmentData.trackingNumber }
+            : {}),
+          ...(fulfillmentData.courierName !== undefined
+            ? { courierName: fulfillmentData.courierName }
+            : {}),
+        },
+      });
+
+      if (updateResult.count === 0) {
+        return null;
+      }
+
+      return tx.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+          },
+          user: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
     });
   }
 }

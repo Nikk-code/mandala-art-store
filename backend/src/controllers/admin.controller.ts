@@ -2,8 +2,13 @@ import type { Request, Response, NextFunction } from 'express';
 import { adminService, type AdminService } from '../services/admin.service';
 import { productService, type ProductService } from '../services/product.service';
 import { categoryService, type CategoryService } from '../services/category.service';
+import { orderService, type OrderService } from '../services/order.service';
 import type { ApiSuccessResponse, PaginatedResponse } from '../types';
-import type { AdminDashboardResponseData } from '../types/admin';
+import type {
+  AdminDashboardResponseData,
+  AdminOrderListItemDto,
+  AdminOrderDetailsDto,
+} from '../types/admin';
 import type { ProductWithDetails } from '../repositories/product.repository';
 import type { CategoryWithProductCount } from '../services/category.service';
 import type { Category, Product, ProductImage, ProductAvailability } from '@prisma/client';
@@ -14,7 +19,8 @@ export class AdminController {
   constructor(
     private service: AdminService = adminService,
     private products: ProductService = productService,
-    private categories: CategoryService = categoryService
+    private categories: CategoryService = categoryService,
+    private orders: OrderService = orderService
   ) {}
 
   /**
@@ -444,6 +450,76 @@ export class AdminController {
     try {
       const productId = validateUuid(req.params.productId, 'Product ID');
       const updated = await this.products.adjustStock(productId, req.body);
+      res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ============================================================================
+  // ORDER MANAGEMENT
+  // ============================================================================
+
+  /**
+   * GET /api/admin/orders
+   * Paginated order listing with filters (search, status, paymentStatus, date range, sort).
+   */
+  public listOrders = async (
+    req: Request,
+    res: Response<PaginatedResponse<AdminOrderListItemDto>>,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const result = await this.orders.getAdminOrders(req.query as Record<string, unknown>);
+      res.status(200).json({
+        success: true,
+        data: result.items,
+        pagination: {
+          page: result.pagination.page,
+          pageSize: result.pagination.pageSize,
+          totalItems: result.pagination.totalItems,
+          totalPages: result.pagination.totalPages,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/admin/orders/:id
+   * Complete immutable order snapshot, items, payments, customer contact, and fulfillment details.
+   */
+  public getOrder = async (
+    req: Request,
+    res: Response<ApiSuccessResponse<AdminOrderDetailsDto>>,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const order = await this.orders.getAdminOrderById(req.params.id);
+      res.status(200).json({
+        success: true,
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * PATCH /api/admin/orders/:id/status
+   * Authoritative fulfillment status transition with concurrency guards.
+   */
+  public updateOrderStatus = async (
+    req: Request,
+    res: Response<ApiSuccessResponse<AdminOrderDetailsDto>>,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const updated = await this.orders.updateOrderStatusByAdmin(req.params.id, req.body);
       res.status(200).json({
         success: true,
         data: updated,

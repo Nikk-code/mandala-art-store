@@ -8,6 +8,7 @@ export interface AdminLayoutProps {
 
 const navItems = [
   { label: 'Overview', to: '/admin', end: true },
+  { label: 'Orders', to: '/admin/orders', end: false },
   { label: 'Products', to: '/admin/products', end: false },
   { label: 'Categories', to: '/admin/categories', end: false },
   { label: 'Inventory', to: '/admin/inventory', end: false },

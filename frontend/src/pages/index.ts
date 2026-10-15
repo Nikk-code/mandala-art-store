@@ -13,3 +13,4 @@ export * from './admin/AdminDashboardPage';
 export * from './admin/AdminProductsPage';
 export * from './admin/AdminCategoriesPage';
 export * from './admin/AdminInventoryPage';
+export * from './admin/AdminOrdersPage';

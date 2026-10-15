@@ -29,6 +29,9 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-021: Customer Wishlist Persistence, Database Unique Constraint & Storefront Synchronization](#adr-021-customer-wishlist-persistence-database-unique-constraint--storefront-synchronization)
 - [ADR-022: Product Reviews & Ratings Architecture, Verified Purchase Eligibility & Storefront Integration](#adr-022-product-reviews--ratings-architecture-verified-purchase-eligibility--storefront-integration)
 - [ADR-023: Role-Based Administrator Authentication, Safe Account Provisioning & Control Dashboard Foundation](#adr-023-role-based-administrator-authentication-safe-account-provisioning--control-dashboard-foundation)
+- [ADR-024: Admin Product, Category, and Inventory Architecture](#adr-024-admin-product-category-and-inventory-architecture)
+- [ADR-025: Inventory Concurrency Control, Atomic Conditional Updates, and Optimistic Verification Strategy](#adr-025-inventory-concurrency-control-atomic-conditional-updates-and-optimistic-verification-strategy)
+- [ADR-026: Admin Order Management, Fulfillment Lifecycle & Multi-Attempt Payment Semantics](#adr-026-admin-order-management-fulfillment-lifecycle--multi-attempt-payment-semantics)
 
 ---
 
@@ -569,3 +572,50 @@ This document tracks significant architectural, technical, and governance decisi
      - Automated unit tests (`backend/tests/inventory-concurrency.test.ts`, `backend/tests/product.service.test.ts`, `backend/tests/admin.api.test.ts`) mock Prisma transactions and verify the generated atomic conditional query parameters, optimistic conflict checks, and error responses.
      - Because a live PostgreSQL database server was not active in the local testing environment, real database-level thread/connection concurrency was simulated rather than executed against a live PostgreSQL server.
 - **Consequences**: Zero lost updates under concurrent delta adjustments, zero risk of negative stock, safe coordination between admin updates and checkout reservations, clear conflict feedback on stale UI counts, and explicit support for physical inventory recounts.
+
+---
+
+### ADR-026: Admin Order Management, Fulfillment Lifecycle & Multi-Attempt Payment Semantics
+
+- **Date**: 2026-10-15
+- **Status**: Accepted
+- **Context**: With products, categories, inventory, and role-based administration operational, administrators need authoritative operational oversight of customer orders and forward fulfillment tracking. The requirements stipulate:
+  1. Resolving multi-attempt payment semantics: orders can have multiple payment records (initial failure, followed by successful retry). A unified authoritative status priority rule and consistent database filter must be defined.
+  2. Safe forward fulfillment order status transitions (`CONFIRMED` -> `PROCESSING` -> `SHIPPED` -> `DELIVERED`). Cancellation, refunds, and stock compensation are strictly out of scope for Step 23.
+  3. Strict concurrency safety on status transitions: preventing concurrent administrative updates or stale writes from racing or double-advancing fulfillment.
+  4. Preventing unauthorized payment status overrides: admin endpoints must never manually mark an order paid or modify payment state.
+  5. Mandatory courier details: `courierName` and `trackingNumber` are strictly mandatory when transitioning to `SHIPPED`.
+  6. Immutability of historical order-item snapshots and prices (prices must never be recalculated from current catalog prices).
+  7. Safe guest checkout order handling (`order.userId === null`).
+  8. Zero schema migrations (existing schema is 100% sufficient).
+- **Decision**:
+  1. **Multi-Attempt Payment Resolution & Bijective Filter**:
+     - Defined unambiguous status precedence: `CAPTURED` > `REFUNDED` > `AUTHORIZED` > `PENDING` > `FAILED`.
+     - Filter query matches Prisma relation queries with complete hierarchical exclusions:
+       - `CAPTURED`: `{ some: { status: 'CAPTURED' } }`
+       - `REFUNDED`: `{ some: { status: 'REFUNDED' }, none: { status: 'CAPTURED' } }`
+       - `AUTHORIZED`: `{ some: { status: 'AUTHORIZED' }, none: { status: { in: ['CAPTURED', 'REFUNDED'] } } }`
+       - `PENDING`: `{ some: { status: 'PENDING' }, none: { status: { in: ['CAPTURED', 'REFUNDED', 'AUTHORIZED'] } } }`
+       - `FAILED`: `{ some: { status: 'FAILED' }, none: { status: { in: ['CAPTURED', 'REFUNDED', 'AUTHORIZED', 'PENDING'] } } }`
+     - This guarantees 100% bijective consistency between filter results and displayed status across all single and multi-attempt combinations.
+     - **Zero-Payment Handling**: In supported application flows (`createOrderTransaction`), every order is created atomically with an initial `PENDING` payment record. Zero-payment orders cannot exist under normal operation; `resolveEffectivePaymentStatus` returns `PENDING` solely as a defensive fallback for abnormal/corrupted records without expanding the API contract or introducing an unnecessary `UNPAID` status.
+  2. **Authoritative Forward Order Lifecycle**:
+     - Transitions restricted to forward progression: `CONFIRMED` -> `PROCESSING` -> `SHIPPED` -> `DELIVERED`.
+     - Orders cannot advance if not in `CONFIRMED` (or subsequent valid state) and verified `CAPTURED` payment.
+     - Transition to `SHIPPED` mandates non-empty `courierName` and `trackingNumber`.
+     - Admins cannot manually set status to `CONFIRMED` or alter payment records.
+  3. **Concurrency Control via Conditional Database Updates**:
+     - Implemented `updateOrderStatusConditionally` in `OrderRepository` using Prisma `tx.order.updateMany({ where: { id: orderId, status: expectedCurrentStatus, payments: { some: { status: 'CAPTURED' } } }, data: { status: newStatus, courierName, trackingNumber } })`.
+     - In PostgreSQL, conditional writes acquire an exclusive row-level lock. If a concurrent admin or background worker changes the order first, `count === 0` and the API rejects the update with HTTP `409 Conflict`.
+  4. **Snapshot Preservation & Guest Checkout Safety**:
+     - Historical item prices, names, and address snapshots remain strictly immutable.
+     - Guest orders (`userId === null`) are safely rendered with clear badges and contact email/phone snapshots.
+  5. **Admin Orders UI & UX**:
+     - Added Orders tab to `AdminLayout`.
+     - Developed responsive `AdminOrdersPage` with KPI summary cards, debounced search, order/payment status filters, sorting, and pagination.
+     - Created `OrderDetailModal` displaying full customer details, address snapshot, item snapshots, financial totals in paise, gateway payment evidence, and contextual fulfillment action buttons.
+- **Alternatives Considered**:
+  - _Direct `paymentStatus` field on `Order` table_: Rejected because it would require a database migration and duplicate payment record truths.
+  - _In-memory status validation followed by unconditional `prisma.order.update`_: Rejected as vulnerable to race conditions and stale concurrent writes.
+  - _Allowing admin to mark orders as CONFIRMED manually_: Rejected to prevent financial discrepancies and inventory bypass without verified gateway payment capture.
+- **Consequences**: Concurrency-safe order fulfillment tracking, reliable guest order operations, clean multi-payment resolution, strict snapshot preservation, and zero schema migrations.

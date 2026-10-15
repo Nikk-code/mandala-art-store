@@ -50,7 +50,7 @@ export class AdminService {
           name: 'Order Fulfillment & Logistics',
           description:
             'Inspect customer orders, track payments, update shipping statuses, and enter courier tracking details.',
-          status: 'PLANNED',
+          status: 'AVAILABLE',
           path: '/admin/orders',
         },
         {
