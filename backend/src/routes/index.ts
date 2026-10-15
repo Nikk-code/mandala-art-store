@@ -9,8 +9,12 @@ import addressRoutes from './address.routes';
 import wishlistRoutes from './wishlist.routes';
 import reviewRoutes from './review.routes';
 import adminRoutes from './admin.routes';
+import couponRoutes from './coupon.routes';
 
 const apiRouter = Router();
+
+// Public Coupon validation endpoint -> /api/coupons/validate
+apiRouter.use('/coupons', couponRoutes);
 
 // Health check endpoint -> /api/health
 apiRouter.use('/health', healthRoutes);

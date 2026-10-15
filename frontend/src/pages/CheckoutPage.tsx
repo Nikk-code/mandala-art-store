@@ -21,6 +21,7 @@ import type {
   PaymentInitializationDto,
   PaymentVerificationResultDto,
   AddressDto,
+  ValidateCouponResultDto,
 } from '@/types';
 
 export function CheckoutPage(): ReactNode {
@@ -50,6 +51,7 @@ export function CheckoutPage(): ReactNode {
   const [paymentInitiated, setPaymentInitiated] = useState<PaymentInitializationDto | null>(null);
   const [paymentVerification, setPaymentVerification] =
     useState<PaymentVerificationResultDto | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResultDto | null>(null);
 
   useEffect(() => {
     document.title = 'Checkout | Mandala Art Store';
@@ -199,6 +201,7 @@ export function CheckoutPage(): ReactNode {
           productId: item.productId,
           quantity: item.quantity,
         })),
+        couponCode: appliedCoupon ? appliedCoupon.couponCode : undefined,
       });
 
       // 2. Initialize Razorpay Payment Order on backend
@@ -530,6 +533,9 @@ export function CheckoutPage(): ReactNode {
                   onSubmit={isReviewMode ? handlePaymentSubmit : handleFormSubmit}
                   isReviewMode={isReviewMode}
                   onEditAddress={() => setIsReviewMode(false)}
+                  appliedCoupon={appliedCoupon}
+                  onApplyCoupon={setAppliedCoupon}
+                  onRemoveCoupon={() => setAppliedCoupon(null)}
                 />
               </div>
             </div>

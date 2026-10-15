@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { adminController } from '../controllers/admin.controller';
+import { couponController } from '../controllers/coupon.controller';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 
 const adminRoutes = Router();
@@ -36,5 +37,13 @@ adminRoutes.patch('/inventory/:productId', adminController.adjustInventory);
 adminRoutes.get('/orders', adminController.listOrders);
 adminRoutes.get('/orders/:id', adminController.getOrder);
 adminRoutes.patch('/orders/:id/status', adminController.updateOrderStatus);
+
+// Coupon & Promotion Management
+adminRoutes.get('/coupons', couponController.listCoupons);
+adminRoutes.post('/coupons', couponController.createCoupon);
+adminRoutes.get('/coupons/:id', couponController.getCoupon);
+adminRoutes.put('/coupons/:id', couponController.updateCoupon);
+adminRoutes.patch('/coupons/:id/status', couponController.toggleCouponStatus);
+adminRoutes.delete('/coupons/:id', couponController.deleteCoupon);
 
 export default adminRoutes;

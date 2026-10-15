@@ -77,6 +77,14 @@ export class AdminService {
           status: 'AVAILABLE',
           path: '/admin/inventory',
         },
+        {
+          id: 'promotions',
+          name: 'Promotions & Coupon Discounts',
+          description:
+            'Create promotional coupon codes, configure discount rates, set minimum subtotal requirements, and manage usage limits.',
+          status: 'AVAILABLE',
+          path: '/admin/coupons',
+        },
       ],
     };
   }

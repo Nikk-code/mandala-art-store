@@ -7,3 +7,4 @@ export * from './address-service';
 export * from './wishlist-service';
 export * from './review-service';
 export * from './admin-service';
+export * from './coupon-service';

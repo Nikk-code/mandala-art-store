@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma';
-import type { Prisma, OrderStatus, PaymentStatus } from '@prisma/client';
+import type { Prisma, OrderStatus, PaymentStatus, Coupon } from '@prisma/client';
 import { PrismaClient } from '@prisma/client';
 import { buildPaymentStatusPrismaFilter } from '../utils/payment-status';
 
@@ -49,6 +49,8 @@ export interface CreateOrderData {
   shippingFee?: number;
   taxAmount?: number;
   total: number;
+  couponId?: string | null;
+  couponCode?: string | null;
   shippingRecipientName: string;
   shippingPhone: string;
   shippingAddressLine1: string;
@@ -144,6 +146,8 @@ export class OrderRepository {
         shippingFee: data.shippingFee ?? 0,
         taxAmount: data.taxAmount ?? 0,
         total: data.total,
+        couponId: data.couponId ?? null,
+        couponCode: data.couponCode ?? null,
         shippingRecipientName: data.shippingRecipientName,
         shippingPhone: data.shippingPhone,
         shippingAddressLine1: data.shippingAddressLine1,
@@ -216,6 +220,7 @@ export class OrderRepository {
 
   /**
    * Atomically confirms an order and marks its payment as CAPTURED within a single database transaction.
+   * Enforces authoritative coupon usage counting, row-level locking, and safe late-capture handling.
    */
   async confirmOrderAndCapturePayment(
     paymentId: string,
@@ -227,6 +232,99 @@ export class OrderRepository {
     payment: Prisma.PaymentGetPayload<Record<string, never>>;
   }> {
     return this.prismaClient.$transaction(async tx => {
+      // 1. Fetch current order and associated payment records
+      const currentOrder = await tx.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: true,
+          payments: true,
+        },
+      });
+
+      if (!currentOrder) {
+        throw new Error(`Order with ID "${orderId}" was not found.`);
+      }
+
+      const paymentRecord = currentOrder.payments.find(p => p.id === paymentId);
+      if (!paymentRecord) {
+        throw new Error(`Payment record "${paymentId}" was not found for order "${orderId}".`);
+      }
+
+      // Idempotency: If payment is already CAPTURED, return immediately
+      if (paymentRecord.status === 'CAPTURED') {
+        return { order: currentOrder, payment: paymentRecord };
+      }
+
+      let targetOrderStatus: OrderStatus = 'CONFIRMED';
+      let customerNotesToPersist: string | undefined = undefined;
+
+      // 2. Coupon capacity validation and timesUsed increment under exclusive row lock
+      if (currentOrder.couponId) {
+        const rows = await tx.$queryRaw<Coupon[]>`
+          SELECT * FROM "coupons"
+          WHERE "id" = ${currentOrder.couponId}::uuid
+          FOR UPDATE
+        `;
+        const lockedCoupon = rows[0];
+
+        if (lockedCoupon) {
+          if (lockedCoupon.usageLimit === null) {
+            // Unlimited usage coupon: always confirm and increment timesUsed
+            await tx.$executeRaw`
+              UPDATE "coupons"
+              SET "times_used" = "times_used" + 1
+              WHERE "id" = ${lockedCoupon.id}::uuid
+            `;
+            targetOrderStatus = 'CONFIRMED';
+          } else {
+            // Invariant: Occupied slots = Coupon.timesUsed + active, unexpired PENDING_PAYMENT reservations.
+            // Check other active reservations and self reservation status under the exclusive row lock.
+            const reservationRows = await tx.$queryRaw<
+              [{ other_active_count: bigint; self_active_count: bigint }]
+            >`
+              SELECT
+                COUNT(*) FILTER (WHERE "id" != ${currentOrder.id}::uuid)::bigint AS other_active_count,
+                COUNT(*) FILTER (WHERE "id" = ${currentOrder.id}::uuid)::bigint AS self_active_count
+              FROM "orders"
+              WHERE "coupon_id" = ${lockedCoupon.id}::uuid
+                AND "status" = 'PENDING_PAYMENT'
+                AND "created_at" >= (NOW() - INTERVAL '15 minutes')
+            `;
+
+            const otherActiveCount = Number(reservationRows[0]?.other_active_count ?? 0);
+            const isSelfActive = Number(reservationRows[0]?.self_active_count ?? 0) > 0;
+
+            // Invariant check:
+            // Capturing this order will increment timesUsed by 1.
+            // The order itself leaves the PENDING_PAYMENT state, leaving otherActiveCount active reservations.
+            // Therefore, new occupied slots after capture will be: (lockedCoupon.timesUsed + 1) + otherActiveCount.
+            // This MUST NOT exceed lockedCoupon.usageLimit.
+            const newOccupiedSlots = lockedCoupon.timesUsed + 1 + otherActiveCount;
+
+            if (newOccupiedSlots <= lockedCoupon.usageLimit) {
+              // Normal capacity available (either active reservation or late capture into available slot)
+              await tx.$executeRaw`
+                UPDATE "coupons"
+                SET "times_used" = "times_used" + 1
+                WHERE "id" = ${lockedCoupon.id}::uuid
+              `;
+              targetOrderStatus = 'CONFIRMED';
+            } else {
+              // Capacity invariant violated:
+              // Either timesUsed has reached usageLimit, or other active reservations occupy all remaining capacity.
+              // Preserve truth: record payment as CAPTURED, but transition order to CANCELLED.
+              // Do NOT increment timesUsed beyond usageLimit.
+              targetOrderStatus = 'CANCELLED';
+              const reconciliationBanner = `[COUPON_OVERAGE_RECONCILIATION] Payment of ₹${(currentOrder.total / 100).toFixed(2)} was captured by the gateway, but coupon "${lockedCoupon.code}" capacity is exhausted (usage limit: ${lockedCoupon.usageLimit}, confirmed: ${lockedCoupon.timesUsed}, active reservations: ${otherActiveCount}, incoming reservation active: ${isSelfActive}). Order cancelled for administrative reconciliation or refund.`;
+              customerNotesToPersist = currentOrder.customerNotes
+                ? `${currentOrder.customerNotes}\n\n${reconciliationBanner}`
+                : reconciliationBanner;
+            }
+          }
+        }
+      }
+
+      // 3. Atomically update Payment to CAPTURED
       const updatedPayment = await tx.payment.update({
         where: { id: paymentId },
         data: {
@@ -237,10 +335,14 @@ export class OrderRepository {
         },
       });
 
+      // 4. Update Order to determined status (CONFIRMED or CANCELLED)
       const updatedOrder = await tx.order.update({
         where: { id: orderId },
         data: {
-          status: 'CONFIRMED',
+          status: targetOrderStatus,
+          ...(customerNotesToPersist !== undefined
+            ? { customerNotes: customerNotesToPersist }
+            : {}),
         },
         include: {
           items: true,

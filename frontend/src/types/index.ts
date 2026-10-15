@@ -14,6 +14,17 @@ export interface ApiErrorResponse {
   };
 }
 
+export interface PaginatedResponse<T> {
+  success: true;
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
 export * from './catalog';
 export * from './cart';
 export * from './checkout';
@@ -22,3 +33,4 @@ export * from './address';
 export * from './wishlist';
 export * from './review';
 export * from './admin';
+export * from './coupon';

@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma';
-import { PrismaClient, OrderStatus } from '@prisma/client';
+import { PrismaClient, OrderStatus, type Coupon } from '@prisma/client';
 import {
   orderRepository,
   type OrderRepository,
@@ -10,6 +10,11 @@ import { NotFoundError, BadRequestError, ConflictError } from '../errors';
 import { validateCreateOrderRequest } from '../utils/checkout-validation';
 import { generateOrderNumber } from '../utils/order-number';
 import { validateUuid } from '../utils/catalog-validation';
+import {
+  normalizeCouponCode,
+  calculateDiscountAmount,
+  validateCouponEligibility,
+} from '../utils/coupon-validation';
 import {
   validateAdminOrderListQuery,
   validateUpdateOrderStatusInput,
@@ -215,8 +220,64 @@ export class OrderService {
         });
       }
 
+      // Authoritative Coupon Validation & Discount Calculation
+      let appliedCouponId: string | null = null;
+      let appliedCouponCode: string | null = null;
+      let discountAmount = 0;
+
+      if (request.couponCode) {
+        const normalizedCode = normalizeCouponCode(request.couponCode);
+
+        // Find coupon by code
+        const rawCoupon = await tx.coupon.findUnique({
+          where: { code: normalizedCode },
+        });
+
+        if (!rawCoupon) {
+          throw new NotFoundError(`Coupon code "${normalizedCode}" was not found.`);
+        }
+
+        // Lock the coupon row using PostgreSQL FOR UPDATE
+        const rows = await tx.$queryRaw<Coupon[]>`
+          SELECT * FROM "coupons"
+          WHERE "id" = ${rawCoupon.id}::uuid
+          FOR UPDATE
+        `;
+        const lockedCoupon = rows[0];
+
+        if (!lockedCoupon) {
+          throw new NotFoundError(`Coupon "${normalizedCode}" was not found.`);
+        }
+
+        // Validate active status, date validity, and minimum order subtotal
+        validateCouponEligibility(lockedCoupon, authoritativeSubtotal);
+
+        // Canonical Capacity Rule:
+        // Occupied Slots = timesUsed + active, unexpired PENDING_PAYMENT reservations (15 min window)
+        if (lockedCoupon.usageLimit !== null) {
+          const reservationRows = await tx.$queryRaw<[{ count: bigint }]>`
+            SELECT COUNT(*)::bigint AS count FROM "orders"
+            WHERE "coupon_id" = ${lockedCoupon.id}::uuid
+              AND "status" = 'PENDING_PAYMENT'
+              AND "created_at" >= (NOW() - INTERVAL '15 minutes')
+          `;
+          const pendingCount = Number(reservationRows[0]?.count ?? 0);
+          const occupiedSlots = lockedCoupon.timesUsed + pendingCount;
+
+          if (occupiedSlots >= lockedCoupon.usageLimit) {
+            throw new ConflictError(
+              `Coupon "${lockedCoupon.code}" has reached its maximum usage limit.`
+            );
+          }
+        }
+
+        // Authoritative integer paise discount calculation with Razorpay payable floor (>= 100 paise)
+        discountAmount = calculateDiscountAmount(authoritativeSubtotal, lockedCoupon);
+        appliedCouponId = lockedCoupon.id;
+        appliedCouponCode = lockedCoupon.code;
+      }
+
       // Financial calculations (all in integer paise)
-      const discountAmount = 0;
       const shippingFee = 0;
       const taxAmount = 0;
       const authoritativeTotal = authoritativeSubtotal - discountAmount + shippingFee + taxAmount;
@@ -235,6 +296,8 @@ export class OrderService {
         shippingFee,
         taxAmount,
         total: authoritativeTotal,
+        couponId: appliedCouponId,
+        couponCode: appliedCouponCode,
         shippingRecipientName: request.customer.fullName,
         shippingPhone: request.customer.phone,
         shippingAddressLine1: request.shippingAddress.addressLine1,
@@ -378,6 +441,7 @@ export class OrderService {
       paymentStatus: order.payments?.[0]?.status ?? 'PENDING',
       subtotal: order.subtotal,
       discountAmount: order.discountAmount,
+      couponCode: order.couponCode ?? null,
       shippingFee: order.shippingFee,
       taxAmount: order.taxAmount,
       total: order.total,

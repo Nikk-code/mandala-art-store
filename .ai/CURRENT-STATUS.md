@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-15  
-**Current Phase**: `ADMIN ORDER MANAGEMENT & FULFILLMENT (Step 23 Complete)`
+**Current Phase**: `ADMIN COUPON MANAGEMENT & AUTHORITATIVE DISCOUNTS (Step 24 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Admin Order Management and Fulfillment (Step 23) has been fully implemented, tested, and verified across both backend and frontend workspaces. Expanding upon the administrative portal foundation, the module introduces authoritative order inspection, multi-field search, status filtering, multi-attempt payment resolution, and concurrency-safe forward fulfillment transitions (`CONFIRMED` → `PROCESSING` → `SHIPPED` → `DELIVERED`). All endpoints are authoritatively protected under `/api/admin/orders` via `[requireAuth, requireAdmin]`. The backend implements an atomic conditional database update pattern that evaluates expected current order status and verifies captured payment evidence before advancing, rejecting stale or racing requests with HTTP 409 Conflict. Manual payment status overrides are strictly prohibited. In accordance with boutique art logistics, transitioning to `SHIPPED` enforces non-empty courier partner and tracking number inputs. Both registered customer orders and guest checkouts (`userId: null`) are handled safely with zero unhandled null pointer exceptions or broken user lookups. The frontend provides a responsive administrative page (`/admin/orders`) with KPI summary metrics, search bar, order and payment status filter pills, sorting options, paginated table, and a comprehensive detail modal (`OrderDetailModal`) presenting immutable historical item snapshots, address snapshots, and payment gateway evidence. All 68 test suites (31 backend / 422 tests, 37 frontend / 235 tests, totaling 657 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Admin Coupon & Promotional Discount Management with Authoritative Checkout Integration (Step 24) has been fully implemented, tested, and verified across both backend and frontend workspaces. The milestone introduces server-authoritative discount calculations, pessimistic concurrency locking (`SELECT ... FOR UPDATE`), reservation capacity tracking with a 15-minute TTL window, late-capture overage reconciliation enforcing the strict capacity invariant (`timesUsed + 1 + otherActiveReservations <= usageLimit`), storefront coupon validation, and administrative promotion management without requiring any database migrations. The canonical coupon capacity formula (`Occupied slots = Coupon.timesUsed + active, unexpired PENDING_PAYMENT reservations`) prevents overselling the last available slot during concurrent checkouts and late captures. Coupon usage (`timesUsed`) is strictly incremented once upon verified gateway payment capture, never at checkout order creation. In the late-capture scenario where a reservation expires and another customer consumes or reserves the remaining slots before a delayed capture arrives, the payment is recorded truthfully as `CAPTURED`, order fulfillment is prevented by marking the order `CANCELLED`, and an explicit reconciliation audit note is logged without exceeding usage limits or claiming unverified refunds. On the frontend, a responsive coupon management console (`/admin/coupons`) provides searchable and filterable listings, modal-driven creation/editing, active toggling, and deletion safeguarded against historical order references. The customer checkout order summary allows applying and removing promotional codes with immediate authoritative validation and live rupee/paise recalculation. All 74 test suites (35 backend / 481 tests, 39 frontend / 243 tests, totaling 724 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -508,17 +508,43 @@ Admin Order Management and Fulfillment (Step 23) has been fully implemented, tes
   - Authored `OrderDetailModal.tsx` for inspecting customer contacts (registered patron vs guest checkout badge), immutable address snapshots, line items, payment gateway evidence, and interactive fulfillment transition form with courier tracking input.
   - Mounted `/admin/orders` route in `App.tsx` guarded by `<AdminRoute>`.
 
+### Phase 24: Admin Coupon & Promotional Discount Management with Authoritative Checkout Integration (Completed)
+
+- [x] **Authoritative Integer-Paise Discount Calculation & Eligibility Engine**:
+  - Authored `backend/src/utils/coupon-validation.ts` implementing `normalizeCouponCode` (trim and uppercase), `calculateDiscountAmount` with round-half-up integer paise and maximum discount capping, `validateCouponEligibility` (active status, temporal window, minimum order amount, Razorpay ₹1.00 minimum payable floor).
+  - Enforced server-authoritative discount recalculation where client-supplied discounts or totals are never trusted.
+- [x] **Transaction-Safe Checkout Integration & Canonical Capacity Guard**:
+  - Authored `CouponRepository` with pessimistic row locking (`SELECT ... FOR UPDATE` via raw SQL) and `countActivePendingReservations` with a 15-minute TTL window (`PENDING_PAYMENT` orders created in the last 15 minutes).
+  - Extended order creation transaction (`OrderService.createOrder` & `OrderRepository.createOrderTransaction`) to validate coupon eligibility, calculate authoritative discount, enforce the canonical capacity rule (`timesUsed + activeReservations < usageLimit`), and persist immutable `couponId`, `couponCode`, `discount`, and payable `total` snapshots.
+- [x] **Late Capture, Idempotency & Reconciliation Lifecycle**:
+  - Enhanced `OrderRepository.confirmOrderAndCapturePayment` to idempotently handle duplicate webhooks and retry verifications without double-incrementing coupon usage.
+  - Implemented late-capture overage reconciliation: enforces the strict capacity invariant (`timesUsed + 1 + otherActiveReservations <= usageLimit`) under PostgreSQL exclusive row locks (`FOR UPDATE`). If a captured payment arrives when capacity is exhausted by confirmed redemptions or other active reservations, the payment is recorded truthfully as `CAPTURED`, order is marked `CANCELLED` (halting fulfillment), `timesUsed` is not incremented past `usageLimit`, and an explicit audit note `[COUPON_OVERAGE_RECONCILIATION]` is appended to `customerNotes`.
+- [x] **Admin Promotion Management & Public Validation APIs**:
+  - `POST /api/coupons/validate`: Public storefront endpoint for validating codes and previewing calculated discounts and payable totals.
+  - `GET /api/admin/coupons`: Paginated admin listing with search, active status filter, discount type filter, and sorting.
+  - `POST /api/admin/coupons`: Administrative coupon creation with strict payload validation.
+  - `GET /api/admin/coupons/:id`: Detailed coupon profile.
+  - `PUT /api/admin/coupons/:id`: Full coupon updates.
+  - `PATCH /api/admin/coupons/:id/status`: Active status toggling.
+  - `DELETE /api/admin/coupons/:id`: Safe deletion rejecting deletion of coupons linked to historical orders (recommending deactivation).
+  - Updated `AdminService.getDashboardData` metadata marking the `promotions` module as `'AVAILABLE'`.
+- [x] **Storefront & Admin User Experience**:
+  - Extended `CheckoutOrderSummary.tsx` with uppercase coupon input, validation feedback, discount badge, removal action, and live discount recalculation.
+  - Integrated coupon support in `CheckoutPage.tsx` passing `couponCode` to `createCheckoutOrder`.
+  - Added "Promotions" tab to `AdminLayout.tsx` and authored `AdminCouponsPage.tsx` with search, filters, create/edit modal, status toggle, and deletion safeguard.
+  - Mounted `/admin/coupons` route in `App.tsx` guarded by `<AdminRoute>`.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 23 is complete and verified).
+- _None_ (Step 24 is complete and verified).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 24: Customer Account Management / Customer Reviews Moderation.
+- Step 25: Customer Account Management / Customer Reviews Moderation.
 
 ---
 

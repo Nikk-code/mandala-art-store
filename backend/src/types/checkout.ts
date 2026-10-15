@@ -22,6 +22,7 @@ export interface CreateOrderRequest {
   customer: CreateOrderCustomerInput;
   shippingAddress: CreateOrderShippingAddressInput;
   items: CreateOrderItemInput[];
+  couponCode?: string | null;
 }
 
 export interface OrderItemSnapshotDto {
@@ -45,6 +46,7 @@ export interface OrderResponseDto {
   taxAmount: number;
   total: number;
   currency: string;
+  couponCode?: string | null;
   customerEmail: string;
   customerPhone: string;
   shippingAddress: {

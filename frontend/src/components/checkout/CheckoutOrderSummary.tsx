@@ -2,7 +2,8 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Badge } from '@/components/ui';
 import { formatPrice, getAvailabilityInfo } from '@/utils';
-import type { CartItem } from '@/types';
+import { validateCoupon } from '@/services/coupon-service';
+import type { CartItem, ValidateCouponResultDto } from '@/types';
 
 export interface CheckoutOrderSummaryProps {
   items: CartItem[];
@@ -12,6 +13,9 @@ export interface CheckoutOrderSummaryProps {
   onSubmit: () => void;
   isReviewMode?: boolean;
   onEditAddress?: () => void;
+  appliedCoupon?: ValidateCouponResultDto | null;
+  onApplyCoupon?: (coupon: ValidateCouponResultDto) => void;
+  onRemoveCoupon?: () => void;
 }
 
 export function CheckoutOrderSummary({
@@ -22,12 +26,42 @@ export function CheckoutOrderSummary({
   onSubmit,
   isReviewMode = false,
   onEditAddress,
+  appliedCoupon = null,
+  onApplyCoupon,
+  onRemoveCoupon,
 }: CheckoutOrderSummaryProps): ReactNode {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [couponInput, setCouponInput] = useState<string>('');
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState<boolean>(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   const handleImageError = (id: string) => {
     setImageErrors(prev => ({ ...prev, [id]: true }));
   };
+
+  const handleApplyCoupon = async () => {
+    const cleanCode = couponInput.trim().toUpperCase();
+    if (!cleanCode) return;
+
+    setIsValidatingCoupon(true);
+    setCouponError(null);
+
+    try {
+      const result = await validateCoupon(cleanCode, subtotalPaise);
+      if (onApplyCoupon) {
+        onApplyCoupon(result);
+      }
+      setCouponInput('');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid promotional coupon code.';
+      setCouponError(message);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const effectiveTotal = Math.max(100, subtotalPaise - discountAmount);
 
   return (
     <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-6">
@@ -101,12 +135,98 @@ export function CheckoutOrderSummary({
         })}
       </div>
 
+      {/* Promotional Coupon Section */}
+      <div className="border-t border-art-stone/60 pt-4 space-y-3">
+        <label
+          htmlFor="checkoutCouponInput"
+          className="block text-xs font-semibold text-art-charcoal"
+        >
+          Promotional Code
+        </label>
+
+        {appliedCoupon ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 flex items-center justify-between text-xs animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+                ✓
+              </span>
+              <div>
+                <span className="font-mono font-bold text-emerald-800 uppercase tracking-wide">
+                  {appliedCoupon.couponCode}
+                </span>
+                <span className="text-emerald-700 ml-1.5 font-medium">
+                  ({formatPrice(appliedCoupon.discountAmount)} discount applied)
+                </span>
+              </div>
+            </div>
+            {onRemoveCoupon && (
+              <button
+                type="button"
+                onClick={onRemoveCoupon}
+                disabled={isSubmitting}
+                className="text-stone-400 hover:text-rose-600 p-1 text-xs font-bold transition-colors focus:outline-none"
+                aria-label="Remove coupon"
+                title="Remove promotional code"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                id="checkoutCouponInput"
+                placeholder="PROMO CODE"
+                value={couponInput}
+                onChange={e => {
+                  setCouponInput(e.target.value.toUpperCase());
+                  if (couponError) setCouponError(null);
+                }}
+                disabled={isSubmitting || isValidatingCoupon}
+                className="flex-1 rounded-xl border border-art-stone px-3 py-2 text-xs uppercase tracking-wider font-mono text-art-charcoal placeholder:text-stone-400 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre transition-all"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleApplyCoupon();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={isSubmitting || isValidatingCoupon || !couponInput.trim()}
+                isLoading={isValidatingCoupon}
+                onClick={handleApplyCoupon}
+                className="px-4 py-2 text-xs font-bold"
+              >
+                Apply
+              </Button>
+            </div>
+            {couponError && (
+              <p role="alert" className="text-[11px] font-medium text-rose-600 pl-1">
+                {couponError}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Pricing Breakdown */}
       <div className="border-t border-art-stone/60 pt-4 space-y-2.5 text-xs text-stone-600">
         <div className="flex justify-between">
           <span>Artworks Subtotal</span>
           <span className="font-semibold text-art-charcoal">{formatPrice(subtotalPaise)}</span>
         </div>
+
+        {appliedCoupon && (
+          <div className="flex justify-between text-emerald-700 font-medium animate-fadeIn">
+            <span>Promo Discount ({appliedCoupon.couponCode})</span>
+            <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
+          </div>
+        )}
 
         <div className="flex justify-between">
           <span>Art Packaging & Wooden Crating</span>
@@ -124,9 +244,9 @@ export function CheckoutOrderSummary({
         </div>
 
         <div className="border-t border-art-stone pt-3 flex justify-between items-baseline">
-          <span className="font-serif text-sm font-bold text-art-charcoal">Estimated Subtotal</span>
+          <span className="font-serif text-sm font-bold text-art-charcoal">Estimated Total</span>
           <span className="font-serif text-xl font-bold text-art-charcoal tracking-tight">
-            {formatPrice(subtotalPaise)}
+            {formatPrice(effectiveTotal)}
           </span>
         </div>
       </div>
@@ -154,7 +274,7 @@ export function CheckoutOrderSummary({
               onClick={onSubmit}
               aria-label="Pay via Razorpay"
             >
-              Pay {formatPrice(subtotalPaise)} via Razorpay
+              Pay {formatPrice(effectiveTotal)} via Razorpay
             </Button>
 
             {onEditAddress && (

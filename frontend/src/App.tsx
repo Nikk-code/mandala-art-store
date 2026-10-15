@@ -18,6 +18,7 @@ import {
   AdminCategoriesPage,
   AdminInventoryPage,
   AdminOrdersPage,
+  AdminCouponsPage,
 } from '@/pages';
 
 import { AdminRoute } from '@/components/admin';
@@ -85,6 +86,14 @@ export function App(): ReactNode {
                 element={
                   <AdminRoute>
                     <AdminOrdersPage />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="admin/coupons"
+                element={
+                  <AdminRoute>
+                    <AdminCouponsPage />
                   </AdminRoute>
                 }
               />

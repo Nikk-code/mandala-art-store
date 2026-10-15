@@ -32,6 +32,7 @@ This document tracks significant architectural, technical, and governance decisi
 - [ADR-024: Admin Product, Category, and Inventory Architecture](#adr-024-admin-product-category-and-inventory-architecture)
 - [ADR-025: Inventory Concurrency Control, Atomic Conditional Updates, and Optimistic Verification Strategy](#adr-025-inventory-concurrency-control-atomic-conditional-updates-and-optimistic-verification-strategy)
 - [ADR-026: Admin Order Management, Fulfillment Lifecycle & Multi-Attempt Payment Semantics](#adr-026-admin-order-management-fulfillment-lifecycle--multi-attempt-payment-semantics)
+- [ADR-027: Admin Coupon & Promotional Discount Architecture, Concurrency Control & Late-Capture Lifecycle](#adr-027-admin-coupon--promotional-discount-architecture-concurrency-control--late-capture-lifecycle)
 
 ---
 
@@ -619,3 +620,58 @@ This document tracks significant architectural, technical, and governance decisi
   - _In-memory status validation followed by unconditional `prisma.order.update`_: Rejected as vulnerable to race conditions and stale concurrent writes.
   - _Allowing admin to mark orders as CONFIRMED manually_: Rejected to prevent financial discrepancies and inventory bypass without verified gateway payment capture.
 - **Consequences**: Concurrency-safe order fulfillment tracking, reliable guest order operations, clean multi-payment resolution, strict snapshot preservation, and zero schema migrations.
+
+---
+
+### ADR-027: Admin Coupon & Promotional Discount Architecture, Concurrency Control & Late-Capture Lifecycle
+
+- **Date**: 2026-10-15
+- **Status**: Accepted
+- **Context**: To boost sales and marketing campaigns, the platform requires promotional discounts with authoritative server-side calculation, administrative lifecycle controls, and transaction-safe checkout integration. The technical requirements mandate:
+  1. Server-authoritative calculation: client-submitted discounts or subtotals must never be trusted.
+  2. Integer-paise financial rules with round-half-up math, percentage/fixed discounts, minimum subtotal, maximum discount cap, and compliance with the Razorpay minimum payable floor ($\ge 100\text{ paise}$ / ₹1.00).
+  3. Strict concurrency safety on limited-usage coupons (`usageLimit`): preventing two concurrent checkouts from overselling the last available redemption slot.
+  4. Defining usage increment timing and reservation capacity rules.
+  5. Resolving the late capture edge case: handling situations where an order's 15-minute reservation expires, another customer redeems the last slot, and the first customer's delayed payment capture arrives afterward.
+  6. Idempotency on duplicate webhooks and payment retry verifications.
+  7. Administrative management with search, filters, pagination, creation, editing, active toggles, and safe deletion safeguarding historical order integrity.
+  8. Zero database migrations (the existing Prisma schema `coupons` table and `Order.couponId` relation must remain unmigrated).
+- **Decision**:
+  1. **Canonical Coupon Capacity Formula & 15-Minute TTL Policy**:
+     - Occupied slots = `Coupon.timesUsed` + active, unexpired `PENDING_PAYMENT` coupon reservations.
+     - An order's reservation is considered active if `status === 'PENDING_PAYMENT'` and `createdAt >= NOW() - 15 minutes`.
+     - Orders older than 15 minutes or in terminal non-paid states (`FAILED`, `CANCELLED`) automatically release their reservation capacity without requiring a background cleanup worker.
+     - Confirmed orders are never counted twice because capture increments `timesUsed` atomically while transitioning order status from `PENDING_PAYMENT` to `CONFIRMED`.
+  2. **Pessimistic Concurrency Locking**:
+     - In `createOrderTransaction`, when a `couponCode` is supplied, `CouponRepository.findForUpdate(couponId, tx)` executes `SELECT ... FOR UPDATE` via raw SQL within the interactive PostgreSQL transaction.
+     - This guarantees that concurrent checkouts competing for the same coupon code queue serially, evaluate current `timesUsed` and active reservations atomically, and avoid race conditions or overselling.
+  3. **Usage Increment Timing**:
+     - Coupon `timesUsed` is **never** incremented at checkout order creation.
+     - It is incremented exactly once upon verified payment capture in `confirmOrderAndCapturePayment`.
+  4. **Late Capture Overage Reconciliation & Strict Capacity Invariant**:
+     - When a verified capture arrives (via client verification or webhook) for an order linked to a coupon:
+       - The coupon row is locked exclusively (`FOR UPDATE`).
+       - Evaluates the capacity invariant under lock: queries other active, unexpired `PENDING_PAYMENT` reservations (`otherActiveCount`) using the database clock (`NOW() - INTERVAL '15 minutes'`).
+       - Calculates `newOccupiedSlots = Coupon.timesUsed + 1 + otherActiveCount`.
+       - If `usageLimit === null` or `newOccupiedSlots <= usageLimit`:
+         - Normal capacity exists (or an unreserved slot is available for late capture).
+         - `Coupon.timesUsed` is incremented by 1 and the order is confirmed normally (`CONFIRMED`).
+       - If `newOccupiedSlots > usageLimit` (capacity is exhausted by confirmed redemptions or other active reservations):
+         - Payment is recorded truthfully as `CAPTURED` (accurate ledger state; payment was genuinely received).
+         - Order status transitions to `CANCELLED` (halting normal automated fulfillment).
+         - `Coupon.timesUsed` is **not** incremented past `usageLimit`.
+         - An explicit reconciliation audit banner `[COUPON_OVERAGE_RECONCILIATION]` is appended to `customerNotes` detailing usage limit, confirmed count, and active reservations.
+         - Automated gateway refunds are strictly out of scope for this milestone; no unverified refund claims are made.
+  5. **Idempotency & Duplicate Safety**:
+     - In `confirmOrderAndCapturePayment`, if the target payment record is already in `CAPTURED` status, the transaction short-circuits immediately without incrementing `timesUsed` or altering order status.
+  6. **Safe Deletion Policy**:
+     - `deleteAdminCoupon` queries whether any historical orders reference `order.couponId === coupon.id`.
+     - If referenced (`ordersCount > 0`), deletion is rejected with HTTP `409 Conflict`, instructing the administrator to deactivate the coupon instead to preserve historical accounting and audit integrity.
+  7. **Storefront & Admin Experience**:
+     - Checkout summary displays uppercase coupon input, immediate authoritative validation (`POST /api/coupons/validate`), visual applied badge, removal action, and live discount recalculation.
+     - Admin portal includes a dedicated "Promotions" section (`/admin/coupons`) with search, active filter, discount type filter, sort options, creation/edit modals, active toggle, and deletion dialog.
+- **Alternatives Considered**:
+  - _Incrementing `timesUsed` at checkout creation_: Rejected because abandoned carts or failed payment attempts would permanently burn scarce coupon usage slots.
+  - _Optimistic concurrency with retry loop_: Rejected in favor of PostgreSQL row locking (`FOR UPDATE`) because checkout transactions already hold inventory row locks and pessimistic locking provides clean, deterministic serialization.
+  - _Hard-deleting coupons with orders_: Rejected to preserve relational integrity and immutable order history.
+- **Consequences**: Deterministic coupon capacity enforcement, guaranteed protection against overselling, transparent late-capture reconciliation, robust idempotency, and zero database schema changes.

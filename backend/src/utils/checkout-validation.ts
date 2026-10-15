@@ -1,4 +1,5 @@
 import { ValidationError } from '../errors';
+import { normalizeCouponCode } from './coupon-validation';
 import type {
   CreateOrderCustomerInput,
   CreateOrderShippingAddressInput,
@@ -161,9 +162,17 @@ export function validateCreateOrderRequest(body: unknown): CreateOrderRequest {
   const shippingAddress = validateShippingAddress(raw.shippingAddress);
   const items = validateOrderItems(raw.items);
 
+  let couponCode: string | undefined = undefined;
+  if (raw.couponCode !== undefined && raw.couponCode !== null) {
+    if (typeof raw.couponCode === 'string' && raw.couponCode.trim()) {
+      couponCode = normalizeCouponCode(raw.couponCode);
+    }
+  }
+
   return {
     customer,
     shippingAddress,
     items,
+    ...(couponCode ? { couponCode } : {}),
   };
 }
