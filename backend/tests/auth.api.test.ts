@@ -502,4 +502,309 @@ describe('Auth REST API Endpoints (/api/auth)', () => {
       ).toBe(true);
     });
   });
+
+  describe('POST /api/auth/change-password', () => {
+    const validNewPassword = 'BrandNewPassword123';
+    let customerAuthToken = '';
+
+    beforeEach(() => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      customerAuthToken = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        config.jwtSecret,
+        { algorithm: 'HS256', expiresIn: '1h' }
+      );
+    });
+
+    it('rejects unauthenticated requests with 401 Unauthorized', async () => {
+      const res = await request(app).post('/api/auth/change-password').send({
+        currentPassword: samplePassword,
+        newPassword: validNewPassword,
+      });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('rejects tampered or forged JWT tokens with 401 Unauthorized', async () => {
+      const forgedToken = jwt.sign(
+        { id: sampleUserId, email: 'ananya@example.com', role: 'CUSTOMER' },
+        'invalid_signature_secret'
+      );
+
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${forgedToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    it('successfully changes password when current password matches, returning 200 without exposing hash', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepository, 'update').mockResolvedValue(sampleUser);
+
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toBe('Password changed successfully.');
+      expect(res.body.passwordHash).toBeUndefined();
+      expect(res.body.newPassword).toBeUndefined();
+      expect(res.body.data).toBeUndefined();
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        sampleUserId,
+        expect.objectContaining({
+          passwordHash: expect.any(String),
+        })
+      );
+      const updatedHash = updateSpy.mock.calls[0][1].passwordHash as string;
+      expect(await bcrypt.compare(validNewPassword, updatedHash)).toBe(true);
+    });
+
+    it('the new password works with login and old password no longer authenticates', async () => {
+      let currentStoredUser = { ...sampleUser };
+
+      vi.spyOn(userRepository, 'findById').mockImplementation(async () => currentStoredUser);
+      vi.spyOn(userRepository, 'findByEmail').mockImplementation(async () => currentStoredUser);
+      vi.spyOn(userRepository, 'update').mockImplementation(async (_id, data) => {
+        currentStoredUser = {
+          ...currentStoredUser,
+          ...(data as any),
+        };
+        return currentStoredUser;
+      });
+
+      // 1. Change password
+      const changeRes = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+      expect(changeRes.status).toBe(200);
+
+      // 2. Login with new password -> SUCCESS
+      const loginNewRes = await request(app).post('/api/auth/login').send({
+        email: 'ananya@example.com',
+        password: validNewPassword,
+      });
+      expect(loginNewRes.status).toBe(200);
+      expect(loginNewRes.body.success).toBe(true);
+
+      // 3. Login with old password -> REJECTED (401)
+      const loginOldRes = await request(app).post('/api/auth/login').send({
+        email: 'ananya@example.com',
+        password: samplePassword,
+      });
+      expect(loginOldRes.status).toBe(401);
+      expect(loginOldRes.body.success).toBe(false);
+      expect(loginOldRes.body.error.message).toBe('Invalid email or password.');
+    });
+
+    it('rejects incorrect current password with 400 without modifying stored hash', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepository, 'update');
+
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: 'IncorrectCurrentPassword1',
+          newPassword: validNewPassword,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('BAD_REQUEST');
+      expect(res.body.error.message).toBe('Current password is incorrect.');
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects identical new password with 400 Validation Error', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepository, 'update');
+
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: samplePassword,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('same as your current password');
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects new password shorter than 8 characters', async () => {
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: 'short1',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('at least 8 characters');
+    });
+
+    it('rejects new password longer than 128 characters', async () => {
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: 'A'.repeat(128) + '1',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('not exceed 128 characters');
+    });
+
+    it('rejects new password without a letter', async () => {
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: '1234567890',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('at least one letter and one number');
+    });
+
+    it('rejects new password without a digit', async () => {
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: 'NoNumbersInPasswordHere',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+      expect(res.body.error.message).toContain('at least one letter and one number');
+    });
+
+    it('rejects missing or malformed payload fields', async () => {
+      const res1 = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({});
+
+      expect(res1.status).toBe(400);
+      expect(res1.body.success).toBe(false);
+
+      const res2 = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({ currentPassword: samplePassword });
+
+      expect(res2.status).toBe(400);
+      expect(res2.body.success).toBe(false);
+
+      const res3 = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({ newPassword: validNewPassword });
+
+      expect(res3.status).toBe(400);
+      expect(res3.body.success).toBe(false);
+    });
+
+    it('safely handles missing or inactive user', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(null);
+
+      const resMissing = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+
+      expect(resMissing.status).toBe(401);
+      expect(resMissing.body.success).toBe(false);
+
+      vi.spyOn(userRepository, 'findById').mockResolvedValue({
+        ...sampleUser,
+        isActive: false,
+      });
+
+      const resInactive = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+
+      expect(resInactive.status).toBe(401);
+      expect(resInactive.body.success).toBe(false);
+    });
+
+    it('cannot change another user password by supplying a user ID in the body', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepository, 'update').mockResolvedValue(sampleUser);
+
+      const victimUserId = '99999999-9999-4999-8999-999999999999';
+
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          userId: victimUserId,
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+
+      expect(res.status).toBe(200);
+      expect(updateSpy).toHaveBeenCalledWith(sampleUserId, expect.any(Object));
+      expect(updateSpy).not.toHaveBeenCalledWith(victimUserId, expect.any(Object));
+    });
+
+    it('attaches standard RateLimit headers to live change-password requests', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValue(sampleUser);
+      vi.spyOn(userRepository, 'update').mockResolvedValue(sampleUser);
+
+      const res = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${customerAuthToken}`)
+        .send({
+          currentPassword: samplePassword,
+          newPassword: validNewPassword,
+        });
+
+      expect(res.headers['ratelimit-limit']).toBeDefined();
+      expect(res.headers['ratelimit-remaining']).toBeDefined();
+    });
+  });
 });

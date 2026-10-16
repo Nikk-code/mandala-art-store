@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AuthService } from '../src/services/auth.service';
 import { UserRepository } from '../src/repositories/user.repository';
-import { ConflictError, UnauthorizedError, ValidationError } from '../src/errors';
+import { ConflictError, UnauthorizedError, ValidationError, BadRequestError } from '../src/errors';
 import { config } from '../src/config/env';
 import { UserRole, type User } from '@prisma/client';
 
@@ -226,6 +226,155 @@ describe('AuthService Unit Tests', () => {
           firstName: 'NewName',
         })
       ).rejects.toThrow(UnauthorizedError);
+    });
+  });
+
+  describe('changePassword', () => {
+    it('successfully updates password hash with bcrypt when current password matches', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepo, 'update').mockResolvedValue({
+        ...sampleUser,
+      });
+
+      const newPassword = 'NewSecretPassword456';
+      await authService.changePassword(sampleUser.id, {
+        currentPassword: samplePassword,
+        newPassword,
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        sampleUser.id,
+        expect.objectContaining({
+          passwordHash: expect.any(String),
+        })
+      );
+
+      const passedHash = updateSpy.mock.calls[0][1].passwordHash as string;
+      expect(passedHash).not.toBe(sampleUser.passwordHash);
+      expect(passedHash).not.toBe(newPassword);
+      expect(await bcrypt.compare(newPassword, passedHash)).toBe(true);
+    });
+
+    it('throws BadRequestError when current password does not match', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepo, 'update');
+
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: 'WrongPassword999',
+          newPassword: 'NewSecretPassword456',
+        })
+      ).rejects.toThrow(BadRequestError);
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('throws ValidationError when new password is the same as current password', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepo, 'update');
+
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+          newPassword: samplePassword,
+        })
+      ).rejects.toThrow(ValidationError);
+
+      expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('throws ValidationError when new password is shorter than 8 characters', async () => {
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+          newPassword: 'short1',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when new password exceeds 128 characters', async () => {
+      const longPassword = 'A'.repeat(128) + '1';
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+          newPassword: longPassword,
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when new password lacks numbers', async () => {
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+          newPassword: 'OnlyLettersPassword',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when new password lacks letters', async () => {
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+          newPassword: '1234567890',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when input payload is malformed or missing fields', async () => {
+      await expect(authService.changePassword(sampleUser.id, {})).rejects.toThrow(ValidationError);
+
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+        })
+      ).rejects.toThrow(ValidationError);
+
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          newPassword: 'ValidNewPassword123',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws UnauthorizedError when user is not found or deactivated', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(null);
+
+      await expect(
+        authService.changePassword('non-existent-user-id', {
+          currentPassword: samplePassword,
+          newPassword: 'NewValidPassword123',
+        })
+      ).rejects.toThrow(UnauthorizedError);
+
+      vi.spyOn(userRepo, 'findById').mockResolvedValue({
+        ...sampleUser,
+        isActive: false,
+      });
+
+      await expect(
+        authService.changePassword(sampleUser.id, {
+          currentPassword: samplePassword,
+          newPassword: 'NewValidPassword123',
+        })
+      ).rejects.toThrow(UnauthorizedError);
+    });
+
+    it('strictly updates the authenticated userId and ignores client-submitted target userId in payload', async () => {
+      vi.spyOn(userRepo, 'findById').mockResolvedValue(sampleUser);
+      const updateSpy = vi.spyOn(userRepo, 'update').mockResolvedValue({
+        ...sampleUser,
+      });
+
+      await authService.changePassword(sampleUser.id, {
+        currentPassword: samplePassword,
+        newPassword: 'NewValidPassword123',
+        userId: 'malicious-victim-id',
+        role: 'ADMIN',
+      } as any);
+
+      // Verify that update was called for sampleUser.id, never malicious-victim-id
+      expect(updateSpy).toHaveBeenCalledWith(sampleUser.id, expect.any(Object));
+      expect(updateSpy).not.toHaveBeenCalledWith('malicious-victim-id', expect.any(Object));
     });
   });
 });

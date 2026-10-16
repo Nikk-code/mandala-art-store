@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { requireAuth } from '../middleware/auth';
-import { loginRateLimiter, registerRateLimiter } from '../middleware/rate-limit';
+import {
+  loginRateLimiter,
+  registerRateLimiter,
+  passwordChangeRateLimiter,
+} from '../middleware/rate-limit';
 
 const authRoutes = Router();
 
@@ -13,5 +17,11 @@ authRoutes.post('/logout', authController.logout);
 // Protected Customer Profile Endpoints
 authRoutes.get('/me', requireAuth, authController.getMe);
 authRoutes.patch('/me', requireAuth, authController.updateMe);
+authRoutes.post(
+  '/change-password',
+  passwordChangeRateLimiter,
+  requireAuth,
+  authController.changePassword
+);
 
 export default authRoutes;

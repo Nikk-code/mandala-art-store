@@ -3,11 +3,12 @@ import jwt from 'jsonwebtoken';
 import { UserRole, type User } from '@prisma/client';
 import { config } from '../config/env';
 import { userRepository, type UserRepository } from '../repositories/user.repository';
-import { ConflictError, UnauthorizedError } from '../errors';
+import { ConflictError, UnauthorizedError, BadRequestError } from '../errors';
 import {
   validateRegisterInput,
   validateLoginInput,
   validateUpdateProfileInput,
+  validateChangePasswordInput,
 } from '../utils/auth-validation';
 import type { UserDto, UserRoleType, JwtUserPayload } from '../types/auth';
 
@@ -142,6 +143,35 @@ export class AuthService {
     });
 
     return this.sanitizeUser(updatedUser);
+  }
+
+  /**
+   * Updates an authenticated customer's password.
+   * Strictly validates existing password, verifies the account is active,
+   * hashes the new password with bcrypt, and persists only the updated password hash.
+   */
+  public async changePassword(userId: string, input: unknown): Promise<void> {
+    const validated = validateChangePasswordInput(input);
+
+    const user = await this.userRepo.findById(userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedError('User account not found or deactivated.');
+    }
+
+    const isMatch = await bcrypt.compare(validated.currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new BadRequestError('Current password is incorrect.');
+    }
+
+    if (validated.newPassword === validated.currentPassword) {
+      throw new BadRequestError('New password cannot be the same as your current password.');
+    }
+
+    const passwordHash = await bcrypt.hash(validated.newPassword, BCRYPT_SALT_ROUNDS);
+
+    await this.userRepo.update(userId, {
+      passwordHash,
+    });
   }
 }
 

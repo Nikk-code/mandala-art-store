@@ -47,3 +47,9 @@ export const loginRateLimiter = createAuthRateLimiter();
  * Protects against automated bot account generation and resource exhaustion.
  */
 export const registerRateLimiter = createAuthRateLimiter();
+
+/**
+ * Rate limiter applied to customer password change (POST /api/auth/change-password).
+ * Protects against brute-force verification of the current password.
+ */
+export const passwordChangeRateLimiter = createAuthRateLimiter();

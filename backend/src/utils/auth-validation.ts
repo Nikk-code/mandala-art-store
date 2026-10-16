@@ -37,17 +37,26 @@ export function validateEmail(email: unknown): string {
   return cleanEmail;
 }
 
-export function validatePassword(password: unknown): string {
+export function validatePassword(password: unknown, field = 'password'): string {
   if (typeof password !== 'string' || !password) {
-    throw new ValidationError('Password is required.', 'password');
+    throw new ValidationError(
+      `${field === 'newPassword' ? 'New password' : 'Password'} is required.`,
+      field
+    );
   }
 
   if (password.length < 8) {
-    throw new ValidationError('Password must be at least 8 characters long.', 'password');
+    throw new ValidationError(
+      `${field === 'newPassword' ? 'New password' : 'Password'} must be at least 8 characters long.`,
+      field
+    );
   }
 
   if (password.length > 128) {
-    throw new ValidationError('Password must not exceed 128 characters.', 'password');
+    throw new ValidationError(
+      `${field === 'newPassword' ? 'New password' : 'Password'} must not exceed 128 characters.`,
+      field
+    );
   }
 
   // Must contain at least one letter and at least one digit
@@ -56,8 +65,8 @@ export function validatePassword(password: unknown): string {
 
   if (!hasLetter || !hasDigit) {
     throw new ValidationError(
-      'Password must contain at least one letter and one number.',
-      'password'
+      `${field === 'newPassword' ? 'New password' : 'Password'} must contain at least one letter and one number.`,
+      field
     );
   }
 
@@ -207,4 +216,35 @@ export function validateUpdateProfileInput(body: unknown): NormalizedUpdateProfi
   }
 
   return result;
+}
+
+export interface NormalizedChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export function validateChangePasswordInput(body: unknown): NormalizedChangePasswordInput {
+  if (!body || typeof body !== 'object') {
+    throw new ValidationError('Password change payload must be a JSON object.');
+  }
+
+  const data = body as Record<string, unknown>;
+
+  if (typeof data.currentPassword !== 'string' || !data.currentPassword) {
+    throw new ValidationError('Current password is required.', 'currentPassword');
+  }
+
+  const newPassword = validatePassword(data.newPassword, 'newPassword');
+
+  if (newPassword === data.currentPassword) {
+    throw new ValidationError(
+      'New password cannot be the same as your current password.',
+      'newPassword'
+    );
+  }
+
+  return {
+    currentPassword: data.currentPassword,
+    newPassword,
+  };
 }

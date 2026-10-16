@@ -31,6 +31,11 @@ export interface UpdateProfileRequest {
   phone?: string | null;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface AuthResponseDto {
   user: UserDto;
 }

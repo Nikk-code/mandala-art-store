@@ -1,13 +1,13 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-15  
-**Current Phase**: `ADMIN COUPON MANAGEMENT & AUTHORITATIVE DISCOUNTS (Step 24 Complete)`
+**Last Updated**: 2026-10-16  
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.1 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Admin Coupon & Promotional Discount Management with Authoritative Checkout Integration (Step 24) has been fully implemented, tested, and verified across both backend and frontend workspaces. The milestone introduces server-authoritative discount calculations, pessimistic concurrency locking (`SELECT ... FOR UPDATE`), reservation capacity tracking with a 15-minute TTL window, late-capture overage reconciliation enforcing the strict capacity invariant (`timesUsed + 1 + otherActiveReservations <= usageLimit`), storefront coupon validation, and administrative promotion management without requiring any database migrations. The canonical coupon capacity formula (`Occupied slots = Coupon.timesUsed + active, unexpired PENDING_PAYMENT reservations`) prevents overselling the last available slot during concurrent checkouts and late captures. Coupon usage (`timesUsed`) is strictly incremented once upon verified gateway payment capture, never at checkout order creation. In the late-capture scenario where a reservation expires and another customer consumes or reserves the remaining slots before a delayed capture arrives, the payment is recorded truthfully as `CAPTURED`, order fulfillment is prevented by marking the order `CANCELLED`, and an explicit reconciliation audit note is logged without exceeding usage limits or claiming unverified refunds. On the frontend, a responsive coupon management console (`/admin/coupons`) provides searchable and filterable listings, modal-driven creation/editing, active toggling, and deletion safeguarded against historical order references. The customer checkout order summary allows applying and removing promotional codes with immediate authoritative validation and live rupee/paise recalculation. All 74 test suites (35 backend / 481 tests, 39 frontend / 243 tests, totaling 724 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Step 25.1 (Secure Customer Password Change — Backend) has been implemented, tested, and verified. Authenticated customers can update their password via `POST /api/auth/change-password` guarded by `passwordChangeRateLimiter` and `requireAuth`. The implementation strictly derives caller identity from verified session credentials, validates current password using bcrypt, validates new password complexity (>= 8 chars, letter + digit, <= 128 chars), rejects reuse of the current password, updates the password hash via `userRepository.update`, and returns no sensitive hashes or credentials. All 74 test suites (35 backend / 506 tests, 39 frontend / 243 tests, totaling 749 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -534,17 +534,40 @@ Admin Coupon & Promotional Discount Management with Authoritative Checkout Integ
   - Added "Promotions" tab to `AdminLayout.tsx` and authored `AdminCouponsPage.tsx` with search, filters, create/edit modal, status toggle, and deletion safeguard.
   - Mounted `/admin/coupons` route in `App.tsx` guarded by `<AdminRoute>`.
 
+### Phase 25.1: Secure Customer Password Change (Backend) (Completed)
+
+- [x] **Password Change Validation & Domain Security**:
+  - Reused `validatePassword` utility in `backend/src/utils/auth-validation.ts` with field-aware error labeling.
+  - Implemented `validateChangePasswordInput` validating `currentPassword` and `newPassword` (>= 8 chars, <= 128 chars, requires letter + digit, non-empty, and strictly prevents new password matching current password).
+  - Preserved raw password strings without trimming or normalization to prevent character mutation.
+- [x] **Authentication Service & Controller Implementation**:
+  - Implemented `AuthService.changePassword(userId, input)` resolving caller strictly from authenticated `userId` parameter and ignoring client-supplied target IDs.
+  - Rejection of missing or deactivated user accounts (`UnauthorizedError`).
+  - Strict verification of `currentPassword` against stored `user.passwordHash` using bcrypt (`bcrypt.compare`).
+  - Hashed new password using bcrypt (work factor 10) and persisted updated hash via `userRepository.update`.
+  - Implemented `AuthController.changePassword` returning 200 with zero password or hash exposure.
+- [x] **Rate Limiting & Authenticated Route Registration**:
+  - Created `passwordChangeRateLimiter` (15-min window, 20 max attempts in prod, RFC draft-6 RateLimit headers) in `backend/src/middleware/rate-limit.ts`.
+  - Registered `POST /api/auth/change-password` in `backend/src/routes/auth.routes.ts` protected by `passwordChangeRateLimiter` and `requireAuth`.
+- [x] **Backend Regression Tests & Quality**:
+  - Extended `backend/tests/auth.service.test.ts` (+11 tests), `backend/tests/auth.api.test.ts` (+13 tests), and `backend/tests/rate-limit.test.ts` (+1 test).
+  - 35 backend automated test suites passing with 506 passing tests and 8 skipped PostgreSQL tests.
+
 ---
 
 ## 3. In-Progress Work
 
-- _None_ (Step 24 is complete and verified).
+- **Step 25**: Customer Account Management and Review Moderation (Step 25.1 backend password change complete; Step 25.2 frontend password change UI next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25: Customer Account Management / Customer Reviews Moderation.
+- Step 25.2: Customer Password Management (Frontend UI integration on `AccountPage.tsx`).
+- Step 25.3: Admin Review Moderation Domain & REST API (`/api/admin/reviews`).
+- Step 25.4: Review Submission Lifecycle Policy Adjustment (`PENDING` queue).
+- Step 25.5: Frontend Admin Review Moderation Console (`/admin/reviews`).
+- Step 25.6: Storefront Feedback & Moderation Status Synchronization.
 
 ---
 

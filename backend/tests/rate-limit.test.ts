@@ -110,4 +110,14 @@ describe('Authentication Rate Limiting Foundation', () => {
     expect(res.headers['ratelimit-limit']).toBeDefined();
     expect(res.headers['ratelimit-remaining']).toBeDefined();
   });
+
+  it('attaches RateLimit headers to live POST /api/auth/change-password route', async () => {
+    const res = await request(app).post('/api/auth/change-password').send({
+      currentPassword: 'OldPassword123',
+      newPassword: 'NewPassword123',
+    });
+
+    expect(res.headers['ratelimit-limit']).toBeDefined();
+    expect(res.headers['ratelimit-remaining']).toBeDefined();
+  });
 });
