@@ -28,6 +28,16 @@ export interface UpdateProfileInput {
   phone?: string | null;
 }
 
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface AuthResponseData {
   user: UserDto;
 }

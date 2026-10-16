@@ -6,6 +6,7 @@ import {
   logoutUser,
   fetchCurrentUser,
   updateUserProfile,
+  changeUserPassword,
 } from '@/services/auth-service';
 import type { UserDto } from '@/types';
 
@@ -105,6 +106,28 @@ describe('Auth Service Client API', () => {
 
       expect(apiSpy).toHaveBeenCalledWith('auth/me', { firstName: 'Updated' });
       expect(result).toEqual(updatedUser);
+    });
+  });
+
+  describe('changeUserPassword', () => {
+    it('sends POST request to auth/change-password and returns success response', async () => {
+      const apiSpy = vi.spyOn(apiClient, 'apiPost').mockResolvedValue({
+        success: true,
+        message: 'Password changed successfully.',
+      });
+
+      const payload = {
+        currentPassword: 'OldPassword123',
+        newPassword: 'NewPassword123',
+      };
+
+      const result = await changeUserPassword(payload);
+
+      expect(apiSpy).toHaveBeenCalledWith('auth/change-password', payload);
+      expect(result).toEqual({
+        success: true,
+        message: 'Password changed successfully.',
+      });
     });
   });
 });

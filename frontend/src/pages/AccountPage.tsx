@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Container, Section, Badge, Input, Button, LoadingState } from '@/components/ui';
-import { SavedAddressesSection } from '@/components/account';
+import { SavedAddressesSection, ChangePasswordSection } from '@/components/account';
 import { useAuth } from '@/context';
 
 interface FormErrors {
@@ -404,6 +404,8 @@ export function AccountPage(): ReactNode {
               </div>
             </form>
           </Section>
+
+          <ChangePasswordSection />
 
           <SavedAddressesSection />
         </div>

@@ -217,4 +217,18 @@ describe('AccountPage Component', () => {
       expect(screen.getByDisplayValue('Priya')).toBeInTheDocument();
     });
   });
+
+  it('renders ChangePasswordSection within the authenticated account area', () => {
+    render(
+      <MemoryRouter>
+        <AccountPage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('heading', { name: /Change Password/i, level: 2 })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Current Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^New Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Confirm New Password/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Update Password/i })).toBeInTheDocument();
+  });
 });

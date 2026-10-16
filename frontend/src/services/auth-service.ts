@@ -5,6 +5,8 @@ import type {
   LoginInput,
   UpdateProfileInput,
   AuthResponseData,
+  ChangePasswordInput,
+  ChangePasswordResponse,
 } from '@/types';
 
 export async function registerUser(data: RegisterInput): Promise<UserDto> {
@@ -32,4 +34,10 @@ export async function fetchCurrentUser(): Promise<UserDto> {
 export async function updateUserProfile(data: UpdateProfileInput): Promise<UserDto> {
   const response = await apiPatch<{ success: boolean; data: AuthResponseData }>('auth/me', data);
   return response.data.user;
+}
+
+export async function changeUserPassword(
+  data: ChangePasswordInput
+): Promise<ChangePasswordResponse> {
+  return apiPost<ChangePasswordResponse>('auth/change-password', data);
 }

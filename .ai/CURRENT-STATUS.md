@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-16  
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.1 Complete)`
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.2 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.1 (Secure Customer Password Change — Backend) has been implemented, tested, and verified. Authenticated customers can update their password via `POST /api/auth/change-password` guarded by `passwordChangeRateLimiter` and `requireAuth`. The implementation strictly derives caller identity from verified session credentials, validates current password using bcrypt, validates new password complexity (>= 8 chars, letter + digit, <= 128 chars), rejects reuse of the current password, updates the password hash via `userRepository.update`, and returns no sensitive hashes or credentials. All 74 test suites (35 backend / 506 tests, 39 frontend / 243 tests, totaling 749 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Step 25.2 (Customer Password Management Frontend UI) has been implemented, tested, and verified. Authenticated customers can change their password directly within the patron account area (`/account`) via a dedicated `ChangePasswordSection` component integrated alongside profile details and address management. The UI features accessible labelled inputs for current password, new password, and confirmation, show/hide visibility toggles, client-side validation mirroring backend complexity constraints (8–128 characters, letter and number required, rejection of identical current and new passwords, matching confirmation check), duplicate submission guards with pending states, field clearing upon success, and graceful error handling for incorrect current password, rate limiting (HTTP 429), and network exceptions. The frontend service layer (`auth-service.ts`) was extended with `changeUserPassword` consuming `POST /api/auth/change-password`. All 75 test suites (35 backend / 506 tests, 40 frontend / 258 tests, totaling 764 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -553,17 +553,35 @@ Step 25.1 (Secure Customer Password Change — Backend) has been implemented, te
   - Extended `backend/tests/auth.service.test.ts` (+11 tests), `backend/tests/auth.api.test.ts` (+13 tests), and `backend/tests/rate-limit.test.ts` (+1 test).
   - 35 backend automated test suites passing with 506 passing tests and 8 skipped PostgreSQL tests.
 
+### Phase 25.2: Customer Password Management (Frontend UI) (Completed)
+
+- [x] **Frontend Password Management Component & Architecture**:
+  - Authored `ChangePasswordSection.tsx` in `frontend/src/components/account/` with accessible inputs (`account-current-password`, `account-new-password`, `account-confirm-password`) and show/hide password toggles.
+  - Extended `Input.tsx` with optional `endAdornment` prop for custom action buttons.
+  - Exported `ChangePasswordSection` from `frontend/src/components/account/index.ts` and mounted on `AccountPage.tsx` between profile details and saved delivery addresses.
+- [x] **Frontend Authentication Service & Type Definitions**:
+  - Added `ChangePasswordInput` and `ChangePasswordResponse` types to `frontend/src/types/auth.ts`.
+  - Implemented `changeUserPassword` in `frontend/src/services/auth-service.ts` communicating with `POST /api/auth/change-password`.
+- [x] **Validation & Error Handling**:
+  - Client-side validation: required fields, 8–128 characters, letter and number enforcement, confirmation matching, and immediate rejection of identical current/new password without unnecessary network calls.
+  - Handled 400 validation/mismatch errors, 401 unauthorized errors, and 429 rate limit errors (`Too many password change attempts. Please try again later.`).
+  - Cleared password state upon success and rendered accessible status banners (`role="alert"` / `role="status"`).
+- [x] **Frontend Automated Test Coverage**:
+  - Authored `frontend/tests/ChangePasswordSection.test.tsx` (13 tests) covering rendering, accessibility, visibility toggles, client validation, identical password rejection, mismatch rejection, duplicate submission guard, success handling, 400 incorrect current password, 429 rate limit, and network exceptions.
+  - Extended `frontend/tests/auth-service.test.ts` (+1 test) verifying service invocation.
+  - Extended `frontend/tests/AccountPage.test.tsx` (+1 test) verifying `ChangePasswordSection` mounting.
+  - 40 frontend test suites passing with 258 passing tests.
+
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Step 25.1 backend password change complete; Step 25.2 frontend password change UI next).
+- **Step 25**: Customer Account Management and Review Moderation (Step 25.1 and 25.2 complete; Step 25.3 admin review moderation backend next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.2: Customer Password Management (Frontend UI integration on `AccountPage.tsx`).
 - Step 25.3: Admin Review Moderation Domain & REST API (`/api/admin/reviews`).
 - Step 25.4: Review Submission Lifecycle Policy Adjustment (`PENDING` queue).
 - Step 25.5: Frontend Admin Review Moderation Console (`/admin/reviews`).
