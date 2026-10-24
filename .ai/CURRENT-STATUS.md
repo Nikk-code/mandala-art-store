@@ -1,13 +1,13 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-16  
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.2 Complete)`
+**Last Updated**: 2026-10-24
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.3 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.2 (Customer Password Management Frontend UI) has been implemented, tested, and verified. Authenticated customers can change their password directly within the patron account area (`/account`) via a dedicated `ChangePasswordSection` component integrated alongside profile details and address management. The UI features accessible labelled inputs for current password, new password, and confirmation, show/hide visibility toggles, client-side validation mirroring backend complexity constraints (8–128 characters, letter and number required, rejection of identical current and new passwords, matching confirmation check), duplicate submission guards with pending states, field clearing upon success, and graceful error handling for incorrect current password, rate limiting (HTTP 429), and network exceptions. The frontend service layer (`auth-service.ts`) was extended with `changeUserPassword` consuming `POST /api/auth/change-password`. All 75 test suites (35 backend / 506 tests, 40 frontend / 258 tests, totaling 764 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Step 25.3 (Admin Review Moderation Domain & REST API) has been implemented, tested, and verified (backend only). Authoritative review moderation endpoints (`GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, `DELETE /api/admin/reviews/:id`) are now mounted under `/api/admin` and protected by `requireAuth` and `requireAdmin` middleware. The administration API supports pagination (default page 1, pageSize 20, max 100), moderation status filtering (`PENDING`, `APPROVED`, `REJECTED`), product ID filtering, case-insensitive search across review content, product names/SKUs, and customer profiles, and flexible sorting. The status transition endpoint strictly allows updating only the `status` field, returning full customer and product moderation details while preventing exposure of credentials or password hashes. Deletion authoritatively purges invalid reviews, and rating summaries dynamically re-aggregate without cached staleness. The public storefront review endpoints continue to filter strictly for `APPROVED` reviews. All 77 test suites (37 backend / 571 tests, 40 frontend / 258 tests, totaling 829 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -572,18 +572,37 @@ Step 25.2 (Customer Password Management Frontend UI) has been implemented, teste
   - Extended `frontend/tests/AccountPage.test.tsx` (+1 test) verifying `ChangePasswordSection` mounting.
   - 40 frontend test suites passing with 258 passing tests.
 
+### Phase 25.3: Admin Review Moderation Domain & REST API (Backend Only) (Completed)
+
+- [x] **Administration Review Moderation REST API**:
+  - Mounted `GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, and `DELETE /api/admin/reviews/:id` in `backend/src/routes/admin.routes.ts`, secured by `requireAuth` and `requireAdmin` middleware.
+  - Implemented `listReviews`, `updateReviewStatus`, and `deleteReview` controller handlers on `AdminController` in `backend/src/controllers/admin.controller.ts`.
+- [x] **Service & Repository Domain Capabilities**:
+  - Extended `ReviewRepository` in `backend/src/repositories/review.repository.ts` with `ReviewWithDetails`, `findAdminReviews` (with pagination, status filter, product ID filter, case-insensitive multi-field search, and multi-option sort), `findByIdWithDetails`, and `updateStatus`.
+  - Extended `ReviewService` in `backend/src/services/review.service.ts` with `listAdminReviews`, `updateReviewStatusByAdmin`, and `deleteReviewByAdmin`.
+  - Added strict sanitization mapping (`mapToAdminDto`) returning product info (`id`, `name`, `slug`, `sku`) and customer info (`id`, `firstName`, `lastName`, `email`), omitting all credentials and password hashes.
+- [x] **Rigorous Input Validation & Security**:
+  - Added `validateReviewStatus`, `validateUpdateReviewStatusInput`, and `validateAdminReviewQuery` in `backend/src/utils/review-validation.ts`.
+  - Enforced pagination limits (page >= 1, pageSize 1-100), status validation against `ReviewStatus` enum (`PENDING`, `APPROVED`, `REJECTED`), UUID validation, search string trimming (max 100 chars), and strict single-field mutation guard on `PATCH /status` rejecting any arbitrary writable fields.
+  - Ensured IDOR protection, authoritative review existence checks, and dynamic on-the-fly rating aggregation consistency without stale stored ratings.
+- [x] **Comprehensive Test Coverage & Quality Gates**:
+  - Authored `backend/tests/admin-reviews.api.test.ts` (20 tests) covering authentication (401), authorization (403), listing with pagination and filters, 400 validation error handling, status updates, 404 not found errors, deletion, and public approved-only storefront consistency.
+  - Authored `backend/tests/review-validation.test.ts` (26 tests) covering product/review ID validation, rating bounds, title/body validation, status validation, update payload security, and query sanitization.
+  - Extended `backend/tests/review.service.test.ts` (+19 tests) testing domain service methods with repository mocks.
+  - 37 backend automated test suites passing with 571 passing tests and 8 skipped PostgreSQL concurrency tests.
+  - Zero database schema migrations or changes to `schema.prisma`.
+
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Step 25.1 and 25.2 complete; Step 25.3 admin review moderation backend next).
+- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, and 25.3 complete; Step 25.4 review submission lifecycle policy adjustment next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.3: Admin Review Moderation Domain & REST API (`/api/admin/reviews`).
-- Step 25.4: Review Submission Lifecycle Policy Adjustment (`PENDING` queue).
+- Step 25.4: Review Submission Lifecycle Policy Adjustment (transitioning newly submitted buyer reviews from auto-approval to `PENDING` moderation queue).
 - Step 25.5: Frontend Admin Review Moderation Console (`/admin/reviews`).
 - Step 25.6: Storefront Feedback & Moderation Status Synchronization.
 
@@ -592,7 +611,7 @@ Step 25.2 (Customer Password Management Frontend UI) has been implemented, teste
 ## 5. Known Limitations & Architecture Notes
 
 - **Initial Administrator Provisioning**: The store contains no default admin credentials or public registration endpoints. The first administrator must register as a customer through the standard registration flow and subsequently be promoted via the CLI operator command (`npm run admin:promote -- <email>`).
-- **Verified Buyer Auto-Approval**: In the absence of an administrative moderation dashboard in this milestone, verified-purchase reviews are created with `status: APPROVED` and `isVerifiedPurchase: true` so genuine buyer feedback reflects immediately. Administrative moderation controls (overriding status, flagging, or bulk approval) are scheduled for Step 25.
+- **Verified Buyer Auto-Approval Lifecycle Policy**: Customer review submission currently sets `status: 'APPROVED'` so genuine buyer feedback reflects immediately. In Step 25.4, newly submitted reviews will transition to default `status: 'PENDING'` pending administrative approval, enabled by the moderation backend built in Step 25.3.
 - **In-Memory Rate Limiting**: The rate limiter tracks requests in local Node.js process memory. In a clustered or multi-instance deployment behind a load balancer, limits are enforced per instance rather than globally. A distributed store (such as Redis) will be introduced when multi-instance production infrastructure is deployed.
 - **Session Revocation Window**: JWT session tokens have a 7-day lifespan. Logout clears the client cookie, but copied tokens remain cryptographically valid until expiration unless the user account is deactivated in the database (which immediately revokes access via `requireAuth`).
 - **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).

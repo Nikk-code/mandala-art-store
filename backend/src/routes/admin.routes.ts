@@ -46,4 +46,9 @@ adminRoutes.put('/coupons/:id', couponController.updateCoupon);
 adminRoutes.patch('/coupons/:id/status', couponController.toggleCouponStatus);
 adminRoutes.delete('/coupons/:id', couponController.deleteCoupon);
 
+// Review Moderation
+adminRoutes.get('/reviews', adminController.listReviews);
+adminRoutes.patch('/reviews/:id/status', adminController.updateReviewStatus);
+adminRoutes.delete('/reviews/:id', adminController.deleteReview);
+
 export default adminRoutes;

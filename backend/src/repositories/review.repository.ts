@@ -1,6 +1,6 @@
 import { prisma } from '../db/prisma';
 import type { Prisma, Review, ReviewStatus } from '@prisma/client';
-import type { RatingSummaryDto } from '../types/review';
+import type { RatingSummaryDto, AdminReviewFilters, AdminReviewListOptions } from '../types/review';
 
 export type ReviewWithAuthor = Prisma.ReviewGetPayload<{
   include: {
@@ -9,6 +9,27 @@ export type ReviewWithAuthor = Prisma.ReviewGetPayload<{
         id: true;
         firstName: true;
         lastName: true;
+      };
+    };
+  };
+}>;
+
+export type ReviewWithDetails = Prisma.ReviewGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+        email: true;
+      };
+    };
+    product: {
+      select: {
+        id: true;
+        name: true;
+        slug: true;
+        sku: true;
       };
     };
   };
@@ -71,6 +92,142 @@ export class ReviewRepository {
             id: true,
             firstName: true,
             lastName: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Finds a review by its ID with full customer and product moderation details.
+   */
+  async findByIdWithDetails(id: string): Promise<ReviewWithDetails | null> {
+    return prisma.review.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            sku: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Lists reviews for administrative moderation with filters, pagination, and sorting.
+   */
+  async findAdminReviews(
+    filters: AdminReviewFilters,
+    options: AdminReviewListOptions
+  ): Promise<{ items: ReviewWithDetails[]; totalItems: number }> {
+    const where: Prisma.ReviewWhereInput = {};
+
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    if (filters.productId) {
+      where.productId = filters.productId;
+    }
+
+    if (filters.search) {
+      const search = filters.search;
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { body: { contains: search, mode: 'insensitive' } },
+        { product: { name: { contains: search, mode: 'insensitive' } } },
+        { product: { sku: { contains: search, mode: 'insensitive' } } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    let orderBy: Prisma.ReviewOrderByWithRelationInput | Prisma.ReviewOrderByWithRelationInput[];
+    switch (options.sort) {
+      case 'oldest':
+        orderBy = { createdAt: 'asc' };
+        break;
+      case 'rating_asc':
+        orderBy = [{ rating: 'asc' }, { createdAt: 'desc' }];
+        break;
+      case 'rating_desc':
+        orderBy = [{ rating: 'desc' }, { createdAt: 'desc' }];
+        break;
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' };
+        break;
+    }
+
+    const skip = (options.page - 1) * options.pageSize;
+    const take = options.pageSize;
+
+    const [items, totalItems] = await Promise.all([
+      prisma.review.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              sku: true,
+            },
+          },
+        },
+        orderBy,
+        skip,
+        take,
+      }),
+      prisma.review.count({ where }),
+    ]);
+
+    return { items, totalItems };
+  }
+
+  /**
+   * Updates moderation status of a review and returns full details.
+   */
+  async updateStatus(id: string, status: ReviewStatus): Promise<ReviewWithDetails> {
+    return prisma.review.update({
+      where: { id },
+      data: { status },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            sku: true,
           },
         },
       },

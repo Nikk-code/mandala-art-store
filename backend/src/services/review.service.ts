@@ -3,6 +3,7 @@ import {
   reviewRepository,
   type ReviewRepository,
   type ReviewWithAuthor,
+  type ReviewWithDetails,
 } from '../repositories/review.repository';
 import { productRepository, type ProductRepository } from '../repositories/product.repository';
 import { NotFoundError, ConflictError, ForbiddenError } from '../errors';
@@ -11,6 +12,8 @@ import {
   validateReviewId,
   validateCreateReviewInput,
   validateUpdateReviewInput,
+  validateAdminReviewQuery,
+  validateUpdateReviewStatusInput,
 } from '../utils/review-validation';
 import type {
   ReviewDto,
@@ -18,6 +21,8 @@ import type {
   UpdateReviewInput,
   ReviewListResponseData,
   ReviewEligibilityDto,
+  AdminReviewDto,
+  PaginatedAdminReviewsResponse,
 } from '../types/review';
 
 export class ReviewService {
@@ -36,6 +41,37 @@ export class ReviewService {
         firstName: review.user.firstName,
         lastName: review.user.lastName,
       },
+      orderId: review.orderId,
+      rating: review.rating,
+      title: review.title,
+      body: review.body,
+      status: review.status,
+      isVerifiedPurchase: review.isVerifiedPurchase,
+      createdAt: review.createdAt.toISOString(),
+      updatedAt: review.updatedAt.toISOString(),
+    };
+  }
+
+  private mapToAdminDto(review: ReviewWithDetails): AdminReviewDto {
+    const customerInfo = {
+      id: review.user.id,
+      firstName: review.user.firstName,
+      lastName: review.user.lastName,
+      email: review.user.email,
+    };
+
+    return {
+      id: review.id,
+      productId: review.productId,
+      product: {
+        id: review.product.id,
+        name: review.product.name,
+        slug: review.product.slug,
+        sku: review.product.sku,
+      },
+      userId: review.userId,
+      user: customerInfo,
+      customer: customerInfo,
       orderId: review.orderId,
       rating: review.rating,
       title: review.title,
@@ -172,6 +208,61 @@ export class ReviewService {
 
     const review = await this.repo.findById(validReviewId);
     if (!review || review.userId !== userId) {
+      throw new NotFoundError('Review not found.');
+    }
+
+    await this.repo.delete(validReviewId);
+  }
+
+  // ============================================================================
+  // ADMIN REVIEW MODERATION
+  // ============================================================================
+
+  /**
+   * Lists reviews for administrator moderation with filtering and pagination.
+   */
+  async listAdminReviews(
+    rawQuery: Record<string, unknown>
+  ): Promise<PaginatedAdminReviewsResponse> {
+    const { filters, options } = validateAdminReviewQuery(rawQuery);
+    const { items, totalItems } = await this.repo.findAdminReviews(filters, options);
+    const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / options.pageSize);
+
+    return {
+      items: items.map(item => this.mapToAdminDto(item)),
+      pagination: {
+        page: options.page,
+        pageSize: options.pageSize,
+        totalItems,
+        totalPages,
+      },
+    };
+  }
+
+  /**
+   * Updates moderation status (PENDING, APPROVED, REJECTED) of a review by admin.
+   */
+  async updateReviewStatusByAdmin(id: string, rawInput: unknown): Promise<AdminReviewDto> {
+    const validReviewId = validateReviewId(id);
+    const { status } = validateUpdateReviewStatusInput(rawInput);
+
+    const existing = await this.repo.findById(validReviewId);
+    if (!existing) {
+      throw new NotFoundError('Review not found.');
+    }
+
+    const updated = await this.repo.updateStatus(validReviewId, status);
+    return this.mapToAdminDto(updated);
+  }
+
+  /**
+   * Authoritatively deletes a review by admin.
+   */
+  async deleteReviewByAdmin(id: string): Promise<void> {
+    const validReviewId = validateReviewId(id);
+
+    const existing = await this.repo.findById(validReviewId);
+    if (!existing) {
       throw new NotFoundError('Review not found.');
     }
 

@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ReviewService } from '../src/services/review.service';
-import type { ReviewRepository, ReviewWithAuthor } from '../src/repositories/review.repository';
+import type {
+  ReviewRepository,
+  ReviewWithAuthor,
+  ReviewWithDetails,
+} from '../src/repositories/review.repository';
 import type { ProductRepository, ProductWithDetails } from '../src/repositories/product.repository';
 import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../src/errors';
 import { ProductAvailability, Prisma } from '@prisma/client';
@@ -382,6 +386,252 @@ describe('ReviewService Domain Logic', () => {
       vi.spyOn(mockReviewRepo, 'delete').mockResolvedValue({} as never);
 
       await expect(service.deleteReview(validUserId, validReviewId)).resolves.not.toThrow();
+      expect(mockReviewRepo.delete).toHaveBeenCalledWith(validReviewId);
+    });
+  });
+
+  // ==========================================================================
+  // ADMIN REVIEW MODERATION TESTS
+  // ==========================================================================
+
+  const mockReviewWithDetails: ReviewWithDetails = {
+    id: validReviewId,
+    productId: validProductId,
+    userId: validUserId,
+    orderId: validOrderId,
+    rating: 5,
+    title: 'Divine Artwork',
+    body: 'Truly sacred energy and vibrant colors.',
+    status: 'PENDING',
+    isVerifiedPurchase: true,
+    createdAt: new Date('2026-01-10T10:00:00.000Z'),
+    updatedAt: new Date('2026-01-10T10:00:00.000Z'),
+    user: {
+      id: validUserId,
+      firstName: 'Aarav',
+      lastName: 'Patel',
+      email: 'aarav@mandala.test',
+    },
+    product: {
+      id: validProductId,
+      name: 'Sacred Lotus Mandala',
+      slug: 'sacred-lotus-mandala',
+      sku: 'MND-LOTUS-01',
+    },
+  };
+
+  // --------------------------------------------------------------------------
+  // 6. listAdminReviews
+  // --------------------------------------------------------------------------
+  describe('listAdminReviews', () => {
+    it('returns paginated reviews mapped to AdminReviewDto', async () => {
+      mockReviewRepo.findAdminReviews = vi.fn().mockResolvedValue({
+        items: [mockReviewWithDetails],
+        totalItems: 1,
+      });
+
+      const result = await service.listAdminReviews({ page: 1, pageSize: 20 });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]).toEqual({
+        id: validReviewId,
+        productId: validProductId,
+        product: {
+          id: validProductId,
+          name: 'Sacred Lotus Mandala',
+          slug: 'sacred-lotus-mandala',
+          sku: 'MND-LOTUS-01',
+        },
+        userId: validUserId,
+        user: {
+          id: validUserId,
+          firstName: 'Aarav',
+          lastName: 'Patel',
+          email: 'aarav@mandala.test',
+        },
+        customer: {
+          id: validUserId,
+          firstName: 'Aarav',
+          lastName: 'Patel',
+          email: 'aarav@mandala.test',
+        },
+        orderId: validOrderId,
+        rating: 5,
+        title: 'Divine Artwork',
+        body: 'Truly sacred energy and vibrant colors.',
+        status: 'PENDING',
+        isVerifiedPurchase: true,
+        createdAt: '2026-01-10T10:00:00.000Z',
+        updatedAt: '2026-01-10T10:00:00.000Z',
+      });
+      expect(result.pagination).toEqual({
+        page: 1,
+        pageSize: 20,
+        totalItems: 1,
+        totalPages: 1,
+      });
+    });
+
+    it('passes validated filters and sorting options to repository', async () => {
+      mockReviewRepo.findAdminReviews = vi.fn().mockResolvedValue({
+        items: [],
+        totalItems: 0,
+      });
+
+      const result = await service.listAdminReviews({
+        page: '2',
+        pageSize: '10',
+        status: 'APPROVED',
+        productId: validProductId,
+        search: 'Lotus',
+        sort: 'rating_desc',
+      });
+
+      expect(mockReviewRepo.findAdminReviews).toHaveBeenCalledWith(
+        {
+          status: 'APPROVED',
+          productId: validProductId,
+          search: 'Lotus',
+        },
+        {
+          page: 2,
+          pageSize: 10,
+          sort: 'rating_desc',
+        }
+      );
+      expect(result.pagination.totalPages).toBe(0);
+    });
+
+    it('throws ValidationError for invalid page number', async () => {
+      await expect(service.listAdminReviews({ page: 0 })).rejects.toThrow(ValidationError);
+      await expect(service.listAdminReviews({ page: 'abc' })).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError for invalid page size', async () => {
+      await expect(service.listAdminReviews({ pageSize: 150 })).rejects.toThrow(ValidationError);
+      await expect(service.listAdminReviews({ pageSize: 0 })).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError for invalid status filter', async () => {
+      await expect(service.listAdminReviews({ status: 'INVALID_STATUS' })).rejects.toThrow(
+        ValidationError
+      );
+    });
+
+    it('throws ValidationError for invalid sort parameter', async () => {
+      await expect(service.listAdminReviews({ sort: 'unsupported' })).rejects.toThrow(
+        ValidationError
+      );
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 7. updateReviewStatusByAdmin
+  // --------------------------------------------------------------------------
+  describe('updateReviewStatusByAdmin', () => {
+    it('throws ValidationError for invalid review ID format', async () => {
+      await expect(
+        service.updateReviewStatusByAdmin('not-a-uuid', { status: 'APPROVED' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when status is missing', async () => {
+      await expect(service.updateReviewStatusByAdmin(validReviewId, {})).rejects.toThrow(
+        ValidationError
+      );
+    });
+
+    it('throws ValidationError when invalid status is provided', async () => {
+      await expect(
+        service.updateReviewStatusByAdmin(validReviewId, { status: 'UNKNOWN' })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws ValidationError when extra writable fields are passed', async () => {
+      await expect(
+        service.updateReviewStatusByAdmin(validReviewId, {
+          status: 'APPROVED',
+          rating: 5,
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('throws NotFoundError when review does not exist', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue(null);
+
+      await expect(
+        service.updateReviewStatusByAdmin(validReviewId, { status: 'APPROVED' })
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('successfully updates review status to APPROVED', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue(mockReview);
+      mockReviewRepo.updateStatus = vi.fn().mockResolvedValue({
+        ...mockReviewWithDetails,
+        status: 'APPROVED',
+      });
+
+      const result = await service.updateReviewStatusByAdmin(validReviewId, {
+        status: 'APPROVED',
+      });
+
+      expect(result.status).toBe('APPROVED');
+      expect(mockReviewRepo.updateStatus).toHaveBeenCalledWith(validReviewId, 'APPROVED');
+    });
+
+    it('successfully updates review status to REJECTED', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue(mockReview);
+      mockReviewRepo.updateStatus = vi.fn().mockResolvedValue({
+        ...mockReviewWithDetails,
+        status: 'REJECTED',
+      });
+
+      const result = await service.updateReviewStatusByAdmin(validReviewId, {
+        status: 'REJECTED',
+      });
+
+      expect(result.status).toBe('REJECTED');
+      expect(mockReviewRepo.updateStatus).toHaveBeenCalledWith(validReviewId, 'REJECTED');
+    });
+
+    it('successfully updates review status back to PENDING', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue(mockReview);
+      mockReviewRepo.updateStatus = vi.fn().mockResolvedValue({
+        ...mockReviewWithDetails,
+        status: 'PENDING',
+      });
+
+      const result = await service.updateReviewStatusByAdmin(validReviewId, {
+        status: 'PENDING',
+      });
+
+      expect(result.status).toBe('PENDING');
+      expect(mockReviewRepo.updateStatus).toHaveBeenCalledWith(validReviewId, 'PENDING');
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 8. deleteReviewByAdmin
+  // --------------------------------------------------------------------------
+  describe('deleteReviewByAdmin', () => {
+    it('throws ValidationError for invalid review ID format', async () => {
+      await expect(service.deleteReviewByAdmin('not-a-uuid')).rejects.toThrow(ValidationError);
+    });
+
+    it('throws NotFoundError when review does not exist', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue(null);
+
+      await expect(service.deleteReviewByAdmin(validReviewId)).rejects.toThrow(NotFoundError);
+    });
+
+    it('successfully deletes review by admin regardless of user ownership', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue({
+        ...mockReview,
+        userId: otherUserId,
+      });
+      vi.spyOn(mockReviewRepo, 'delete').mockResolvedValue({} as never);
+
+      await expect(service.deleteReviewByAdmin(validReviewId)).resolves.not.toThrow();
       expect(mockReviewRepo.delete).toHaveBeenCalledWith(validReviewId);
     });
   });

@@ -1,3 +1,5 @@
+import type { PaginationMeta } from './catalog';
+
 export type ReviewStatusType = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface ReviewAuthorDto {
@@ -58,4 +60,62 @@ export interface ReviewEligibilityDto {
   hasReviewed: boolean;
   existingReview?: ReviewDto | null;
   reason?: string;
+}
+
+// ============================================================================
+// ADMIN REVIEW MODERATION TYPES
+// ============================================================================
+
+export interface AdminReviewProductDto {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+}
+
+export interface AdminReviewCustomerDto {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface AdminReviewDto {
+  id: string;
+  productId: string;
+  product: AdminReviewProductDto;
+  userId: string;
+  user: AdminReviewCustomerDto;
+  customer: AdminReviewCustomerDto;
+  orderId: string | null;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  status: ReviewStatusType;
+  isVerifiedPurchase: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReviewFilters {
+  status?: ReviewStatusType;
+  productId?: string;
+  search?: string;
+}
+
+export type AdminReviewSortOption = 'newest' | 'oldest' | 'rating_asc' | 'rating_desc';
+
+export interface AdminReviewListOptions {
+  page: number;
+  pageSize: number;
+  sort?: AdminReviewSortOption;
+}
+
+export interface PaginatedAdminReviewsResponse {
+  items: AdminReviewDto[];
+  pagination: PaginationMeta;
+}
+
+export interface UpdateReviewStatusInput {
+  status: ReviewStatusType;
 }

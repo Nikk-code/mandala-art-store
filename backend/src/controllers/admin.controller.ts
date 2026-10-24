@@ -3,12 +3,14 @@ import { adminService, type AdminService } from '../services/admin.service';
 import { productService, type ProductService } from '../services/product.service';
 import { categoryService, type CategoryService } from '../services/category.service';
 import { orderService, type OrderService } from '../services/order.service';
+import { reviewService, type ReviewService } from '../services/review.service';
 import type { ApiSuccessResponse, PaginatedResponse } from '../types';
 import type {
   AdminDashboardResponseData,
   AdminOrderListItemDto,
   AdminOrderDetailsDto,
 } from '../types/admin';
+import type { AdminReviewDto } from '../types/review';
 import type { ProductWithDetails } from '../repositories/product.repository';
 import type { CategoryWithProductCount } from '../services/category.service';
 import type { Category, Product, ProductImage, ProductAvailability } from '@prisma/client';
@@ -20,7 +22,8 @@ export class AdminController {
     private service: AdminService = adminService,
     private products: ProductService = productService,
     private categories: CategoryService = categoryService,
-    private orders: OrderService = orderService
+    private orders: OrderService = orderService,
+    private reviews: ReviewService = reviewService
   ) {}
 
   /**
@@ -523,6 +526,73 @@ export class AdminController {
       res.status(200).json({
         success: true,
         data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  // ============================================================================
+  // REVIEW MODERATION
+  // ============================================================================
+
+  /**
+   * GET /api/admin/reviews
+   * Paginated review listing with moderation filters (status, productId, search, sort).
+   */
+  public listReviews = async (
+    req: Request,
+    res: Response<PaginatedResponse<AdminReviewDto>>,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const result = await this.reviews.listAdminReviews(req.query as Record<string, unknown>);
+      res.status(200).json({
+        success: true,
+        data: result.items,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * PATCH /api/admin/reviews/:id/status
+   * Updates moderation status (PENDING, APPROVED, REJECTED) of a product review.
+   */
+  public updateReviewStatus = async (
+    req: Request,
+    res: Response<ApiSuccessResponse<AdminReviewDto>>,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const updated = await this.reviews.updateReviewStatusByAdmin(id, req.body);
+      res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * DELETE /api/admin/reviews/:id
+   * Authoritatively deletes a product review by admin.
+   */
+  public deleteReview = async (
+    req: Request,
+    res: Response<{ success: true; message: string }>,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      await this.reviews.deleteReviewByAdmin(id);
+      res.status(200).json({
+        success: true,
+        message: 'Review deleted successfully.',
       });
     } catch (error) {
       next(error);
