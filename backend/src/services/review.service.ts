@@ -167,7 +167,7 @@ export class ReviewService {
         rating: validated.rating,
         title: validated.title,
         body: validated.body,
-        status: 'APPROVED',
+        status: 'PENDING',
         isVerifiedPurchase: true,
       });
 

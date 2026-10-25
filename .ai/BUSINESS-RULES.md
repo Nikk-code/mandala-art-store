@@ -142,9 +142,10 @@ This document outlines the core business logic, domain constraints, and calculat
   - Enforced at both the service layer (checking existing reviews) and the database engine layer via the compound unique constraint `@@unique([userId, productId])`.
   - Duplicate review attempts return HTTP `409 Conflict`.
 - **Moderation & Visibility Lifecycle**:
-  - Verified-purchase customer reviews are created with `status: ReviewStatus.APPROVED` and `isVerifiedPurchase: true` in this milestone, making them immediately visible in storefront calculations and the reviews list.
-  - Only reviews with `APPROVED` status are included in public average ratings, rating distributions, and storefront listings.
-  - Full administrative moderation dashboard (manual review approval/rejection/flagging) is planned for the administrative management milestone.
+  - Verified-purchase customer reviews are created with `status: ReviewStatus.PENDING` and `isVerifiedPurchase: true`, requiring administrative moderation before becoming publicly visible.
+  - Customers cannot supply or force approval status upon review submission; client-supplied status fields are stripped and ignored.
+  - Only reviews with `APPROVED` status are included in public average ratings, rating distributions, and storefront listings. Pending and rejected reviews do not affect public counts or score aggregates.
+  - Administrative moderation REST API (`/api/admin/reviews`) provides the mechanism for inspecting, approving, or rejecting submitted reviews.
 - **Customer Review Ownership & Anti-IDOR**:
   - Customers can edit their rating, title, and body on their existing review (`PUT /api/reviews/:reviewId`).
   - Customers can delete their own review (`DELETE /api/reviews/:reviewId`).

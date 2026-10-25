@@ -1,13 +1,13 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-24
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.3 Complete)`
+**Last Updated**: 2026-10-25
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.4 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.3 (Admin Review Moderation Domain & REST API) has been implemented, tested, and verified (backend only). Authoritative review moderation endpoints (`GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, `DELETE /api/admin/reviews/:id`) are now mounted under `/api/admin` and protected by `requireAuth` and `requireAdmin` middleware. The administration API supports pagination (default page 1, pageSize 20, max 100), moderation status filtering (`PENDING`, `APPROVED`, `REJECTED`), product ID filtering, case-insensitive search across review content, product names/SKUs, and customer profiles, and flexible sorting. The status transition endpoint strictly allows updating only the `status` field, returning full customer and product moderation details while preventing exposure of credentials or password hashes. Deletion authoritatively purges invalid reviews, and rating summaries dynamically re-aggregate without cached staleness. The public storefront review endpoints continue to filter strictly for `APPROVED` reviews. All 77 test suites (37 backend / 571 tests, 40 frontend / 258 tests, totaling 829 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Step 25.4 (Review Submission Lifecycle Policy Adjustment) has been implemented, tested, and verified (backend only). Customer review creation has been adjusted so that all newly submitted reviews are created with `status: 'PENDING'` and require administrative moderation before becoming publicly visible in storefront listings or contributing to authoritative rating calculations. Defensive validation strips client-supplied status fields so customers cannot force auto-approval. Verified buyer order eligibility checks, duplicate review constraints (`409 Conflict`), and admin moderation endpoints (`GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, `DELETE /api/admin/reviews/:id`) remain fully intact. Public review queries (`findByProductId`) and server-authoritative star rating summaries (`getRatingSummary`) continue to strictly filter for `status: 'APPROVED'`. All 77 test suites (37 backend / 574 tests, 40 frontend / 258 tests, totaling 832 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
 
 ---
 
@@ -592,17 +592,26 @@ Step 25.3 (Admin Review Moderation Domain & REST API) has been implemented, test
   - 37 backend automated test suites passing with 571 passing tests and 8 skipped PostgreSQL concurrency tests.
   - Zero database schema migrations or changes to `schema.prisma`.
 
+### Step 25.4: Review Submission Lifecycle Policy Adjustment (Completed)
+
+- [x] Adjusted customer review creation in `ReviewService.createReview` to set `status: 'PENDING'`.
+- [x] Updated `ReviewRepository.create` and `CreateReviewData` interface to make `status` optional, defaulting safely to `'PENDING'`.
+- [x] Verified client status tampering protection: client payloads cannot supply or override review status upon submission.
+- [x] Verified public review listings and rating aggregates strictly query `status: 'APPROVED'`, excluding pending and rejected reviews.
+- [x] Preserved verified purchase eligibility verification, duplicate review protection (`409 Conflict`), and admin moderation endpoints.
+- [x] Added unit and API tests in `backend/tests/review.service.test.ts` and `backend/tests/review.api.test.ts` (+3 tests, total 574 backend tests passing, 8 skipped live DB tests).
+- [x] Zero database schema migrations required (`schema.prisma` already defines `@default(PENDING)` on `Review.status`).
+
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, and 25.3 complete; Step 25.4 review submission lifecycle policy adjustment next).
+- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, 25.3, and 25.4 complete; Step 25.5 frontend admin review moderation console next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.4: Review Submission Lifecycle Policy Adjustment (transitioning newly submitted buyer reviews from auto-approval to `PENDING` moderation queue).
 - Step 25.5: Frontend Admin Review Moderation Console (`/admin/reviews`).
 - Step 25.6: Storefront Feedback & Moderation Status Synchronization.
 
@@ -611,7 +620,7 @@ Step 25.3 (Admin Review Moderation Domain & REST API) has been implemented, test
 ## 5. Known Limitations & Architecture Notes
 
 - **Initial Administrator Provisioning**: The store contains no default admin credentials or public registration endpoints. The first administrator must register as a customer through the standard registration flow and subsequently be promoted via the CLI operator command (`npm run admin:promote -- <email>`).
-- **Verified Buyer Auto-Approval Lifecycle Policy**: Customer review submission currently sets `status: 'APPROVED'` so genuine buyer feedback reflects immediately. In Step 25.4, newly submitted reviews will transition to default `status: 'PENDING'` pending administrative approval, enabled by the moderation backend built in Step 25.3.
+- **Review Moderation Lifecycle**: Newly submitted customer reviews enter the `PENDING` moderation queue and require administrative approval via `/api/admin/reviews/:id/status` before becoming publicly visible in storefront listings or contributing to star ratings.
 - **In-Memory Rate Limiting**: The rate limiter tracks requests in local Node.js process memory. In a clustered or multi-instance deployment behind a load balancer, limits are enforced per instance rather than globally. A distributed store (such as Redis) will be introduced when multi-instance production infrastructure is deployed.
 - **Session Revocation Window**: JWT session tokens have a 7-day lifespan. Logout clears the client cookie, but copied tokens remain cryptographically valid until expiration unless the user account is deactivated in the database (which immediately revokes access via `requireAuth`).
 - **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).

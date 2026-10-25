@@ -42,7 +42,7 @@ export interface CreateReviewData {
   rating: number;
   title?: string | null;
   body?: string | null;
-  status: ReviewStatus;
+  status?: ReviewStatus;
   isVerifiedPurchase: boolean;
 }
 
@@ -357,7 +357,7 @@ export class ReviewRepository {
         rating: data.rating,
         title: data.title ?? null,
         body: data.body ?? null,
-        status: data.status,
+        status: data.status ?? 'PENDING',
         isVerifiedPurchase: data.isVerifiedPurchase,
       },
       include: {

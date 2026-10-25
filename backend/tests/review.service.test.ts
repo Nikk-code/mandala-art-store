@@ -269,11 +269,11 @@ describe('ReviewService Domain Logic', () => {
       ).rejects.toThrow(ConflictError);
     });
 
-    it('successfully creates review and sets isVerifiedPurchase: true', async () => {
+    it('successfully creates review with PENDING status and sets isVerifiedPurchase: true', async () => {
       vi.spyOn(mockProductRepo, 'findById').mockResolvedValue(mockProduct);
       vi.spyOn(mockReviewRepo, 'findByUserAndProduct').mockResolvedValue(null);
       vi.spyOn(mockReviewRepo, 'findEligiblePurchase').mockResolvedValue({ orderId: validOrderId });
-      vi.spyOn(mockReviewRepo, 'create').mockResolvedValue(mockReview);
+      vi.spyOn(mockReviewRepo, 'create').mockResolvedValue({ ...mockReview, status: 'PENDING' });
 
       const result = await service.createReview(validUserId, {
         productId: validProductId,
@@ -289,12 +289,37 @@ describe('ReviewService Domain Logic', () => {
         rating: 5,
         title: 'Exquisite Artwork',
         body: 'The detailing on this mandala is mesmerizing. Truly mastercrafted!',
-        status: 'APPROVED',
+        status: 'PENDING',
         isVerifiedPurchase: true,
       });
 
       expect(result.id).toBe(validReviewId);
+      expect(result.status).toBe('PENDING');
       expect(result.isVerifiedPurchase).toBe(true);
+    });
+
+    it('ignores client-supplied status and always creates review as PENDING', async () => {
+      vi.spyOn(mockProductRepo, 'findById').mockResolvedValue(mockProduct);
+      vi.spyOn(mockReviewRepo, 'findByUserAndProduct').mockResolvedValue(null);
+      vi.spyOn(mockReviewRepo, 'findEligiblePurchase').mockResolvedValue({ orderId: validOrderId });
+      vi.spyOn(mockReviewRepo, 'create').mockResolvedValue({ ...mockReview, status: 'PENDING' });
+
+      const result = await service.createReview(validUserId, {
+        productId: validProductId,
+        rating: 5,
+        title: 'Moderation Bypass Attempt',
+        body: 'Attempting to inject APPROVED status directly into creation input payload.',
+        // @ts-expect-error Testing client status tampering protection
+        status: 'APPROVED',
+      });
+
+      expect(mockReviewRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: validProductId,
+          status: 'PENDING',
+        })
+      );
+      expect(result.status).toBe('PENDING');
     });
 
     it('translates Prisma P2002 conflict error to ConflictError', async () => {

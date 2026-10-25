@@ -99,6 +99,11 @@ describe('Review REST API Endpoints (/api/reviews)', () => {
     },
   };
 
+  const pendingReviewA: ReviewWithAuthor = {
+    ...reviewA,
+    status: 'PENDING',
+  };
+
   function createAuthToken(
     userId: string = customerAId,
     email: string = 'ananya@example.com'
@@ -139,6 +144,24 @@ describe('Review REST API Endpoints (/api/reviews)', () => {
       expect(res.body.data.reviews[0].id).toBe(reviewAId);
       expect(res.body.data.reviews[0].user.firstName).toBe('Ananya');
       expect(res.body.data.summary.averageRating).toBe(5.0);
+      expect(reviewRepository.findByProductId).toHaveBeenCalledWith(productAId, 'APPROVED');
+    });
+
+    it('excludes pending and rejected reviews from public visibility and rating calculations', async () => {
+      vi.spyOn(productRepository, 'findById').mockResolvedValue(productA);
+      vi.spyOn(reviewRepository, 'findByProductId').mockResolvedValue([]);
+      vi.spyOn(reviewRepository, 'getRatingSummary').mockResolvedValue({
+        averageRating: 0,
+        totalReviews: 0,
+        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      });
+
+      const res = await request(app).get(`/api/reviews/product/${productAId}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.reviews).toHaveLength(0);
+      expect(res.body.data.summary.totalReviews).toBe(0);
+      expect(reviewRepository.findByProductId).toHaveBeenCalledWith(productAId, 'APPROVED');
     });
 
     it('returns 404 when product is not found', async () => {
@@ -279,12 +302,12 @@ describe('Review REST API Endpoints (/api/reviews)', () => {
       expect(res.body.error.code).toBe('CONFLICT');
     });
 
-    it('returns 201 Created on valid review submission', async () => {
+    it('returns 201 Created on valid review submission with PENDING status', async () => {
       const token = createAuthToken(customerAId);
       vi.spyOn(productRepository, 'findById').mockResolvedValue(productA);
       vi.spyOn(reviewRepository, 'findByUserAndProduct').mockResolvedValue(null);
       vi.spyOn(reviewRepository, 'findEligiblePurchase').mockResolvedValue({ orderId: orderAId });
-      vi.spyOn(reviewRepository, 'create').mockResolvedValue(reviewA);
+      vi.spyOn(reviewRepository, 'create').mockResolvedValue(pendingReviewA);
 
       const res = await request(app)
         .post('/api/reviews')
@@ -299,7 +322,43 @@ describe('Review REST API Endpoints (/api/reviews)', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.id).toBe(reviewAId);
+      expect(res.body.data.status).toBe('PENDING');
       expect(res.body.data.isVerifiedPurchase).toBe(true);
+      expect(reviewRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: productAId,
+          status: 'PENDING',
+        })
+      );
+    });
+
+    it('ignores client-supplied status: "APPROVED" and creates review with PENDING status', async () => {
+      const token = createAuthToken(customerAId);
+      vi.spyOn(productRepository, 'findById').mockResolvedValue(productA);
+      vi.spyOn(reviewRepository, 'findByUserAndProduct').mockResolvedValue(null);
+      vi.spyOn(reviewRepository, 'findEligiblePurchase').mockResolvedValue({ orderId: orderAId });
+      vi.spyOn(reviewRepository, 'create').mockResolvedValue(pendingReviewA);
+
+      const res = await request(app)
+        .post('/api/reviews')
+        .set('Cookie', `auth_token=${token}`)
+        .send({
+          productId: productAId,
+          rating: 5,
+          title: 'Tampering Attempt',
+          body: 'Customer attempts to force auto-approval via payload.',
+          status: 'APPROVED',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.status).toBe('PENDING');
+      expect(reviewRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: productAId,
+          status: 'PENDING',
+        })
+      );
     });
   });
 
