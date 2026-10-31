@@ -20,6 +20,9 @@ import {
   fetchAdminOrders,
   fetchAdminOrderById,
   updateAdminOrderStatus,
+  fetchAdminReviews,
+  updateAdminReviewStatus,
+  deleteAdminReview,
 } from '@/services/admin-service';
 import * as apiClient from '@/services/api-client';
 import type {
@@ -31,6 +34,7 @@ import type {
   UpdateProductInput,
   CreateCategoryInput,
   UpdateCategoryInput,
+  AdminReviewDto,
 } from '@/types';
 
 describe('Admin Service', () => {
@@ -554,6 +558,96 @@ describe('Admin Service', () => {
       });
       expect(res.status).toBe('SHIPPED');
       expect(res.fulfillment.courierName).toBe('Delhivery');
+    });
+  });
+
+  describe('Review Moderation', () => {
+    const mockAdminReview: AdminReviewDto = {
+      id: 'rev-uuid-1',
+      productId: 'prod-uuid-1',
+      product: {
+        id: 'prod-uuid-1',
+        name: 'Sacred Lotus Mandala',
+        slug: 'sacred-lotus-mandala',
+        sku: 'MND-LOTUS-01',
+      },
+      userId: 'user-uuid-1',
+      user: {
+        id: 'user-uuid-1',
+        firstName: 'Ananya',
+        lastName: 'Sharma',
+        email: 'ananya@example.com',
+      },
+      customer: {
+        id: 'user-uuid-1',
+        firstName: 'Ananya',
+        lastName: 'Sharma',
+        email: 'ananya@example.com',
+      },
+      orderId: 'ord-uuid-1',
+      rating: 5,
+      title: 'Stunning artwork',
+      body: 'The details and gold paint are exquisite.',
+      status: 'PENDING',
+      isVerifiedPurchase: true,
+      createdAt: '2026-10-15T10:00:00.000Z',
+      updatedAt: '2026-10-15T10:00:00.000Z',
+    };
+
+    it('fetchAdminReviews calls GET admin/reviews with formatted query parameters', async () => {
+      const getSpy = vi.spyOn(apiClient, 'apiGet').mockResolvedValue({
+        success: true,
+        data: [mockAdminReview],
+        pagination: { page: 1, pageSize: 15, totalItems: 1, totalPages: 1 },
+      });
+
+      const res = await fetchAdminReviews({
+        page: 1,
+        pageSize: 15,
+        status: 'PENDING',
+        search: 'Lotus',
+        productId: 'prod-uuid-1',
+        sort: 'newest',
+      });
+
+      expect(getSpy).toHaveBeenCalledWith(expect.stringContaining('admin/reviews?'));
+      const urlArg = getSpy.mock.calls[0][0];
+      expect(urlArg).toContain('page=1');
+      expect(urlArg).toContain('pageSize=15');
+      expect(urlArg).toContain('status=PENDING');
+      expect(urlArg).toContain('search=Lotus');
+      expect(urlArg).toContain('productId=prod-uuid-1');
+      expect(urlArg).toContain('sort=newest');
+      expect(res.items).toHaveLength(1);
+      expect(res.items[0].id).toBe('rev-uuid-1');
+    });
+
+    it('updateAdminReviewStatus calls PATCH admin/reviews/:id/status', async () => {
+      const patchSpy = vi.spyOn(apiClient, 'apiPatch').mockResolvedValue({
+        success: true,
+        data: {
+          ...mockAdminReview,
+          status: 'APPROVED',
+        },
+      });
+
+      const res = await updateAdminReviewStatus('rev-uuid-1', { status: 'APPROVED' });
+
+      expect(patchSpy).toHaveBeenCalledWith('admin/reviews/rev-uuid-1/status', {
+        status: 'APPROVED',
+      });
+      expect(res.status).toBe('APPROVED');
+    });
+
+    it('deleteAdminReview calls DELETE admin/reviews/:id', async () => {
+      const deleteSpy = vi.spyOn(apiClient, 'apiDelete').mockResolvedValue({
+        success: true,
+        message: 'Review deleted successfully.',
+      });
+
+      await deleteAdminReview('rev-uuid-1');
+
+      expect(deleteSpy).toHaveBeenCalledWith('admin/reviews/rev-uuid-1');
     });
   });
 });

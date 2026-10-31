@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-25
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.4 Complete)`
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.5A Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.4 (Review Submission Lifecycle Policy Adjustment) has been implemented, tested, and verified (backend only). Customer review creation has been adjusted so that all newly submitted reviews are created with `status: 'PENDING'` and require administrative moderation before becoming publicly visible in storefront listings or contributing to authoritative rating calculations. Defensive validation strips client-supplied status fields so customers cannot force auto-approval. Verified buyer order eligibility checks, duplicate review constraints (`409 Conflict`), and admin moderation endpoints (`GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, `DELETE /api/admin/reviews/:id`) remain fully intact. Public review queries (`findByProductId`) and server-authoritative star rating summaries (`getRatingSummary`) continue to strictly filter for `status: 'APPROVED'`. All 77 test suites (37 backend / 574 tests, 40 frontend / 258 tests, totaling 832 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and Prisma validation compliance.
+Step 25.5A (Admin Review Moderation UI Polish) has been fully implemented, tested, and verified. Building on Step 25.5, the admin review moderation console at `/admin/reviews` now features robust delete dialog accessibility (focus into modal on open, focus trap with Tab/Shift+Tab, Escape key dismissal, focus restoration to triggering delete button, and background scroll lock), resilient pagination after deletion (automatic boundary recalculation to previous valid page when the last item on a page is deleted, zero-item empty state handling, and duplicate request prevention), and a monotonic request-sequencing guard (`requestIdRef`) preventing stale out-of-order API responses from overwriting newer filter or search results. All 78 test suites (41 frontend / 281 tests, 37 backend / 574 tests, totaling 855 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and diff compliance.
 
 ---
 
@@ -602,18 +602,60 @@ Step 25.4 (Review Submission Lifecycle Policy Adjustment) has been implemented, 
 - [x] Added unit and API tests in `backend/tests/review.service.test.ts` and `backend/tests/review.api.test.ts` (+3 tests, total 574 backend tests passing, 8 skipped live DB tests).
 - [x] Zero database schema migrations required (`schema.prisma` already defines `@default(PENDING)` on `Review.status`).
 
+### Step 25.5: Frontend Admin Review Moderation Console (Completed)
+
+- [x] **Page Implementation (`AdminReviewsPage.tsx`)**:
+  - Implemented the admin review moderation console at `/admin/reviews` consistent with the art store aesthetic and admin design standards.
+  - Review listing displays customer name/email, product name/SKU, star rating, review title/body, verified purchase indicator, submission date, and moderation status.
+  - Status badges provide accessible icon and textual indicators (`Approved`, `Rejected`, `Pending Moderation`) without relying on color alone.
+  - Search input with form submission, status filter (`PENDING`, `APPROVED`, `REJECTED`, or all), artwork product selector, sort order (`newest`, `oldest`, `rating_desc`, `rating_asc`), and active filter count with clear action.
+  - Pagination using the shared `Pagination` component.
+  - Interactive moderation actions: approve pending/rejected reviews, reject pending/approved reviews, and permanently delete reviews with modal confirmation.
+  - Protection against duplicate action submissions with busy states (`Processing...`) and disabled buttons.
+  - Explicit Loading, Empty, and Error states with retry capability.
+- [x] **Navigation & Route Protection**:
+  - Registered `/admin/reviews` route in `frontend/src/App.tsx` guarded by `<AdminRoute>`.
+  - Added `Reviews` module link to `navItems` in `frontend/src/components/admin/AdminLayout.tsx`.
+  - Re-exported `AdminReviewsPage` in `frontend/src/pages/index.ts`.
+- [x] **Typed Service Layer**:
+  - Added `AdminReviewDto`, `AdminReviewProductDto`, `AdminReviewCustomerDto`, `AdminReviewListQuery`, `PaginatedAdminReviewsResponse`, and `UpdateReviewStatusInput` in `frontend/src/types/review.ts`.
+  - Added `fetchAdminReviews`, `updateAdminReviewStatus`, and `deleteAdminReview` in `frontend/src/services/admin-service.ts`.
+- [x] **Test Coverage**:
+  - Authored `frontend/tests/AdminReviewsPage.test.tsx` (12 tests) verifying list loading, filters (status, search, product, sort), approve/reject actions, delete modal confirmation/cancellation, error states, and empty states.
+  - Extended `frontend/tests/admin-service.test.ts` (+3 tests) verifying admin review service API calls.
+  - Extended `frontend/tests/AdminRoute.test.tsx` (+1 test) verifying navigation link rendering and route protection for `/admin/reviews`.
+  - All 41 frontend test suites (274 tests) and 37 backend test suites (574 tests) passing.
+
+### Step 25.5A: Admin Review Moderation UI Polish (Completed)
+
+- [x] **Delete Dialog Accessibility**:
+  - Automatically moves keyboard focus into the confirmation dialog container upon open.
+  - Traps `Tab` and `Shift+Tab` keyboard focus strictly within the dialog while active.
+  - Supports `Escape` key dismissal to cancel deletion cleanly.
+  - Restores keyboard focus to the triggering delete button upon dialog dismissal or closure.
+  - Locks body scroll and background interaction (`overflow: hidden`) while modal is active.
+- [x] **Pagination After Deletion**:
+  - Recalculates new total page count when a review is deleted.
+  - When the final review on the current page is deleted causing the current page to exceed the new total pages, automatically transitions to the previous valid page.
+  - Avoids duplicate API requests by relying on page state transition effects.
+  - Resets pagination and displays empty state when the only remaining review in the system is deleted.
+- [x] **Request Sequencing & Concurrency Guard**:
+  - Implemented monotonic `requestIdRef` sequencing in `AdminReviewsPage.tsx` to discard stale out-of-order network responses during rapid filter/search changes without modifying shared HTTP clients.
+- [x] **Test Coverage & Quality**:
+  - Authored 7 comprehensive tests in `frontend/tests/AdminReviewsPage.test.tsx` (19 tests total) covering modal focus entry, focus trapping, Escape key handling, focus restoration, pagination boundary decrement, zero-state transition, and race-condition response discard.
+  - All 41 frontend test suites (281 tests) and 37 backend test suites (574 tests) passing (855 total passing tests).
+
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, 25.3, and 25.4 complete; Step 25.5 frontend admin review moderation console next).
+- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, 25.3, 25.4, 25.5, and 25.5A complete; Step 25.6 customer-facing pending-review messaging and storefront sync next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.5: Frontend Admin Review Moderation Console (`/admin/reviews`).
-- Step 25.6: Storefront Feedback & Moderation Status Synchronization.
+- Step 25.6: Storefront Customer Feedback & Moderation Status Synchronization (customer-facing pending review submission feedback and badge).
 
 ---
 

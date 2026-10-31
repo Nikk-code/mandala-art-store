@@ -13,6 +13,7 @@ const navItems = [
   { label: 'Categories', to: '/admin/categories', end: false },
   { label: 'Inventory', to: '/admin/inventory', end: false },
   { label: 'Promotions', to: '/admin/coupons', end: false },
+  { label: 'Reviews', to: '/admin/reviews', end: false },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps): ReactNode {

@@ -19,6 +19,10 @@ import type {
   AdminOrderListQuery,
   UpdateAdminOrderStatusInput,
   PaginatedAdminOrdersResponse,
+  AdminReviewDto,
+  AdminReviewListQuery,
+  PaginatedAdminReviewsResponse,
+  UpdateReviewStatusInput,
 } from '@/types';
 
 /**
@@ -265,4 +269,49 @@ export async function updateAdminOrderStatus(
     input
   );
   return response.data;
+}
+
+// ============================================================================
+// REVIEW MODERATION
+// ============================================================================
+
+export async function fetchAdminReviews(
+  query: AdminReviewListQuery = {}
+): Promise<PaginatedAdminReviewsResponse> {
+  const params = new URLSearchParams();
+  if (query.page) params.set('page', query.page.toString());
+  if (query.pageSize) params.set('pageSize', query.pageSize.toString());
+  if (query.status) params.set('status', query.status);
+  if (query.productId) params.set('productId', query.productId);
+  if (query.search) params.set('search', query.search);
+  if (query.sort) params.set('sort', query.sort);
+
+  const queryString = params.toString();
+  const path = queryString ? `admin/reviews?${queryString}` : 'admin/reviews';
+
+  const response = await apiGet<{
+    success: boolean;
+    data: AdminReviewDto[];
+    pagination: PaginatedAdminReviewsResponse['pagination'];
+  }>(path);
+
+  return {
+    items: response.data,
+    pagination: response.pagination,
+  };
+}
+
+export async function updateAdminReviewStatus(
+  id: string,
+  input: UpdateReviewStatusInput
+): Promise<AdminReviewDto> {
+  const response = await apiPatch<{ success: boolean; data: AdminReviewDto }>(
+    `admin/reviews/${encodeURIComponent(id)}/status`,
+    input
+  );
+  return response.data;
+}
+
+export async function deleteAdminReview(id: string): Promise<void> {
+  await apiDelete<{ success: boolean; message: string }>(`admin/reviews/${encodeURIComponent(id)}`);
 }

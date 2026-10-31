@@ -105,6 +105,34 @@ describe('AdminRoute Guard', () => {
     expect(screen.getByText(/Admin Portal/i)).toBeInTheDocument();
     expect(screen.getByText(/Meera Deshmukh/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Storefront/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Reviews/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Sign Out/i })).toBeInTheDocument();
+  });
+
+  it('protects /admin/reviews route against unauthenticated and customer access', () => {
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      ...AuthContextModule.defaultAuthContextValue,
+      isLoading: false,
+      isAuthenticated: true,
+      user: customerUser,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin/reviews']}>
+        <Routes>
+          <Route
+            path="/admin/reviews"
+            element={
+              <AdminRoute>
+                <div data-testid="admin-reviews-content">Reviews Moderation Page</div>
+              </AdminRoute>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText(/Administrator Access Required/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('admin-reviews-content')).not.toBeInTheDocument();
   });
 });
