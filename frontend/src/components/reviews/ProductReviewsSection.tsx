@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type {
   ReviewDto,
@@ -25,6 +25,7 @@ import { Button, LoadingState, ErrorState } from '@/components/ui';
 export interface ActionFeedback {
   title: string;
   description?: string;
+  type?: 'success' | 'error';
 }
 
 export interface ProductReviewsSectionProps {
@@ -62,12 +63,17 @@ export function ProductReviewsSection({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<boolean>(false);
   const [isDeletingAuthorReview, setIsDeletingAuthorReview] = useState<boolean>(false);
 
+  const reviewsReqIdRef = useRef(0);
+  const eligReqIdRef = useRef(0);
+
   const loadReviewsData = useCallback(async () => {
+    const reqId = ++reviewsReqIdRef.current;
     setIsLoading(true);
     setError(null);
 
     try {
       const data = await fetchProductReviews(productId);
+      if (reqId !== reviewsReqIdRef.current) return;
       const safeReviews = Array.isArray(data?.reviews) ? data.reviews : [];
       const safeSummary = data?.summary || {
         averageRating: 0,
@@ -78,13 +84,17 @@ export function ProductReviewsSection({
       setSummary(safeSummary);
       onSummaryChange?.(safeSummary);
     } catch (err) {
+      if (reqId !== reviewsReqIdRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load reviews');
     } finally {
-      setIsLoading(false);
+      if (reqId === reviewsReqIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [productId, onSummaryChange]);
 
   const loadEligibility = useCallback(async () => {
+    const reqId = ++eligReqIdRef.current;
     if (!isAuthenticated) {
       setEligibility(null);
       return;
@@ -92,8 +102,10 @@ export function ProductReviewsSection({
 
     try {
       const elig = await checkReviewEligibility(productId);
+      if (reqId !== eligReqIdRef.current) return;
       setEligibility(elig);
     } catch {
+      if (reqId !== eligReqIdRef.current) return;
       // Graceful fallback for eligibility query failure
       setEligibility(null);
     }
@@ -121,6 +133,7 @@ export function ProductReviewsSection({
 
     await createReview(input);
     setActionFeedback({
+      type: 'success',
       title: 'Your review has been submitted successfully and is awaiting admin moderation.',
       description: 'Your review will appear publicly on the artwork page once it is approved.',
     });
@@ -143,12 +156,17 @@ export function ProductReviewsSection({
     };
 
     await updateReview(editingReview.id, input);
+    let description = 'Your updated feedback is now visible on the artwork page.';
+    if (editingReview.status === 'PENDING') {
+      description = 'Your review remains awaiting admin moderation before public display.';
+    } else if (editingReview.status === 'REJECTED') {
+      description = 'Your review was not approved during moderation and is not publicly visible.';
+    }
+
     setActionFeedback({
+      type: 'success',
       title: 'Your review has been successfully updated.',
-      description:
-        editingReview.status === 'PENDING'
-          ? 'Your review remains awaiting admin moderation before public display.'
-          : 'Your updated feedback is now visible on the artwork page.',
+      description,
     });
     setFormMode('closed');
     setEditingReview(null);
@@ -161,6 +179,7 @@ export function ProductReviewsSection({
     try {
       await deleteReview(reviewId);
       setActionFeedback({
+        type: 'success',
         title: 'Your review has been removed.',
       });
       setIsConfirmingDelete(false);
@@ -169,6 +188,13 @@ export function ProductReviewsSection({
         setEditingReview(null);
       }
       await Promise.all([loadReviewsData(), loadEligibility()]);
+    } catch (err) {
+      setActionFeedback({
+        type: 'error',
+        title: 'Unable to remove review.',
+        description: err instanceof Error ? err.message : 'Please try again later.',
+      });
+      setIsConfirmingDelete(false);
     } finally {
       setIsDeletingAuthorReview(false);
     }
@@ -280,32 +306,63 @@ export function ProductReviewsSection({
           )}
       </div>
 
-      {/* Success Notification Alert */}
+      {/* Notification Alert (Success or Error) */}
       {actionFeedback && (
         <div
-          role="status"
-          aria-live="polite"
-          className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs sm:text-sm text-emerald-900 flex items-start justify-between gap-3 shadow-sm animate-in fade-in"
+          role={actionFeedback.type === 'error' ? 'alert' : 'status'}
+          aria-live={actionFeedback.type === 'error' ? 'assertive' : 'polite'}
+          className={`rounded-xl p-4 text-xs sm:text-sm flex items-start justify-between gap-3 shadow-sm animate-in fade-in ${
+            actionFeedback.type === 'error'
+              ? 'bg-rose-50 border border-rose-200 text-rose-900'
+              : 'bg-emerald-50 border border-emerald-200 text-emerald-900'
+          }`}
         >
           <div className="flex items-start gap-2.5">
-            <svg
-              className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            {actionFeedback.type === 'error' ? (
+              <svg
+                className="w-5 h-5 text-rose-600 shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            )}
             <div className="space-y-1">
-              <p className="font-semibold text-emerald-900">{actionFeedback.title}</p>
+              <p
+                className={`font-semibold ${
+                  actionFeedback.type === 'error' ? 'text-rose-900' : 'text-emerald-900'
+                }`}
+              >
+                {actionFeedback.title}
+              </p>
               {actionFeedback.description && (
-                <p className="text-emerald-800 text-xs leading-relaxed">
+                <p
+                  className={`text-xs leading-relaxed ${
+                    actionFeedback.type === 'error' ? 'text-rose-800' : 'text-emerald-800'
+                  }`}
+                >
                   {actionFeedback.description}
                 </p>
               )}
@@ -314,7 +371,11 @@ export function ProductReviewsSection({
           <button
             type="button"
             onClick={() => setActionFeedback(null)}
-            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold p-1 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 shrink-0"
+            className={`text-xs font-bold p-1 rounded focus:outline-none shrink-0 ${
+              actionFeedback.type === 'error'
+                ? 'text-rose-700 hover:text-rose-900 focus-visible:ring-1 focus-visible:ring-rose-500'
+                : 'text-emerald-700 hover:text-emerald-900 focus-visible:ring-1 focus-visible:ring-emerald-500'
+            }`}
             aria-label="Dismiss notification"
           >
             ✕

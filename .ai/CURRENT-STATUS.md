@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-25
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.6 Complete)`
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.7 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.6 (Storefront Customer Feedback & Moderation Status Synchronization) has been fully implemented, tested, and verified. Customer-facing review interactions in `ProductReviewsSection.tsx` now explicitly inform patrons that newly created reviews are pending administrative moderation and will appear publicly once approved, eliminating misleading "published" messaging. Authenticated review authors can view their review's moderation status (`PENDING`, `APPROVED`, or `REJECTED`) within a dedicated author review panel on the artwork page, powered securely by the authenticated eligibility endpoint (`GET /api/reviews/eligibility/:productId`). Other customers and unauthenticated visitors cannot see another patron's pending or rejected reviews or moderation status. Public review listings and rating metrics strictly continue to display only `APPROVED` reviews. Review authors can edit or delete their pending or rejected feedback directly from the author panel with safe confirmation and instant eligibility refresh. All 78 test suites (41 frontend / 290 tests, 37 backend / 574 tests, totaling 864 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and diff compliance.
+Step 25.7 (Final Review Lifecycle Audit & Regression Hardening) has been fully implemented, verified, and quality-tested. The complete customer review domain—from authenticated verified-purchase submission, PENDING queue assignment, author moderation status visibility, edit/delete lifecycle, admin moderation actions (`GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, `DELETE /api/admin/reviews/:id`), to approved-only public display and rating metrics—has been exhaustively verified against all domain invariants and anti-IDOR security standards. Storefront customer feedback in `ProductReviewsSection.tsx` was hardened to ensure edits on REJECTED reviews explicitly communicate continued non-approval without falsely claiming public visibility; deletion failures catch errors and display accessible alerts (`role="alert"`); and monotonic request sequencing guards (`reviewsReqIdRef` and `eligReqIdRef`) protect against out-of-order asynchronous responses. Robust regression tests were added across both backend (`review.service.test.ts`, `review-validation.test.ts`) and frontend (`ProductReviewsSection.test.tsx`), validating status tampering prevention, moderation status preservation, and failure state announcements. All 78 test suites (41 frontend / 293 tests, 37 backend / 578 tests, totaling 871 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and diff compliance.
 
 ---
 
@@ -666,17 +666,32 @@ Step 25.6 (Storefront Customer Feedback & Moderation Status Synchronization) has
   - Authored 9 new comprehensive tests in `frontend/tests/ProductReviewsSection.test.tsx` (16 tests total in file) covering submission feedback, status badges, author-only visibility, absence from public lists, pending edit preservation, deletion eligibility refresh, and duplicate submission prevention.
   - All 41 frontend test suites (290 tests) and 37 backend test suites (574 tests) passing (864 total passing tests).
 
+### Step 25.7: Final Review Lifecycle Audit & Regression Hardening (Completed)
+
+- [x] **Storefront Customer Feedback Hardening (`ProductReviewsSection.tsx`)**:
+  - Hardened update feedback so that editing a `REJECTED` review accurately reports that the review remains not approved and is not publicly visible, eliminating erroneous "visible on artwork page" claims.
+  - Hardened delete error handling in `handleDeleteReview` with an accessible error notification (`role="alert"`, `aria-live="assertive"`) and safe confirmation reset, preventing unhandled promise rejections.
+  - Implemented monotonic request sequencing guards via `reviewsReqIdRef` and `eligReqIdRef` to discard stale out-of-order network responses.
+- [x] **Backend Status Tampering & Moderation Preservation**:
+  - Verified and tested `updateReview` domain protection against client status tampering: extraneous `status` in update payloads is stripped by `validateUpdateReviewInput` and never passed to the repository.
+  - Verified and tested that customer updates to `PENDING` reviews preserve `PENDING` status, and updates to `REJECTED` reviews preserve `REJECTED` status.
+- [x] **Comprehensive Regression Test Coverage**:
+  - Added 3 regression tests to `frontend/tests/ProductReviewsSection.test.tsx` (19 tests total in file) covering rejected-review edit messaging, deletion failure alert display, and out-of-order response discard.
+  - Added 3 regression tests to `backend/tests/review.service.test.ts` (41 tests total in file) covering update status tampering prevention, pending status preservation, and rejected status preservation.
+  - Added 1 regression test to `backend/tests/review-validation.test.ts` (29 tests total in file) asserting that `validateUpdateReviewInput` strips extraneous properties (`status`, `isVerifiedPurchase`, `userId`).
+  - Total test suite expanded to 871 passing tests across 78 test suites (41 frontend files / 293 tests, 37 backend files / 578 tests, plus 8 skipped live DB tests).
+
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, 25.3, 25.4, 25.5, 25.5A, and 25.6 complete; Step 25.7 review moderation regression and end-to-end audit next).
+- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1 through 25.7 complete; Step 25.7 independent audit and commit review next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.7: Review Moderation Milestone Audit & Validation.
+- Step 25.7: Independent Read-Only Audit & Commit Review.
 
 ---
 

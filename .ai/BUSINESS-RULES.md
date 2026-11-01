@@ -150,7 +150,7 @@ This document outlines the core business logic, domain constraints, and calculat
   - Administrative moderation REST API (`/api/admin/reviews`) provides the mechanism for inspecting, approving, or rejecting submitted reviews.
 - **Customer Review Ownership & Anti-IDOR**:
   - Customers can edit their rating, title, and body on their existing review (`PUT /api/reviews/:reviewId`).
-  - Editing a review preserves its moderation status (editing a pending review leaves it `PENDING` and does not grant automatic approval).
+  - Editing a review preserves its moderation status (editing a pending review leaves it `PENDING`, and editing a rejected review leaves it `REJECTED`; client updates modify only rating, title, and body, and never grant automatic approval or public visibility).
   - Customers can delete their own review (`DELETE /api/reviews/:reviewId`).
   - Deleting a review permanently removes the author's review record and resets review eligibility, allowing the customer to submit fresh feedback.
   - Any attempt to edit or delete another customer's review—or a nonexistent review—returns HTTP `404 Not Found` (`Review not found.`), preventing resource enumeration.

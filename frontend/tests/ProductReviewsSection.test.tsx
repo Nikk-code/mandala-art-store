@@ -660,5 +660,190 @@ describe('ProductReviewsSection Component', () => {
         )
       ).toBeInTheDocument();
     });
+
+    it('displays accurate feedback when editing a REJECTED review without claiming public visibility', async () => {
+      const rejectedReview: ReviewDto = {
+        ...mockReview,
+        id: 'rev-rejected',
+        status: 'REJECTED',
+        rating: 3,
+        title: 'Needs improvement',
+        body: 'Initial thoughts that were rejected.',
+      };
+
+      vi.spyOn(reviewService, 'fetchProductReviews').mockResolvedValue(mockReviewList);
+      vi.spyOn(reviewService, 'checkReviewEligibility').mockResolvedValue({
+        isEligible: true,
+        hasReviewed: true,
+        existingReview: rejectedReview,
+      });
+
+      const updateSpy = vi.spyOn(reviewService, 'updateReview').mockResolvedValue({
+        ...rejectedReview,
+        rating: 4,
+        body: 'Revised thoughts following moderation guidelines.',
+      });
+
+      await act(async () => {
+        renderSection(authUser);
+      });
+
+      const editBtn = screen.getByRole('button', { name: /Edit Your Review/i });
+      await act(async () => {
+        fireEvent.click(editBtn);
+      });
+
+      const bodyInput = screen.getByLabelText(/Written Review/i);
+      await act(async () => {
+        fireEvent.change(bodyInput, {
+          target: { value: 'Revised thoughts following moderation guidelines.' },
+        });
+      });
+
+      const submitBtn = screen.getByRole('button', { name: /Update Review/i });
+      await act(async () => {
+        fireEvent.click(submitBtn);
+      });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        rejectedReview.id,
+        expect.objectContaining({
+          body: 'Revised thoughts following moderation guidelines.',
+        })
+      );
+
+      // Verify accurate notification for REJECTED edit
+      expect(screen.getByText('Your review has been successfully updated.')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Your review was not approved during moderation and is not publicly visible.'
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Your updated feedback is now visible on the artwork page/i)
+      ).not.toBeInTheDocument();
+    });
+
+    it('handles deletion error gracefully and displays accessible error alert', async () => {
+      vi.spyOn(reviewService, 'fetchProductReviews').mockResolvedValue(mockReviewList);
+      vi.spyOn(reviewService, 'checkReviewEligibility').mockResolvedValue({
+        isEligible: true,
+        hasReviewed: true,
+        existingReview: pendingReview,
+      });
+
+      vi.spyOn(reviewService, 'deleteReview').mockRejectedValue(
+        new Error('Network error deleting review')
+      );
+
+      await act(async () => {
+        renderSection(authUser);
+      });
+
+      const authorDeleteBtn = screen.getByTestId('author-delete-button');
+      await act(async () => {
+        fireEvent.click(authorDeleteBtn);
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: 'Yes' });
+      await act(async () => {
+        fireEvent.click(confirmBtn);
+      });
+
+      // Role="alert" error notification is displayed
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(within(alert).getByText('Unable to remove review.')).toBeInTheDocument();
+      expect(within(alert).getByText('Network error deleting review')).toBeInTheDocument();
+
+      // Author panel remains intact
+      expect(screen.getByTestId('author-review-panel')).toBeInTheDocument();
+    });
+
+    it('discards stale out-of-order reviews responses if a newer request resolves first', async () => {
+      let resolveFirst!: (val: ReviewListResponseData) => void;
+      const firstPromise = new Promise<ReviewListResponseData>(res => {
+        resolveFirst = res;
+      });
+
+      const secondResult: ReviewListResponseData = {
+        reviews: [
+          {
+            ...mockReview,
+            id: 'newer-rev',
+            title: 'Newest Review Displayed',
+          },
+        ],
+        summary: {
+          averageRating: 5.0,
+          totalReviews: 1,
+          distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 1 },
+        },
+      };
+
+      const fetchSpy = vi
+        .spyOn(reviewService, 'fetchProductReviews')
+        .mockReturnValueOnce(firstPromise)
+        .mockResolvedValueOnce(secondResult);
+
+      vi.spyOn(reviewService, 'checkReviewEligibility').mockResolvedValue({
+        isEligible: false,
+        hasReviewed: false,
+        existingReview: null,
+      });
+
+      const { rerender } = render(
+        <BrowserRouter>
+          <AuthContext.Provider value={authUser}>
+            <ProductReviewsSection
+              productId="prod-stale"
+              productName={sampleProductName}
+              productSlug={sampleProductSlug}
+            />
+          </AuthContext.Provider>
+        </BrowserRouter>
+      );
+
+      // Re-render with new productId triggering second request
+      await act(async () => {
+        rerender(
+          <BrowserRouter>
+            <AuthContext.Provider value={authUser}>
+              <ProductReviewsSection
+                productId="prod-fresh"
+                productName={sampleProductName}
+                productSlug={sampleProductSlug}
+              />
+            </AuthContext.Provider>
+          </BrowserRouter>
+        );
+      });
+
+      // Second request resolves first
+      expect(screen.getByText('Newest Review Displayed')).toBeInTheDocument();
+
+      // First request resolves later with stale data
+      await act(async () => {
+        resolveFirst({
+          reviews: [
+            {
+              ...mockReview,
+              id: 'stale-rev',
+              title: 'Stale Old Review',
+            },
+          ],
+          summary: {
+            averageRating: 1.0,
+            totalReviews: 1,
+            distribution: { 1: 1, 2: 0, 3: 0, 4: 0, 5: 0 },
+          },
+        });
+      });
+
+      // Newer review is still displayed, stale data was ignored
+      expect(screen.getByText('Newest Review Displayed')).toBeInTheDocument();
+      expect(screen.queryByText('Stale Old Review')).not.toBeInTheDocument();
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
   });
 });

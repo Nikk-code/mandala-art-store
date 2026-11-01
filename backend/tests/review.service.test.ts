@@ -391,6 +391,66 @@ describe('ReviewService Domain Logic', () => {
         body: 'Updated review content that is long enough.',
       });
     });
+
+    it('ignores client-supplied status in update payload and does not alter review status', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue({
+        ...mockReview,
+        status: 'PENDING',
+      });
+      vi.spyOn(mockReviewRepo, 'update').mockResolvedValue({
+        ...mockReview,
+        status: 'PENDING',
+        rating: 5,
+      });
+
+      const updated = await service.updateReview(validUserId, validReviewId, {
+        rating: 5,
+        // @ts-expect-error Testing client status tampering during update
+        status: 'APPROVED',
+      });
+
+      // Verify status was stripped and not passed to repository update
+      expect(mockReviewRepo.update).toHaveBeenCalledWith(validReviewId, {
+        rating: 5,
+      });
+      expect(updated.status).toBe('PENDING');
+    });
+
+    it('preserves PENDING moderation status when author edits a pending review', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue({
+        ...mockReview,
+        status: 'PENDING',
+      });
+      vi.spyOn(mockReviewRepo, 'update').mockResolvedValue({
+        ...mockReview,
+        status: 'PENDING',
+        body: 'Updated pending text that meets length requirements.',
+      });
+
+      const updated = await service.updateReview(validUserId, validReviewId, {
+        body: 'Updated pending text that meets length requirements.',
+      });
+
+      expect(updated.status).toBe('PENDING');
+    });
+
+    it('preserves REJECTED moderation status when author edits a rejected review', async () => {
+      vi.spyOn(mockReviewRepo, 'findById').mockResolvedValue({
+        ...mockReview,
+        status: 'REJECTED',
+      });
+      vi.spyOn(mockReviewRepo, 'update').mockResolvedValue({
+        ...mockReview,
+        status: 'REJECTED',
+        body: 'Revised thoughts following moderation guidelines.',
+      });
+
+      const updated = await service.updateReview(validUserId, validReviewId, {
+        body: 'Revised thoughts following moderation guidelines.',
+      });
+
+      expect(updated.status).toBe('REJECTED');
+    });
   });
 
   // --------------------------------------------------------------------------

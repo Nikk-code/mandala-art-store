@@ -111,6 +111,19 @@ describe('Review Validation Utilities', () => {
     it('rejects update review input with no update fields', () => {
       expect(() => validateUpdateReviewInput({})).toThrow(ValidationError);
     });
+
+    it('strips extraneous properties like status from update input', () => {
+      const result = validateUpdateReviewInput({
+        rating: 5,
+        status: 'APPROVED',
+        isVerifiedPurchase: false,
+        userId: 'hacker-id',
+      });
+      expect(result.rating).toBe(5);
+      expect((result as Record<string, unknown>).status).toBeUndefined();
+      expect((result as Record<string, unknown>).isVerifiedPurchase).toBeUndefined();
+      expect((result as Record<string, unknown>).userId).toBeUndefined();
+    });
   });
 
   describe('validateReviewStatus', () => {
