@@ -1,13 +1,13 @@
 # Current Project Status
 
 **Last Updated**: 2026-10-25
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.5A Complete)`
+**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.6 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.5A (Admin Review Moderation UI Polish) has been fully implemented, tested, and verified. Building on Step 25.5, the admin review moderation console at `/admin/reviews` now features robust delete dialog accessibility (focus into modal on open, focus trap with Tab/Shift+Tab, Escape key dismissal, focus restoration to triggering delete button, and background scroll lock), resilient pagination after deletion (automatic boundary recalculation to previous valid page when the last item on a page is deleted, zero-item empty state handling, and duplicate request prevention), and a monotonic request-sequencing guard (`requestIdRef`) preventing stale out-of-order API responses from overwriting newer filter or search results. All 78 test suites (41 frontend / 281 tests, 37 backend / 574 tests, totaling 855 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and diff compliance.
+Step 25.6 (Storefront Customer Feedback & Moderation Status Synchronization) has been fully implemented, tested, and verified. Customer-facing review interactions in `ProductReviewsSection.tsx` now explicitly inform patrons that newly created reviews are pending administrative moderation and will appear publicly once approved, eliminating misleading "published" messaging. Authenticated review authors can view their review's moderation status (`PENDING`, `APPROVED`, or `REJECTED`) within a dedicated author review panel on the artwork page, powered securely by the authenticated eligibility endpoint (`GET /api/reviews/eligibility/:productId`). Other customers and unauthenticated visitors cannot see another patron's pending or rejected reviews or moderation status. Public review listings and rating metrics strictly continue to display only `APPROVED` reviews. Review authors can edit or delete their pending or rejected feedback directly from the author panel with safe confirmation and instant eligibility refresh. All 78 test suites (41 frontend / 290 tests, 37 backend / 574 tests, totaling 864 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and diff compliance.
 
 ---
 
@@ -645,17 +645,38 @@ Step 25.5A (Admin Review Moderation UI Polish) has been fully implemented, teste
   - Authored 7 comprehensive tests in `frontend/tests/AdminReviewsPage.test.tsx` (19 tests total) covering modal focus entry, focus trapping, Escape key handling, focus restoration, pagination boundary decrement, zero-state transition, and race-condition response discard.
   - All 41 frontend test suites (281 tests) and 37 backend test suites (574 tests) passing (855 total passing tests).
 
+### Step 25.6: Storefront Customer Feedback & Moderation Status Synchronization (Completed)
+
+- [x] **Customer Submission Feedback (`ProductReviewsSection.tsx`)**:
+  - Replaced misleading "published" wording with authoritative feedback: "Your review has been submitted successfully and is awaiting admin moderation. Your review will appear publicly on the artwork page once it is approved."
+  - Implemented accessible status notification banner with `role="status"`, `aria-live="polite"`, and dismiss button.
+  - Preserved existing form validation and submission error handling.
+  - Prevented duplicate submissions by maintaining disabled submit states while `isSubmitting` is active.
+- [x] **Author-Only Moderation Status Panel**:
+  - Displays moderation status (`PENDING`, `APPROVED`, or `REJECTED`) exclusively to the authenticated review author via existing `checkReviewEligibility` API (`GET /api/reviews/eligibility/:productId`).
+  - Rendered status badges with accessible icons and text (`Pending Moderation`, `Approved`, `Not Approved`).
+  - For pending and rejected reviews, displays an explanatory notice and content preview (star rating, title, and body) within the author panel since these reviews are excluded from the public listing.
+  - For approved reviews, confirms publication on the artwork page.
+  - Other customers and unauthenticated visitors cannot see another patron's author panel, pending/rejected reviews, or moderation status.
+  - Public review listings and rating summaries strictly continue to include only `APPROVED` reviews.
+- [x] **Review Editing & Deletion Lifecycle**:
+  - Review authors can edit a pending review, which preserves its `PENDING` moderation status without granting automatic approval.
+  - Review authors can delete their review from the author panel with confirmation, immediately refreshing eligibility and restoring review submission readiness.
+- [x] **Automated Test Coverage**:
+  - Authored 9 new comprehensive tests in `frontend/tests/ProductReviewsSection.test.tsx` (16 tests total in file) covering submission feedback, status badges, author-only visibility, absence from public lists, pending edit preservation, deletion eligibility refresh, and duplicate submission prevention.
+  - All 41 frontend test suites (290 tests) and 37 backend test suites (574 tests) passing (864 total passing tests).
+
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, 25.3, 25.4, 25.5, and 25.5A complete; Step 25.6 customer-facing pending-review messaging and storefront sync next).
+- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1, 25.2, 25.3, 25.4, 25.5, 25.5A, and 25.6 complete; Step 25.7 review moderation regression and end-to-end audit next).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.6: Storefront Customer Feedback & Moderation Status Synchronization (customer-facing pending review submission feedback and badge).
+- Step 25.7: Review Moderation Milestone Audit & Validation.
 
 ---
 

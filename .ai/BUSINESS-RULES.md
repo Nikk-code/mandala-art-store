@@ -144,11 +144,15 @@ This document outlines the core business logic, domain constraints, and calculat
 - **Moderation & Visibility Lifecycle**:
   - Verified-purchase customer reviews are created with `status: ReviewStatus.PENDING` and `isVerifiedPurchase: true`, requiring administrative moderation before becoming publicly visible.
   - Customers cannot supply or force approval status upon review submission; client-supplied status fields are stripped and ignored.
+  - Customer Submission Feedback: Upon successful submission of a new review, the storefront presents explicit confirmation that the review has been submitted successfully and is awaiting administrative moderation, clarifying that it will appear publicly on the artwork page once approved.
+  - Author-Only Moderation Status Visibility: The review author can view their review's moderation status (`PENDING`, `APPROVED`, or `REJECTED`) within a dedicated author review panel on the product page via the authenticated eligibility check (`GET /api/reviews/eligibility/:productId`). Other customers and unauthenticated visitors cannot view an author's pending or rejected reviews or moderation status.
   - Only reviews with `APPROVED` status are included in public average ratings, rating distributions, and storefront listings. Pending and rejected reviews do not affect public counts or score aggregates.
   - Administrative moderation REST API (`/api/admin/reviews`) provides the mechanism for inspecting, approving, or rejecting submitted reviews.
 - **Customer Review Ownership & Anti-IDOR**:
   - Customers can edit their rating, title, and body on their existing review (`PUT /api/reviews/:reviewId`).
+  - Editing a review preserves its moderation status (editing a pending review leaves it `PENDING` and does not grant automatic approval).
   - Customers can delete their own review (`DELETE /api/reviews/:reviewId`).
+  - Deleting a review permanently removes the author's review record and resets review eligibility, allowing the customer to submit fresh feedback.
   - Any attempt to edit or delete another customer's review—or a nonexistent review—returns HTTP `404 Not Found` (`Review not found.`), preventing resource enumeration.
 - **Server-Authoritative Metrics**:
   - Rating summaries (average rating, review count, and 1-to-5 star distribution) are computed authoritatively on the server.

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type {
   ReviewDto,
+  ReviewStatusType,
   RatingSummaryDto,
   ReviewEligibilityDto,
   CreateReviewInput,
@@ -18,7 +19,13 @@ import {
 import { RatingSummary } from './RatingSummary';
 import { ReviewCard } from './ReviewCard';
 import { ReviewForm } from './ReviewForm';
+import { StarRating } from './StarRating';
 import { Button, LoadingState, ErrorState } from '@/components/ui';
+
+export interface ActionFeedback {
+  title: string;
+  description?: string;
+}
 
 export interface ProductReviewsSectionProps {
   productId: string;
@@ -51,7 +58,9 @@ export function ProductReviewsSection({
   // Form display state: 'closed' | 'create' | 'edit'
   const [formMode, setFormMode] = useState<'closed' | 'create' | 'edit'>('closed');
   const [editingReview, setEditingReview] = useState<ReviewDto | null>(null);
-  const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<ActionFeedback | null>(null);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState<boolean>(false);
+  const [isDeletingAuthorReview, setIsDeletingAuthorReview] = useState<boolean>(false);
 
   const loadReviewsData = useCallback(async () => {
     setIsLoading(true);
@@ -111,8 +120,12 @@ export function ProductReviewsSection({
     };
 
     await createReview(input);
-    setActionSuccessMessage('Your review has been successfully published!');
+    setActionFeedback({
+      title: 'Your review has been submitted successfully and is awaiting admin moderation.',
+      description: 'Your review will appear publicly on the artwork page once it is approved.',
+    });
     setFormMode('closed');
+    setIsConfirmingDelete(false);
     await Promise.all([loadReviewsData(), loadEligibility()]);
   };
 
@@ -130,26 +143,108 @@ export function ProductReviewsSection({
     };
 
     await updateReview(editingReview.id, input);
-    setActionSuccessMessage('Your review has been successfully updated!');
+    setActionFeedback({
+      title: 'Your review has been successfully updated.',
+      description:
+        editingReview.status === 'PENDING'
+          ? 'Your review remains awaiting admin moderation before public display.'
+          : 'Your updated feedback is now visible on the artwork page.',
+    });
     setFormMode('closed');
     setEditingReview(null);
+    setIsConfirmingDelete(false);
     await Promise.all([loadReviewsData(), loadEligibility()]);
   };
 
   const handleDeleteReview = async (reviewId: string) => {
-    await deleteReview(reviewId);
-    setActionSuccessMessage('Your review has been removed.');
-    if (formMode !== 'closed') {
-      setFormMode('closed');
-      setEditingReview(null);
+    setIsDeletingAuthorReview(true);
+    try {
+      await deleteReview(reviewId);
+      setActionFeedback({
+        title: 'Your review has been removed.',
+      });
+      setIsConfirmingDelete(false);
+      if (formMode !== 'closed') {
+        setFormMode('closed');
+        setEditingReview(null);
+      }
+      await Promise.all([loadReviewsData(), loadEligibility()]);
+    } finally {
+      setIsDeletingAuthorReview(false);
     }
-    await Promise.all([loadReviewsData(), loadEligibility()]);
   };
 
   const handleStartEdit = (review: ReviewDto) => {
     setEditingReview(review);
     setFormMode('edit');
-    setActionSuccessMessage(null);
+    setActionFeedback(null);
+    setIsConfirmingDelete(false);
+  };
+
+  const renderAuthorStatusBadge = (status: ReviewStatusType): ReactNode => {
+    switch (status) {
+      case 'PENDING':
+        return (
+          <span
+            data-testid="author-review-status-badge"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200"
+          >
+            <svg
+              className="w-3.5 h-3.5 text-amber-600 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>Pending Moderation</span>
+          </span>
+        );
+      case 'APPROVED':
+        return (
+          <span
+            data-testid="author-review-status-badge"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200"
+          >
+            <svg
+              className="w-3.5 h-3.5 text-emerald-600 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Approved</span>
+          </span>
+        );
+      case 'REJECTED':
+        return (
+          <span
+            data-testid="author-review-status-badge"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200"
+          >
+            <svg
+              className="w-3.5 h-3.5 text-rose-600 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Not Approved</span>
+          </span>
+        );
+    }
   };
 
   return (
@@ -176,7 +271,8 @@ export function ProductReviewsSection({
               size="sm"
               onClick={() => {
                 setFormMode('create');
-                setActionSuccessMessage(null);
+                setActionFeedback(null);
+                setIsConfirmingDelete(false);
               }}
             >
               Write a Review
@@ -185,18 +281,43 @@ export function ProductReviewsSection({
       </div>
 
       {/* Success Notification Alert */}
-      {actionSuccessMessage && (
+      {actionFeedback && (
         <div
           role="status"
-          className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs sm:text-sm text-emerald-800 font-medium flex items-center justify-between"
+          aria-live="polite"
+          className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-xs sm:text-sm text-emerald-900 flex items-start justify-between gap-3 shadow-sm animate-in fade-in"
         >
-          <span>{actionSuccessMessage}</span>
+          <div className="flex items-start gap-2.5">
+            <svg
+              className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div className="space-y-1">
+              <p className="font-semibold text-emerald-900">{actionFeedback.title}</p>
+              {actionFeedback.description && (
+                <p className="text-emerald-800 text-xs leading-relaxed">
+                  {actionFeedback.description}
+                </p>
+              )}
+            </div>
+          </div>
           <button
             type="button"
-            onClick={() => setActionSuccessMessage(null)}
-            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold"
+            onClick={() => setActionFeedback(null)}
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold p-1 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 shrink-0"
+            aria-label="Dismiss notification"
           >
-            Dismiss
+            ✕
           </button>
         </div>
       )}
@@ -243,7 +364,7 @@ export function ProductReviewsSection({
               />
             )}
 
-            {/* Eligibility Banners when form is closed */}
+            {/* Eligibility Banners & Author Review Panel when form is closed */}
             {formMode === 'closed' && (
               <div className="rounded-xl border border-art-stone/60 bg-stone-50/70 p-4">
                 {!isAuthenticated ? (
@@ -261,19 +382,173 @@ export function ProductReviewsSection({
                 ) : eligibility ? (
                   eligibility.isEligible ? (
                     eligibility.hasReviewed && eligibility.existingReview ? (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
-                        <p className="text-stone-700">
-                          You have reviewed this artwork. You can update or remove your feedback at
-                          any time.
-                        </p>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleStartEdit(eligibility.existingReview!)}
-                        >
-                          Edit Your Review
-                        </Button>
+                      <div data-testid="author-review-panel" className="space-y-3">
+                        {/* Header: Title, Status Badge, Edit/Delete Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-art-stone/60 pb-3">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <h4 className="font-serif text-sm sm:text-base font-bold text-art-charcoal">
+                              Your Review
+                            </h4>
+                            {renderAuthorStatusBadge(eligibility.existingReview.status)}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {!isConfirmingDelete ? (
+                              <>
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => handleStartEdit(eligibility.existingReview!)}
+                                >
+                                  Edit Your Review
+                                </Button>
+                                <button
+                                  type="button"
+                                  data-testid="author-delete-button"
+                                  onClick={() => setIsConfirmingDelete(true)}
+                                  className="text-xs font-semibold text-stone-500 hover:text-red-600 transition-colors p-1"
+                                  aria-label="Delete author review"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 p-1.5 rounded-lg text-xs">
+                                <span className="text-red-700 font-medium text-[11px]">
+                                  Delete review?
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteReview(eligibility.existingReview!.id)}
+                                  disabled={isDeletingAuthorReview}
+                                  className="text-xs font-bold text-red-700 hover:underline px-1 disabled:opacity-50"
+                                >
+                                  {isDeletingAuthorReview ? 'Deleting...' : 'Yes'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsConfirmingDelete(false)}
+                                  disabled={isDeletingAuthorReview}
+                                  className="text-xs font-medium text-stone-600 hover:underline px-1"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Status explanation notice */}
+                        {eligibility.existingReview.status === 'PENDING' && (
+                          <div
+                            data-testid="author-status-pending-notice"
+                            className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900"
+                          >
+                            <svg
+                              className="w-4 h-4 text-amber-600 shrink-0 mt-0.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <div className="space-y-0.5">
+                              <p className="font-semibold">Awaiting Admin Moderation</p>
+                              <p className="text-amber-800 leading-relaxed">
+                                Your review is awaiting admin moderation and is not yet publicly
+                                visible. It will appear on the artwork page once approved.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {eligibility.existingReview.status === 'APPROVED' && (
+                          <div
+                            data-testid="author-status-approved-notice"
+                            className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-xs text-emerald-900"
+                          >
+                            <svg
+                              className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <div className="space-y-0.5">
+                              <p className="font-semibold">Approved & Publicly Visible</p>
+                              <p className="text-emerald-800 leading-relaxed">
+                                You have reviewed this artwork. Your review is approved and
+                                published below. You can update or remove your feedback at any time.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {eligibility.existingReview.status === 'REJECTED' && (
+                          <div
+                            data-testid="author-status-rejected-notice"
+                            className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-50/80 border border-rose-200/80 text-xs text-rose-900"
+                          >
+                            <svg
+                              className="w-4 h-4 text-rose-600 shrink-0 mt-0.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                              />
+                            </svg>
+                            <div className="space-y-0.5">
+                              <p className="font-semibold">Not Approved</p>
+                              <p className="text-rose-800 leading-relaxed">
+                                This review was not approved during moderation and is not publicly
+                                visible. You can edit your review to revise your thoughts or delete
+                                it.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Author Review Preview for PENDING or REJECTED reviews (since they are not in the public list below) */}
+                        {eligibility.existingReview.status !== 'APPROVED' && (
+                          <div className="bg-white/80 rounded-xl p-3.5 border border-stone-200 text-xs space-y-2">
+                            <div className="flex items-center gap-2">
+                              <StarRating rating={eligibility.existingReview.rating} size="sm" />
+                              <span className="font-bold text-art-charcoal text-xs">
+                                {eligibility.existingReview.rating} of 5 stars
+                              </span>
+                            </div>
+                            {eligibility.existingReview.title && (
+                              <h5 className="font-serif font-bold text-art-charcoal text-xs sm:text-sm">
+                                {eligibility.existingReview.title}
+                              </h5>
+                            )}
+                            {eligibility.existingReview.body && (
+                              <p className="text-stone-700 leading-relaxed whitespace-pre-line">
+                                {eligibility.existingReview.body}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm">
@@ -287,7 +562,8 @@ export function ProductReviewsSection({
                           size="sm"
                           onClick={() => {
                             setFormMode('create');
-                            setActionSuccessMessage(null);
+                            setActionFeedback(null);
+                            setIsConfirmingDelete(false);
                           }}
                         >
                           Write a Review
