@@ -9,7 +9,7 @@ export function setAuthCookie(res: Response, token: string): void {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: 'lax',
+    sameSite: config.isProduction ? 'none' : 'lax',
     maxAge: COOKIE_MAX_AGE_MS,
     path: '/',
   });
@@ -19,7 +19,7 @@ export function clearAuthCookie(res: Response): void {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: 'lax',
+    sameSite: config.isProduction ? 'none' : 'lax',
     path: '/',
   });
 }
