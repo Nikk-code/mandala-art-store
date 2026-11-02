@@ -44,6 +44,7 @@ export interface CreateOrderData {
   userId?: string | null;
   customerEmail: string;
   customerPhone: string;
+  guestAccessTokenHash?: string | null;
   subtotal: number;
   discountAmount?: number;
   shippingFee?: number;
@@ -140,6 +141,7 @@ export class OrderRepository {
         userId: data.userId ?? null,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
+        guestAccessTokenHash: data.guestAccessTokenHash ?? null,
         status: 'PENDING_PAYMENT',
         subtotal: data.subtotal,
         discountAmount: data.discountAmount ?? 0,
@@ -232,7 +234,16 @@ export class OrderRepository {
     payment: Prisma.PaymentGetPayload<Record<string, never>>;
   }> {
     return this.prismaClient.$transaction(async tx => {
-      // 1. Fetch current order and associated payment records
+      // 1. Acquire exclusive row lock on the Order row immediately to serialize with expiration
+      if (typeof tx.$queryRaw === 'function') {
+        await tx.$queryRaw`
+          SELECT "id" FROM "orders"
+          WHERE "id" = ${orderId}::uuid
+          FOR UPDATE
+        `;
+      }
+
+      // Fetch current order and associated payment records under lock
       const currentOrder = await tx.order.findUnique({
         where: { id: orderId },
         include: {
@@ -253,6 +264,37 @@ export class OrderRepository {
       // Idempotency: If payment is already CAPTURED, return immediately
       if (paymentRecord.status === 'CAPTURED') {
         return { order: currentOrder, payment: paymentRecord };
+      }
+
+      // Late capture reconciliation: Order was already CANCELLED (e.g., reservation expired or cancelled by customer)
+      if (currentOrder.status === 'CANCELLED') {
+        const updatedPayment = await tx.payment.update({
+          where: { id: paymentId },
+          data: {
+            status: 'CAPTURED',
+            providerPaymentId,
+            providerSignature: providerSignature ?? null,
+            paidAt: new Date(),
+          },
+        });
+
+        const reconciliationBanner = `[EXPIRED_ORDER_PAYMENT_RECONCILIATION] Payment of ₹${(currentOrder.total / 100).toFixed(2)} was captured by the gateway, but order "${currentOrder.orderNumber}" was previously cancelled (stock was released). Order remains cancelled for administrative reconciliation or refund.`;
+        const notesToPersist = currentOrder.customerNotes
+          ? `${currentOrder.customerNotes}\n\n${reconciliationBanner}`
+          : reconciliationBanner;
+
+        const updatedOrder = await tx.order.update({
+          where: { id: orderId },
+          data: {
+            customerNotes: notesToPersist,
+          },
+          include: {
+            items: true,
+            payments: true,
+          },
+        });
+
+        return { order: updatedOrder, payment: updatedPayment };
       }
 
       let targetOrderStatus: OrderStatus = 'CONFIRMED';
@@ -319,6 +361,34 @@ export class OrderRepository {
               customerNotesToPersist = currentOrder.customerNotes
                 ? `${currentOrder.customerNotes}\n\n${reconciliationBanner}`
                 : reconciliationBanner;
+
+              // Restore reserved product inventory since order cannot be confirmed
+              if (currentOrder.items && Array.isArray(currentOrder.items)) {
+                for (const item of currentOrder.items) {
+                  if (!item.productId) continue;
+                  const product = await tx.product.findUnique({
+                    where: { id: item.productId },
+                  });
+                  if (product && product.availability !== 'MADE_TO_ORDER') {
+                    await tx.product.update({
+                      where: { id: product.id },
+                      data: {
+                        stockQuantity: { increment: item.quantity },
+                      },
+                    });
+                    await tx.product.updateMany({
+                      where: {
+                        id: product.id,
+                        availability: 'SOLD_OUT',
+                        stockQuantity: { gt: 0 },
+                      },
+                      data: {
+                        availability: 'IN_STOCK',
+                      },
+                    });
+                  }
+                }
+              }
             }
           }
         }
@@ -335,20 +405,78 @@ export class OrderRepository {
         },
       });
 
-      // 4. Update Order to determined status (CONFIRMED or CANCELLED)
-      const updatedOrder = await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: targetOrderStatus,
-          ...(customerNotesToPersist !== undefined
-            ? { customerNotes: customerNotesToPersist }
-            : {}),
-        },
-        include: {
-          items: true,
-          payments: true,
-        },
-      });
+      // 4. Update Order to determined status (guard against overwriting CANCELLED with CONFIRMED)
+      let updatedOrder: Prisma.OrderGetPayload<{
+        include: { items: true; payments: true };
+      }> | null = null;
+      if (targetOrderStatus === 'CONFIRMED') {
+        let confirmResult = { count: 1 };
+        if (typeof tx.order.updateMany === 'function') {
+          confirmResult = await tx.order.updateMany({
+            where: {
+              id: orderId,
+              status: 'PENDING_PAYMENT',
+            },
+            data: {
+              status: 'CONFIRMED',
+              ...(customerNotesToPersist !== undefined
+                ? { customerNotes: customerNotesToPersist }
+                : {}),
+            },
+          });
+        }
+
+        if (confirmResult.count === 0) {
+          // The order was transitioned away from PENDING_PAYMENT (e.g. cancelled by expiration)
+          const latestOrder = await tx.order.findUnique({
+            where: { id: orderId },
+            include: { items: true, payments: true },
+          });
+
+          if (latestOrder && latestOrder.status === 'CANCELLED') {
+            const reconciliationBanner = `[EXPIRED_ORDER_PAYMENT_RECONCILIATION] Payment of ₹${(currentOrder.total / 100).toFixed(2)} was captured by the gateway, but order "${currentOrder.orderNumber}" was previously cancelled (stock was released). Order remains cancelled for administrative reconciliation or refund.`;
+            const notes = latestOrder.customerNotes
+              ? `${latestOrder.customerNotes}\n\n${reconciliationBanner}`
+              : reconciliationBanner;
+
+            updatedOrder = await tx.order.update({
+              where: { id: orderId },
+              data: { customerNotes: notes },
+              include: { items: true, payments: true },
+            });
+          } else {
+            updatedOrder = latestOrder ?? currentOrder;
+          }
+        } else {
+          updatedOrder = await tx.order.update({
+            where: { id: orderId },
+            data: {
+              status: 'CONFIRMED',
+              ...(customerNotesToPersist !== undefined
+                ? { customerNotes: customerNotesToPersist }
+                : {}),
+            },
+            include: {
+              items: true,
+              payments: true,
+            },
+          });
+        }
+      } else {
+        updatedOrder = await tx.order.update({
+          where: { id: orderId },
+          data: {
+            status: 'CANCELLED',
+            ...(customerNotesToPersist !== undefined
+              ? { customerNotes: customerNotesToPersist }
+              : {}),
+          },
+          include: {
+            items: true,
+            payments: true,
+          },
+        });
+      }
 
       return { order: updatedOrder, payment: updatedPayment };
     });
@@ -369,6 +497,114 @@ export class OrderRepository {
         failureReason,
         ...(providerPaymentId ? { providerPaymentId } : {}),
       },
+    });
+  }
+
+  /**
+   * Atomically transitions a PENDING_PAYMENT order to CANCELLED and restores reserved inventory.
+   * Guaranteed to be race-safe:
+   * - Uses conditional updateMany ({ id, status: 'PENDING_PAYMENT' }).
+   * - If the order was already transitioned (e.g. by payment capture or another worker),
+   *   updateMany returns count === 0, and NO inventory is restored.
+   * - Restores stockQuantity and availability (SOLD_OUT -> IN_STOCK) for non-MADE_TO_ORDER products.
+   * - Marks any PENDING payments as FAILED.
+   * - Releases coupon capacity consistently (since occupied slots count only PENDING_PAYMENT orders).
+   */
+  async cancelOrderAndRestoreStock(
+    orderId: string,
+    reason: string
+  ): Promise<{ cancelled: boolean; restoredItems: number }> {
+    return this.prismaClient.$transaction(async tx => {
+      // 1. Acquire exclusive row lock on the Order row immediately to serialize with payment capture
+      if (typeof tx.$queryRaw === 'function') {
+        await tx.$queryRaw`
+          SELECT "id" FROM "orders"
+          WHERE "id" = ${orderId}::uuid
+          FOR UPDATE
+        `;
+      }
+
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: { items: true, payments: true },
+      });
+
+      if (!order || order.status !== 'PENDING_PAYMENT') {
+        return { cancelled: false, restoredItems: 0 };
+      }
+
+      // If order already has a captured or authorized payment, never cancel or restore stock
+      const hasCaptured = order.payments.some(
+        p => p.status === 'CAPTURED' || p.status === 'AUTHORIZED'
+      );
+      if (hasCaptured) {
+        return { cancelled: false, restoredItems: 0 };
+      }
+
+      // Atomic conditional status update: only succeeds if status is still PENDING_PAYMENT
+      const updateResult = await tx.order.updateMany({
+        where: {
+          id: order.id,
+          status: 'PENDING_PAYMENT',
+        },
+        data: {
+          status: 'CANCELLED',
+          customerNotes: order.customerNotes ? `${order.customerNotes}\n\n${reason}` : reason,
+        },
+      });
+
+      if (updateResult.count === 0) {
+        return { cancelled: false, restoredItems: 0 };
+      }
+
+      // Mark pending payments as FAILED
+      await tx.payment.updateMany({
+        where: {
+          orderId: order.id,
+          status: 'PENDING',
+        },
+        data: {
+          status: 'FAILED',
+          failureReason: reason,
+        },
+      });
+
+      // Atomically restore product quantities and availability
+      let restoredItems = 0;
+      if (order.items && Array.isArray(order.items)) {
+        for (const item of order.items) {
+          if (!item.productId) continue;
+
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+          });
+
+          if (product && product.availability !== 'MADE_TO_ORDER') {
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                stockQuantity: { increment: item.quantity },
+              },
+            });
+
+            // If product was SOLD_OUT and is now > 0, restore IN_STOCK status
+            await tx.product.updateMany({
+              where: {
+                id: product.id,
+                availability: 'SOLD_OUT',
+                stockQuantity: { gt: 0 },
+              },
+              data: {
+                availability: 'IN_STOCK',
+              },
+            });
+
+            restoredItems += item.quantity;
+          }
+        }
+      }
+
+      return { cancelled: true, restoredItems };
     });
   }
 

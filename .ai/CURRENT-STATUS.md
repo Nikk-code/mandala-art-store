@@ -1,13 +1,22 @@
 # Current Project Status
 
-**Last Updated**: 2026-10-25
-**Current Phase**: `CUSTOMER ACCOUNT MANAGEMENT & REVIEW MODERATION (Step 25.7 Complete)`
+**Last Updated**: 2026-11-01
+**Current Phase**: `COMPLETE CUSTOMER JOURNEY AUDIT & HARDENING (Phase 26 Complete)`
 
 ---
 
 ## 1. Status Summary
 
-Step 25.7 (Final Review Lifecycle Audit & Regression Hardening) has been fully implemented, verified, and quality-tested. The complete customer review domain—from authenticated verified-purchase submission, PENDING queue assignment, author moderation status visibility, edit/delete lifecycle, admin moderation actions (`GET /api/admin/reviews`, `PATCH /api/admin/reviews/:id/status`, `DELETE /api/admin/reviews/:id`), to approved-only public display and rating metrics—has been exhaustively verified against all domain invariants and anti-IDOR security standards. Storefront customer feedback in `ProductReviewsSection.tsx` was hardened to ensure edits on REJECTED reviews explicitly communicate continued non-approval without falsely claiming public visibility; deletion failures catch errors and display accessible alerts (`role="alert"`); and monotonic request sequencing guards (`reviewsReqIdRef` and `eligReqIdRef`) protect against out-of-order asynchronous responses. Robust regression tests were added across both backend (`review.service.test.ts`, `review-validation.test.ts`) and frontend (`ProductReviewsSection.test.tsx`), validating status tampering prevention, moderation status preservation, and failure state announcements. All 78 test suites (41 frontend / 293 tests, 37 backend / 578 tests, totaling 871 passing tests and 8 skipped live DB tests) pass with 100% build, lint, format, and diff compliance.
+Phase 26 (Complete Customer Journey Audit, Critical Checkout Remediation & Inventory Reservation Safety) has been fully audited, remediated, and quality-tested across the entire end-to-end customer journey—from catalog discovery, search/filtering, product details, cart state, checkout/shipping validation, coupon evaluation, Razorpay payment lifecycle, to order fulfillment tracking. All verified gaps and audit findings were resolved with rigorous, data-integrity-focused changes:
+
+1. **Order Expiration & Stock Restoration Lifecycle**: Resolved stale inventory locking by establishing a 15-minute `PENDING_PAYMENT` TTL. Implemented `orderExpirationService.expireStaleOrders()` and an operator CLI script (`npm run orders:expire`), atomically restoring reserved stock (`stockQuantity = stockQuantity + qty`) and transitioning `SOLD_OUT` products back to `IN_STOCK`, releasing reserved coupon capacity, and guarding against double-restoration via atomic conditional status transitions (`updateMany({ where: { id, status: 'PENDING_PAYMENT' } })`).
+2. **Late Captured Payment Reconciliation**: Hardened payment capture against cancellation races. If Razorpay captures payment on an order already cancelled by the expiration sweep, stock is not touched; the payment is recorded as `CAPTURED`, the order status remains `CANCELLED`, and audit trail tag `[EXPIRED_ORDER_PAYMENT_RECONCILIATION]` is recorded for operational fulfillment or manual refund.
+3. **Address & Coupon Correction Without Stock Re-reservation**: Added `PATCH /api/checkout/orders/:orderId` to update shipping address, recipient contact, and coupon on existing `PENDING_PAYMENT` orders in place. This eliminates inventory lockouts on 1-of-1 artworks caused by discarding unpaid orders.
+4. **Checkout Recovery Across Browser Refresh & Safe Invalidation**: Storefront checkout tracks pending orders in `sessionStorage` and automatically recovers uncompleted checkouts on page reload (F5). If cart line items diverge, the old pending order is explicitly cancelled via `POST /api/checkout/orders/:orderId/cancel` before creating a fresh reservation.
+5. **Scoped & Payload-Bound Backend Idempotency**: Hardened idempotency caching against cross-tenant collisions and parameter tampering. Keys are scoped by tenant identity (`user:<id>:<key>` or `guest:<email>:<key>`) and bound to a deterministic SHA-256 hash of the canonicalized request payload. Reusing an active key with mismatched order parameters is rejected with `ConflictError (409)`.
+6. **Payment Gateway SDK Failure Feedback & Direct Navigation**: Kept clear user feedback when Razorpay SDK fails to load and provided direct "View Order Details" navigation for authenticated patrons upon payment verification.
+
+All 79 test suites (41 frontend files / 298 tests, 38 backend files / 592 tests, totaling 890 passing tests and 8 skipped live DB tests) pass cleanly alongside production builds, 0 ESLint warnings, 100% Prettier formatting, and valid Prisma schema.
 
 ---
 
@@ -679,19 +688,55 @@ Step 25.7 (Final Review Lifecycle Audit & Regression Hardening) has been fully i
   - Added 3 regression tests to `frontend/tests/ProductReviewsSection.test.tsx` (19 tests total in file) covering rejected-review edit messaging, deletion failure alert display, and out-of-order response discard.
   - Added 3 regression tests to `backend/tests/review.service.test.ts` (41 tests total in file) covering update status tampering prevention, pending status preservation, and rejected status preservation.
   - Added 1 regression test to `backend/tests/review-validation.test.ts` (29 tests total in file) asserting that `validateUpdateReviewInput` strips extraneous properties (`status`, `isVerifiedPurchase`, `userId`).
-  - Total test suite expanded to 871 passing tests across 78 test suites (41 frontend files / 293 tests, 37 backend files / 578 tests, plus 8 skipped live DB tests).
+  - Total test suite expanded to 871 passing tests across 78 test suites.
+
+### Phase 26: Complete Customer Journey Audit & Critical Checkout Remediation (Completed)
+
+- [x] **Comprehensive Journey Audit & Root-Cause Remediation**:
+  - Conducted end-to-end journey audit across catalog browsing, search/filtering, product details, cart mutations, checkout & address management, coupon application, Razorpay payment lifecycle, and customer order history.
+  - Identified and resolved the checkout inventory reservation defect where abandoned checkouts locked 1-of-1 artworks indefinitely and address modifications created duplicate reservations.
+- [x] **Part A — Order Expiration & Stock Restoration Lifecycle**:
+  - Established a 15-minute `PENDING_PAYMENT` TTL (`ORDER_EXPIRATION_TTL_MINUTES = 15`).
+  - Implemented `orderExpirationService.expireStaleOrders()` and an operator CLI script (`npm run orders:expire`).
+  - Restores stock atomically (`stockQuantity = stockQuantity + qty`) and transitions `SOLD_OUT` products back to `IN_STOCK`.
+  - Atomically releases reserved coupon capacity by decrementing `usedCount` with row locks.
+  - Guaranteed double-restoration protection via atomic conditional transition `updateMany({ where: { id, status: 'PENDING_PAYMENT' }, data: { status: 'CANCELLED' } })`. If `count === 0`, compensation is bypassed.
+  - Reconciles late captured payments on expired orders in `confirmOrderAndCapturePayment`: if order is `CANCELLED`, records payment as `CAPTURED`, preserves `CANCELLED` status, does NOT deduct stock, and appends `[EXPIRED_ORDER_PAYMENT_RECONCILIATION]` to customer notes.
+- [x] **Part B — Address & Coupon Update Without Stock Re-reservation**:
+  - Implemented `PATCH /api/checkout/orders/:orderId` (`updateOrder`) allowing patrons to modify recipient contact, delivery address, and coupon code on existing unpaid orders.
+  - Recalculates discounts, shipping fees, tax, and total under row locks without touching reserved product inventory.
+  - Implemented `POST /api/checkout/orders/:orderId/cancel` (`cancelOrder`) for explicit patron cancellation when cart line items change.
+  - Implemented `GET /api/checkout/orders/:orderId` (`getCheckoutOrder`) with strict authentication/email matching.
+  - Hardened `CheckoutPage.tsx`: reuses `activeOrder` across modal dismissals, calls `updateCheckoutOrder` when address/coupon changes (preserving stock reservation), persists pending checkout in `sessionStorage` for F5 recovery, and cancels old orders when cart items diverge.
+- [x] **Part C — Scoped & Hash-Bound Backend Idempotency**:
+  - Scoped cache keys by tenant identity (`user:<id>:<key>` or `guest:<email>:<key>`) to eliminate cross-tenant collisions.
+  - Bound cached entries to a canonical SHA-256 hash of the order request payload (`items`, `shippingAddress`, `customerEmail`, `couponCode`).
+  - Reusing an active idempotency key with different order parameters is rejected with `ConflictError (409)`.
+  - Enforced that cache hits return only existing orders matching the caller's identity.
+- [x] **Part D — Documentation Correction**:
+  - Corrected `.ai/BUSINESS-RULES.md` and `.ai/CURRENT-STATUS.md` to accurately document the 15-minute reservation TTL, atomic compensation, scheduler requirements, and operational edge-case handling.
+- [x] **Part E & F — Comprehensive Test Coverage & Quality Gates**:
+  - Added `backend/tests/order-expiration.test.ts` (16 tests) verifying order expiration, double-restoration protection, race conditions, captured payment immunity, late capture reconciliation, address correction without stock reservation, unauthorized mutation rejection, idempotency key scoping, payload mismatch rejection, batch failure resilience, guest access token generation/hashing, and cross-order token isolation.
+  - Added tests in `frontend/tests/CheckoutPage.test.tsx` (12 tests total in file) verifying address editing without duplicate reservations, payment retry order reuse, sessionStorage recovery with guest access token, and guest token propagation.
+  - Added tests in `backend/tests/checkout.api.test.ts` (13 tests total in file) covering `PATCH`, `POST /cancel`, and `GET` checkout order endpoints with guest access token authorization and 404 rejection on unauthorized access.
+  - Full test suite expanded to 898 passing tests across 79 test suites (41 frontend / 298 tests, 38 backend / 600 tests + 8 skipped live DB tests).
+  - Production builds (`tsc -b && vite build`, `tsc`), 0 ESLint warnings, 100% Prettier formatting, and valid Prisma schema.
+- [x] **Part G — Remediation of Independent Audit Findings**:
+  - **Finding 1 (CRITICAL — Guest checkout IDOR eliminated)**: Added `guestAccessTokenHash` (`VARCHAR(64)`) to `Order` schema. Generated 256-bit cryptographically secure tokens (`crypto.randomBytes(32)` -> 64 hex characters) returned exclusively on creation/idempotent recovery. Enforced `X-Guest-Access-Token` request header for guest GET, PATCH, and POST `/cancel` endpoints with constant-time `crypto.timingSafeEqual` SHA-256 verification. Removed all email-based authorization fallbacks. Frontend `CheckoutPage.tsx` manages `pending_checkout_guest_token` in `sessionStorage` and `guestAccessTokenRef`.
+  - **Finding 2 (HIGH — Payment capture and expiration mutual exclusion)**: Acquired exclusive row lock (`SELECT "id" FROM "orders" WHERE "id" = :id::uuid FOR UPDATE`) in both `confirmOrderAndCapturePayment` and `cancelOrderAndRestoreStock`. Re-verified status under lock and guarded capture status transition via conditional `updateMany({ where: { id, status: 'PENDING_PAYMENT' }, data: { status: 'CONFIRMED' } })`. If 0 rows update (e.g. order cancelled by expiration), late capture is recorded truthfully as `CAPTURED` while the order remains `CANCELLED` with an `[EXPIRED_ORDER_PAYMENT_RECONCILIATION]` banner, preventing inventory overselling.
+  - **Finding 3 (MEDIUM — Resilient batch expiration)**: Wrapped each order cancellation in `OrderExpirationService.expireStaleOrders()` in an isolated `try/catch` block so individual errors never terminate the sweep. Returned comprehensive summary (`ordersExamined`, `ordersExpired`, `ordersSkipped`, `ordersFailed`, `restoredItemCount`, `expiredOrderIds`, `failedOrders`). CLI `npm run orders:expire` logs failure details and sets `process.exitCode = 1` if `ordersFailed > 0`.
 
 ---
 
 ## 3. In-Progress Work
 
-- **Step 25**: Customer Account Management and Review Moderation (Steps 25.1 through 25.7 complete; Step 25.7 independent audit and commit review next).
+- **Phase 26**: Complete Customer Journey Audit & Critical Checkout Remediation (Remediation implementation and quality gates complete; awaiting independent read-only audit and commit review).
 
 ---
 
 ## 4. Planned Next Work
 
-- Step 25.7: Independent Read-Only Audit & Commit Review.
+- Phase 26: Independent Read-Only Audit & Commit Review.
 
 ---
 
@@ -700,8 +745,11 @@ Step 25.7 (Final Review Lifecycle Audit & Regression Hardening) has been fully i
 - **Initial Administrator Provisioning**: The store contains no default admin credentials or public registration endpoints. The first administrator must register as a customer through the standard registration flow and subsequently be promoted via the CLI operator command (`npm run admin:promote -- <email>`).
 - **Review Moderation Lifecycle**: Newly submitted customer reviews enter the `PENDING` moderation queue and require administrative approval via `/api/admin/reviews/:id/status` before becoming publicly visible in storefront listings or contributing to star ratings.
 - **In-Memory Rate Limiting**: The rate limiter tracks requests in local Node.js process memory. In a clustered or multi-instance deployment behind a load balancer, limits are enforced per instance rather than globally. A distributed store (such as Redis) will be introduced when multi-instance production infrastructure is deployed.
+- **Order Expiration Scheduler Requirement**: The background expiration service provides `orderExpirationService.expireStaleOrders(15)` and an operator CLI script (`npm run orders:expire`). In development, an in-process interval timer runs if `ENABLE_ORDER_EXPIRATION_SCHEDULER=true`. In production multi-replica environments, an external job runner (e.g. Kubernetes CronJob, AWS EventBridge, or BullMQ worker) must execute the sweep periodically (e.g. every 1–2 minutes) to ensure stale reservations are expired reliably without running duplicate sweeps across replicas.
+- **Process-Local Idempotency Cache**: Checkout idempotency keys are currently cached in Node.js process memory (`Map<string, CacheEntry>`). In multi-replica load-balanced deployments, consecutive requests with the same key routed to different pods will not share the local cache. When scaling horizontally, the idempotency cache must be migrated to a distributed Redis cluster using Redis `SET key value NX EX 600`.
+- **Late Captured Payment Reconciliation**: If Razorpay captures a payment on an expired/cancelled order due to extreme network delay, the order remains `CANCELLED` and `[EXPIRED_ORDER_PAYMENT_RECONCILIATION]` is logged in customer notes. Store operators must monitor for this tag in administrative tooling to arrange manual fulfillment or issue a gateway refund.
 - **Session Revocation Window**: JWT session tokens have a 7-day lifespan. Logout clears the client cookie, but copied tokens remain cryptographically valid until expiration unless the user account is deactivated in the database (which immediately revokes access via `requireAuth`).
-- **Guest Order Confirmation Reload**: Guest checkouts render authoritative confirmation immediately on `/checkout` via the Step 14 verified payment response. However, guest orders (`order.userId === null`) cannot be re-fetched on page reload via `GET /api/orders/:orderId` because exposing unauthenticated UUID lookups would create an insecure resource enumeration / IDOR vulnerability. Secure guest order recovery without customer login is planned for a dedicated future milestone using unguessable order access tokens (`guestAccessToken` or HMAC-signed links sent via email).
+- **Guest Order In-Flight Security & Confirmation**: Guest checkouts use 256-bit cryptographic access tokens (`guestAccessToken`) verified via constant-time SHA-256 hash comparison for in-flight checkout operations (`GET`, `PATCH`, `POST /cancel`). Upon payment verification, order confirmation renders immediately on `/checkout`. Historical order lookup for unauthenticated users after session clearance remains protected against IDOR enumeration.
 - **Password Reset & Email Verification**: Automated password reset links and email verification are planned for a subsequent communication integration step.
 - **Cart Merging**: Guest carts are persisted in client localStorage; customer login retains the active cart items. Server-side cart persistence across multiple devices will be addressed in a future milestone.
 

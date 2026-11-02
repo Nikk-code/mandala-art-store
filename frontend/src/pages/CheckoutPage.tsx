@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Container, Section, EmptyState, Badge } from '@/components/ui';
 import {
@@ -11,6 +11,9 @@ import { useCart, useAuth } from '@/context';
 import { validateCheckoutForm, loadRazorpayScript } from '@/utils';
 import {
   createCheckoutOrder,
+  updateCheckoutOrder,
+  cancelCheckoutOrder,
+  getCheckoutOrder,
   initializeCheckoutPayment,
   verifyCheckoutPayment,
   fetchAddresses,
@@ -22,7 +25,15 @@ import type {
   PaymentVerificationResultDto,
   AddressDto,
   ValidateCouponResultDto,
+  OrderResponseDto,
 } from '@/types';
+
+function generateIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `checkout_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
 
 export function CheckoutPage(): ReactNode {
   const { items, itemCount, subtotalPaise, clearCart } = useCart();
@@ -52,10 +63,113 @@ export function CheckoutPage(): ReactNode {
   const [paymentVerification, setPaymentVerification] =
     useState<PaymentVerificationResultDto | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<ValidateCouponResultDto | null>(null);
+  const [activeOrder, setActiveOrder] = useState<OrderResponseDto | null>(null);
+  const idempotencyKeyRef = useRef<string>(generateIdempotencyKey());
+  const orderDirtyRef = useRef<boolean>(false);
+  const hasAttemptedRecoveryRef = useRef<boolean>(false);
+  const guestAccessTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = 'Checkout | Mandala Art Store';
   }, []);
+
+  // Invalidate cached order and refresh idempotency token if cart items change
+  useEffect(() => {
+    if (activeOrder) {
+      const itemsMatch =
+        activeOrder.items.length === items.length &&
+        items.every(ci => {
+          const matched = activeOrder.items.find(oi => oi.productId === ci.productId);
+          return matched && matched.quantity === ci.quantity;
+        });
+
+      if (!itemsMatch) {
+        void cancelCheckoutOrder(
+          activeOrder.id,
+          guestAccessTokenRef.current || undefined,
+          'Cart items modified'
+        ).catch(() => {});
+        setActiveOrder(null);
+        guestAccessTokenRef.current = null;
+        try {
+          sessionStorage.removeItem('pending_checkout_order_id');
+          sessionStorage.removeItem('pending_checkout_guest_token');
+          sessionStorage.removeItem('pending_checkout_order_email');
+        } catch {
+          // ignore
+        }
+        idempotencyKeyRef.current = generateIdempotencyKey();
+      }
+    } else {
+      idempotencyKeyRef.current = generateIdempotencyKey();
+    }
+  }, [items, activeOrder]);
+
+  // Safe recovery across page refresh
+  useEffect(() => {
+    if (hasAttemptedRecoveryRef.current) return;
+    try {
+      const storedOrderId = sessionStorage.getItem('pending_checkout_order_id');
+      const storedGuestToken = sessionStorage.getItem('pending_checkout_guest_token');
+      if (storedOrderId && items.length > 0) {
+        hasAttemptedRecoveryRef.current = true;
+        getCheckoutOrder(storedOrderId, storedGuestToken || undefined)
+          .then(recovered => {
+            if (recovered && recovered.status === 'PENDING_PAYMENT') {
+              const matches =
+                recovered.items.length === items.length &&
+                items.every(ci => {
+                  const matched = recovered.items.find(oi => oi.productId === ci.productId);
+                  return matched && matched.quantity === ci.quantity;
+                });
+              if (matches) {
+                setActiveOrder(recovered);
+                if (recovered.guestAccessToken) {
+                  guestAccessTokenRef.current = recovered.guestAccessToken;
+                } else if (storedGuestToken) {
+                  guestAccessTokenRef.current = storedGuestToken;
+                }
+                setFormData({
+                  fullName: recovered.shippingAddress.recipientName,
+                  email: recovered.customerEmail,
+                  phone: recovered.customerPhone,
+                  addressLine1: recovered.shippingAddress.addressLine1,
+                  addressLine2: recovered.shippingAddress.addressLine2 || '',
+                  city: recovered.shippingAddress.city,
+                  state: recovered.shippingAddress.state,
+                  postalCode: recovered.shippingAddress.postalCode,
+                  country: recovered.shippingAddress.country || 'India',
+                });
+                setIsReviewMode(true);
+              } else {
+                void cancelCheckoutOrder(
+                  recovered.id,
+                  storedGuestToken || undefined,
+                  'Cart items diverged'
+                ).catch(() => {});
+                sessionStorage.removeItem('pending_checkout_order_id');
+                sessionStorage.removeItem('pending_checkout_guest_token');
+                sessionStorage.removeItem('pending_checkout_order_email');
+                guestAccessTokenRef.current = null;
+              }
+            } else {
+              sessionStorage.removeItem('pending_checkout_order_id');
+              sessionStorage.removeItem('pending_checkout_guest_token');
+              sessionStorage.removeItem('pending_checkout_order_email');
+              guestAccessTokenRef.current = null;
+            }
+          })
+          .catch(() => {
+            sessionStorage.removeItem('pending_checkout_order_id');
+            sessionStorage.removeItem('pending_checkout_guest_token');
+            sessionStorage.removeItem('pending_checkout_order_email');
+            guestAccessTokenRef.current = null;
+          });
+      }
+    } catch {
+      // Storage unavailable fallback
+    }
+  }, [items]);
 
   useEffect(() => {
     if (user) {
@@ -95,6 +209,7 @@ export function CheckoutPage(): ReactNode {
   }, [user]);
 
   const handleSelectSavedAddress = (addr: AddressDto) => {
+    orderDirtyRef.current = true;
     setSelectedAddressId(addr.id);
     setFormData(prev => ({
       ...prev,
@@ -121,6 +236,7 @@ export function CheckoutPage(): ReactNode {
   };
 
   const handleUseNewAddress = () => {
+    orderDirtyRef.current = true;
     setSelectedAddressId(null);
     setFormData(prev => ({
       ...prev,
@@ -134,6 +250,7 @@ export function CheckoutPage(): ReactNode {
   };
 
   const handleFieldChange = (field: keyof CheckoutFormData, value: string) => {
+    orderDirtyRef.current = true;
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear field error on change if present
     if (errors[field as keyof CheckoutFormErrors]) {
@@ -182,35 +299,81 @@ export function CheckoutPage(): ReactNode {
     setPaymentError(null);
 
     try {
-      // 1. Create the authoritative backend ecommerce order
-      const order = await createCheckoutOrder({
-        customer: {
-          fullName: formData.fullName.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-        },
-        shippingAddress: {
-          addressLine1: formData.addressLine1.trim(),
-          addressLine2: formData.addressLine2 ? formData.addressLine2.trim() : undefined,
-          city: formData.city.trim(),
-          state: formData.state.trim(),
-          postalCode: formData.postalCode.trim(),
-          country: formData.country,
-        },
-        items: items.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
-        couponCode: appliedCoupon ? appliedCoupon.couponCode : undefined,
-      });
+      // 1. Create or update the authoritative backend ecommerce order
+      let order: OrderResponseDto;
+      if (activeOrder && !orderDirtyRef.current) {
+        order = activeOrder;
+      } else if (activeOrder && orderDirtyRef.current) {
+        order = await updateCheckoutOrder(
+          activeOrder.id,
+          {
+            customer: {
+              fullName: formData.fullName.trim(),
+              email: formData.email.trim(),
+              phone: formData.phone.trim(),
+            },
+            shippingAddress: {
+              addressLine1: formData.addressLine1.trim(),
+              addressLine2: formData.addressLine2 ? formData.addressLine2.trim() : undefined,
+              city: formData.city.trim(),
+              state: formData.state.trim(),
+              postalCode: formData.postalCode.trim(),
+              country: formData.country,
+            },
+            couponCode: appliedCoupon ? appliedCoupon.couponCode : null,
+          },
+          guestAccessTokenRef.current || undefined
+        );
+        orderDirtyRef.current = false;
+      } else {
+        order = await createCheckoutOrder(
+          {
+            customer: {
+              fullName: formData.fullName.trim(),
+              email: formData.email.trim(),
+              phone: formData.phone.trim(),
+            },
+            shippingAddress: {
+              addressLine1: formData.addressLine1.trim(),
+              addressLine2: formData.addressLine2 ? formData.addressLine2.trim() : undefined,
+              city: formData.city.trim(),
+              state: formData.state.trim(),
+              postalCode: formData.postalCode.trim(),
+              country: formData.country,
+            },
+            items: items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            })),
+            couponCode: appliedCoupon ? appliedCoupon.couponCode : undefined,
+          },
+          idempotencyKeyRef.current
+        );
+        orderDirtyRef.current = false;
+      }
+      setActiveOrder(order);
+      if (order.guestAccessToken) {
+        guestAccessTokenRef.current = order.guestAccessToken;
+      }
+      try {
+        sessionStorage.setItem('pending_checkout_order_id', order.id);
+        if (guestAccessTokenRef.current) {
+          sessionStorage.setItem('pending_checkout_guest_token', guestAccessTokenRef.current);
+        }
+      } catch {
+        // Storage unavailable fallback
+      }
 
-      // 2. Initialize Razorpay Payment Order on backend
+      // 2. Initialize Razorpay Payment Order on backend (idempotent on order)
       const paymentInfo = await initializeCheckoutPayment(order.id);
       setPaymentInitiated(paymentInfo);
 
       // 3. Load Razorpay Checkout browser script
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded || !window.Razorpay) {
+        setPaymentError(
+          'Unable to load payment gateway SDK. Please check your internet connection or disable content blockers and try again.'
+        );
         setIsSubmitting(false);
         return;
       }
@@ -241,6 +404,15 @@ export function CheckoutPage(): ReactNode {
               razorpaySignature: response.razorpay_signature,
             });
             setPaymentVerification(verificationResult);
+            setActiveOrder(null);
+            guestAccessTokenRef.current = null;
+            try {
+              sessionStorage.removeItem('pending_checkout_order_id');
+              sessionStorage.removeItem('pending_checkout_guest_token');
+              sessionStorage.removeItem('pending_checkout_order_email');
+            } catch {
+              // ignore
+            }
             clearCart();
             setIsSubmitting(false);
           } catch (verifyErr: unknown) {
@@ -312,10 +484,23 @@ export function CheckoutPage(): ReactNode {
               </div>
 
               <div className="pt-4 flex flex-col sm:flex-row justify-center gap-4">
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/orders/${paymentVerification.orderId}`)}
+                    className="inline-flex items-center justify-center rounded-xl bg-art-terracotta px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-art-terracotta/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta"
+                  >
+                    View Order Details
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => navigate('/products')}
-                  className="inline-flex items-center justify-center rounded-xl bg-art-terracotta px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-art-terracotta/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta"
+                  className={
+                    user
+                      ? 'inline-flex items-center justify-center rounded-xl border border-art-stone bg-white px-6 py-3 text-xs font-bold uppercase tracking-wider text-stone-700 shadow-sm hover:bg-stone-50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre'
+                      : 'inline-flex items-center justify-center rounded-xl bg-art-terracotta px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-art-terracotta/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta'
+                  }
                 >
                   Explore Handcrafted Collection
                 </button>
@@ -532,10 +717,18 @@ export function CheckoutPage(): ReactNode {
                   isSubmitting={isSubmitting}
                   onSubmit={isReviewMode ? handlePaymentSubmit : handleFormSubmit}
                   isReviewMode={isReviewMode}
-                  onEditAddress={() => setIsReviewMode(false)}
+                  onEditAddress={() => {
+                    setIsReviewMode(false);
+                  }}
                   appliedCoupon={appliedCoupon}
-                  onApplyCoupon={setAppliedCoupon}
-                  onRemoveCoupon={() => setAppliedCoupon(null)}
+                  onApplyCoupon={coupon => {
+                    orderDirtyRef.current = true;
+                    setAppliedCoupon(coupon);
+                  }}
+                  onRemoveCoupon={() => {
+                    orderDirtyRef.current = true;
+                    setAppliedCoupon(null);
+                  }}
                 />
               </div>
             </div>

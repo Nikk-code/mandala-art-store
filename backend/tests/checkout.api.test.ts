@@ -191,4 +191,129 @@ describe('Checkout REST API Endpoints', () => {
       );
     });
   });
+
+  describe('PATCH /api/checkout/orders/:orderId', () => {
+    it('updates customer address on pending order with guest access token and returns 200', async () => {
+      const updatedOrder = {
+        ...sampleOrderResponse,
+        shippingAddress: {
+          ...sampleOrderResponse.shippingAddress,
+          addressLine1: 'New Street 99',
+        },
+      };
+      const spy = vi.spyOn(orderService, 'updatePendingOrder').mockResolvedValue(updatedOrder);
+
+      const res = await request(app)
+        .patch('/api/checkout/orders/order-123')
+        .set('x-guest-access-token', 'valid-guest-token-123')
+        .send({
+          shippingAddress: {
+            addressLine1: 'New Street 99',
+            city: 'Bengaluru',
+            state: 'Karnataka',
+            postalCode: '560001',
+          },
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.order.shippingAddress.addressLine1).toBe('New Street 99');
+      expect(spy).toHaveBeenCalledWith(
+        'order-123',
+        expect.any(Object),
+        null,
+        'valid-guest-token-123'
+      );
+    });
+
+    it('returns 404 when unauthorized or invalid guest access token provided', async () => {
+      vi.spyOn(orderService, 'updatePendingOrder').mockRejectedValue(
+        new NotFoundError('Order was not found or access is unauthorized.')
+      );
+
+      const res = await request(app)
+        .patch('/api/checkout/orders/order-123')
+        .set('x-guest-access-token', 'wrong-token')
+        .send({
+          shippingAddress: {
+            addressLine1: 'New Street 99',
+            city: 'Bengaluru',
+            state: 'Karnataka',
+            postalCode: '560001',
+          },
+        });
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('POST /api/checkout/orders/:orderId/cancel', () => {
+    it('cancels pending order with guest access token and returns 200', async () => {
+      const spy = vi.spyOn(orderService, 'cancelPendingOrder').mockResolvedValue({
+        success: true,
+        message: 'Order cancelled successfully and reserved inventory was restored.',
+      });
+
+      const res = await request(app)
+        .post('/api/checkout/orders/order-123/cancel')
+        .set('x-guest-access-token', 'valid-guest-token-123')
+        .send({ reason: 'Cart items changed' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.message).toContain('cancelled successfully');
+      expect(spy).toHaveBeenCalledWith(
+        'order-123',
+        null,
+        'valid-guest-token-123',
+        'Cart items changed'
+      );
+    });
+
+    it('returns 404 when order cancellation is unauthorized', async () => {
+      vi.spyOn(orderService, 'cancelPendingOrder').mockRejectedValue(
+        new NotFoundError('Order was not found or access is unauthorized.')
+      );
+
+      const res = await request(app)
+        .post('/api/checkout/orders/order-123/cancel')
+        .set('x-guest-access-token', 'invalid-token')
+        .send({ reason: 'Cart items changed' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('GET /api/checkout/orders/:orderId', () => {
+    it('recovers pending order for guest with valid guest access token and returns 200', async () => {
+      const spy = vi
+        .spyOn(orderService, 'getPendingOrderForCheckout')
+        .mockResolvedValue(sampleOrderResponse);
+
+      const res = await request(app)
+        .get('/api/checkout/orders/order-123')
+        .set('x-guest-access-token', 'valid-guest-token-123');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.order.id).toBe('order-123');
+      expect(spy).toHaveBeenCalledWith('order-123', null, 'valid-guest-token-123');
+    });
+
+    it('returns 404 when guest access token is missing or unauthorized', async () => {
+      vi.spyOn(orderService, 'getPendingOrderForCheckout').mockRejectedValue(
+        new NotFoundError('Order was not found or access is unauthorized.')
+      );
+
+      const res = await request(app).get('/api/checkout/orders/order-123');
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    });
+  });
 });

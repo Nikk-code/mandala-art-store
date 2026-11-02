@@ -176,3 +176,40 @@ export function validateCreateOrderRequest(body: unknown): CreateOrderRequest {
     ...(couponCode ? { couponCode } : {}),
   };
 }
+
+export function validateUpdateOrderRequest(body: unknown): {
+  customer?: CreateOrderCustomerInput;
+  shippingAddress?: CreateOrderShippingAddressInput;
+  couponCode?: string | null;
+} {
+  if (!body || typeof body !== 'object') {
+    throw new ValidationError('Request body is required and must be a JSON object');
+  }
+
+  const raw = body as Record<string, unknown>;
+  const result: {
+    customer?: CreateOrderCustomerInput;
+    shippingAddress?: CreateOrderShippingAddressInput;
+    couponCode?: string | null;
+  } = {};
+
+  if (raw.customer !== undefined) {
+    result.customer = validateCustomer(raw.customer);
+  }
+
+  if (raw.shippingAddress !== undefined) {
+    result.shippingAddress = validateShippingAddress(raw.shippingAddress);
+  }
+
+  if (raw.couponCode !== undefined) {
+    if (raw.couponCode === null || raw.couponCode === '') {
+      result.couponCode = null;
+    } else if (typeof raw.couponCode === 'string') {
+      result.couponCode = normalizeCouponCode(raw.couponCode);
+    } else {
+      throw new ValidationError('Coupon code must be a string or null');
+    }
+  }
+
+  return result;
+}

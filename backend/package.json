@@ -12,7 +12,8 @@
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
     "prisma:seed": "prisma db seed",
-    "admin:promote": "tsx scripts/promote-admin.ts"
+    "admin:promote": "tsx scripts/promote-admin.ts",
+    "orders:expire": "tsx scripts/expire-orders.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -1,7 +1,8 @@
-import { apiPost } from './api-client';
+import { apiPost, apiPatch, apiGet } from './api-client';
 import type {
   ApiSuccessResponse,
   CreateOrderRequest,
+  UpdateCheckoutOrderRequest,
   OrderResponseDto,
   PaymentInitializationDto,
   PaymentVerificationResultDto,
@@ -23,6 +24,55 @@ export async function createCheckoutOrder(
     { headers }
   );
 
+  return response.data.order;
+}
+
+export async function updateCheckoutOrder(
+  orderId: string,
+  request: UpdateCheckoutOrderRequest,
+  guestAccessToken?: string
+): Promise<OrderResponseDto> {
+  const headers: Record<string, string> = {};
+  if (guestAccessToken) {
+    headers['X-Guest-Access-Token'] = guestAccessToken;
+  }
+  const response = await apiPatch<ApiSuccessResponse<{ order: OrderResponseDto }>>(
+    `checkout/orders/${encodeURIComponent(orderId)}`,
+    request,
+    { headers }
+  );
+  return response.data.order;
+}
+
+export async function cancelCheckoutOrder(
+  orderId: string,
+  guestAccessToken?: string,
+  reason?: string
+): Promise<{ message: string }> {
+  const headers: Record<string, string> = {};
+  if (guestAccessToken) {
+    headers['X-Guest-Access-Token'] = guestAccessToken;
+  }
+  const response = await apiPost<ApiSuccessResponse<{ message: string }>>(
+    `checkout/orders/${encodeURIComponent(orderId)}/cancel`,
+    { reason },
+    { headers }
+  );
+  return response.data;
+}
+
+export async function getCheckoutOrder(
+  orderId: string,
+  guestAccessToken?: string
+): Promise<OrderResponseDto> {
+  const headers: Record<string, string> = {};
+  if (guestAccessToken) {
+    headers['X-Guest-Access-Token'] = guestAccessToken;
+  }
+  const response = await apiGet<ApiSuccessResponse<{ order: OrderResponseDto }>>(
+    `checkout/orders/${encodeURIComponent(orderId)}`,
+    { headers }
+  );
   return response.data.order;
 }
 

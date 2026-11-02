@@ -245,6 +245,7 @@ model Order {
   userId                String?     @map("user_id") @db.Uuid // Nullable for Guest Checkout support (ADR-012)
   customerEmail         String      @map("customer_email") @db.VarChar(255)
   customerPhone         String      @map("customer_phone") @db.VarChar(20)
+  guestAccessTokenHash  String?     @map("guest_access_token_hash") @db.VarChar(64)
   status                OrderStatus @default(PENDING_PAYMENT)
   subtotal              Int // In paise
   discountAmount        Int         @default(0) @map("discount_amount") // In paise

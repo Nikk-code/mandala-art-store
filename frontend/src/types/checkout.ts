@@ -65,6 +65,12 @@ export interface CreateOrderRequest {
   couponCode?: string;
 }
 
+export interface UpdateCheckoutOrderRequest {
+  customer?: Partial<CheckoutCustomer>;
+  shippingAddress?: Partial<CheckoutShippingAddress>;
+  couponCode?: string | null;
+}
+
 export interface OrderItemSnapshotDto {
   id: string;
   productId: string | null;
@@ -100,6 +106,7 @@ export interface OrderResponseDto {
     country: string;
   };
   items: OrderItemSnapshotDto[];
+  guestAccessToken?: string;
   createdAt: string;
   updatedAt?: string;
 }

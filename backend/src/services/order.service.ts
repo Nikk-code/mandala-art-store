@@ -1,3 +1,9 @@
+import { createHash } from 'crypto';
+import {
+  generateGuestAccessToken,
+  hashGuestAccessToken,
+  verifyGuestAccessToken,
+} from '../utils/guest-token';
 import { prisma } from '../db/prisma';
 import { PrismaClient, OrderStatus, type Coupon } from '@prisma/client';
 import {
@@ -7,7 +13,10 @@ import {
   type AdminOrderRecord,
 } from '../repositories/order.repository';
 import { NotFoundError, BadRequestError, ConflictError } from '../errors';
-import { validateCreateOrderRequest } from '../utils/checkout-validation';
+import {
+  validateCreateOrderRequest,
+  validateUpdateOrderRequest,
+} from '../utils/checkout-validation';
 import { generateOrderNumber } from '../utils/order-number';
 import { validateUuid } from '../utils/catalog-validation';
 import {
@@ -22,6 +31,7 @@ import {
 import { resolveEffectivePaymentStatus } from '../utils/payment-status';
 import type {
   CreateOrderRequest,
+  UpdateCheckoutOrderRequest,
   OrderResponseDto,
   OrderDetailsDto,
   OrderItemSnapshotDto,
@@ -36,7 +46,36 @@ import type {
 
 interface IdempotencyEntry {
   response: OrderResponseDto;
+  payloadHash: string;
   createdAt: number;
+}
+
+/**
+ * Computes a deterministic SHA-256 hash of a normalized CreateOrderRequest payload.
+ */
+export function computePayloadHash(req: CreateOrderRequest): string {
+  const canonical = {
+    customer: {
+      email: req.customer.email.trim().toLowerCase(),
+      fullName: req.customer.fullName.trim(),
+      phone: req.customer.phone.trim(),
+    },
+    shippingAddress: {
+      addressLine1: req.shippingAddress.addressLine1.trim(),
+      addressLine2: req.shippingAddress.addressLine2
+        ? req.shippingAddress.addressLine2.trim()
+        : null,
+      city: req.shippingAddress.city.trim(),
+      state: req.shippingAddress.state.trim(),
+      postalCode: req.shippingAddress.postalCode.trim(),
+      country: req.shippingAddress.country ? req.shippingAddress.country.trim() : 'India',
+    },
+    items: [...req.items]
+      .sort((a, b) => a.productId.localeCompare(b.productId))
+      .map(i => ({ productId: i.productId.trim(), quantity: i.quantity })),
+    couponCode: req.couponCode ? normalizeCouponCode(req.couponCode) : null,
+  };
+  return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
 export class OrderService {
@@ -84,47 +123,71 @@ export class OrderService {
 
     // 2. Handle Idempotency / Duplicate Submission Protection
     const cleanKey = idempotencyKey?.trim();
+    let scopedKey: string | null = null;
+    let payloadHash: string | null = null;
+
     if (cleanKey) {
       this.cleanupIdempotencyCache();
+      scopedKey = userId
+        ? `user:${userId.trim()}:${cleanKey}`
+        : `guest:${validatedRequest.customer.email.trim().toLowerCase()}:${cleanKey}`;
+      payloadHash = computePayloadHash(validatedRequest);
 
       // Check if already completed
-      const cached = this.idempotencyCache.get(cleanKey);
+      const cached = this.idempotencyCache.get(scopedKey);
       if (cached && Date.now() - cached.createdAt <= this.IDEMPOTENCY_TTL_MS) {
+        if (cached.payloadHash !== payloadHash) {
+          throw new ConflictError('Idempotency key reuse with mismatched request payload.');
+        }
         return cached.response;
       }
 
       // Check if identical request is currently in flight
-      const inFlight = this.inFlightRequests.get(cleanKey);
+      const inFlight = this.inFlightRequests.get(scopedKey);
       if (inFlight) {
         return inFlight;
       }
     }
 
-    const orderPromise = this.executeCreateOrderTransaction(validatedRequest, userId ?? null);
+    // Generate guest access token for unauthenticated checkouts
+    const isGuest = !userId;
+    const guestAccessToken = isGuest ? generateGuestAccessToken() : null;
+    const guestAccessTokenHash = guestAccessToken ? hashGuestAccessToken(guestAccessToken) : null;
 
-    if (cleanKey) {
-      this.inFlightRequests.set(cleanKey, orderPromise);
+    const orderPromise = this.executeCreateOrderTransaction(
+      validatedRequest,
+      userId ?? null,
+      guestAccessTokenHash
+    );
+
+    if (scopedKey) {
+      this.inFlightRequests.set(scopedKey, orderPromise);
     }
 
     try {
       const result = await orderPromise;
-      if (cleanKey) {
-        this.idempotencyCache.set(cleanKey, {
+      if (guestAccessToken) {
+        result.guestAccessToken = guestAccessToken;
+      }
+      if (scopedKey && payloadHash) {
+        this.idempotencyCache.set(scopedKey, {
           response: result,
+          payloadHash,
           createdAt: Date.now(),
         });
       }
       return result;
     } finally {
-      if (cleanKey) {
-        this.inFlightRequests.delete(cleanKey);
+      if (scopedKey) {
+        this.inFlightRequests.delete(scopedKey);
       }
     }
   }
 
   private async executeCreateOrderTransaction(
     request: CreateOrderRequest,
-    userId: string | null
+    userId: string | null,
+    guestAccessTokenHash?: string | null
   ): Promise<OrderResponseDto> {
     const createdOrder = await this.prismaClient.$transaction(async tx => {
       let authoritativeSubtotal = 0;
@@ -291,6 +354,7 @@ export class OrderService {
         userId,
         customerEmail: request.customer.email,
         customerPhone: request.customer.phone,
+        guestAccessTokenHash: guestAccessTokenHash ?? null,
         subtotal: authoritativeSubtotal,
         discountAmount,
         shippingFee,
@@ -318,6 +382,291 @@ export class OrderService {
     });
 
     return this.mapToOrderResponseDto(createdOrder);
+  }
+
+  /**
+   * Authorizes access to an order.
+   * - If the order belongs to a registered customer (userId is not null), only that authenticated customer may access it.
+   * - If the order is a guest order (userId is null), the caller MUST supply a valid guestAccessToken matching the stored hash.
+   * - Never permits email-based fallback or cross-order token reuse.
+   */
+  private authorizeOrderAccess(
+    order: { id: string; userId: string | null; guestAccessTokenHash?: string | null },
+    requestUser?: { id: string; email: string } | null,
+    guestAccessToken?: string | null
+  ): void {
+    if (order.userId) {
+      if (!requestUser || requestUser.id !== order.userId) {
+        throw new NotFoundError(`Order with ID "${order.id}" was not found.`);
+      }
+    } else {
+      if (
+        !guestAccessToken ||
+        !verifyGuestAccessToken(order.guestAccessTokenHash, guestAccessToken)
+      ) {
+        throw new NotFoundError(`Order with ID "${order.id}" was not found.`);
+      }
+    }
+  }
+
+  /**
+   * Updates contact, shipping address, and/or coupon on an existing PENDING_PAYMENT order.
+   * Reuses the same order and maintains reserved inventory without double reservation or 1-of-1 lockout.
+   */
+  async updatePendingOrder(
+    orderId: string,
+    rawRequest: UpdateCheckoutOrderRequest,
+    requestUser?: { id: string; email: string } | null,
+    guestAccessToken?: string | null
+  ): Promise<OrderResponseDto> {
+    validateUuid(orderId, 'orderId');
+    const validatedRequest = validateUpdateOrderRequest(rawRequest);
+
+    const order = await this.repository.findById(orderId);
+    if (!order) {
+      throw new NotFoundError(`Order with ID "${orderId}" was not found.`);
+    }
+
+    // Strict Authorization Check: requires user ownership or valid guest access token
+    this.authorizeOrderAccess(order, requestUser, guestAccessToken);
+
+    // State validation
+    if (order.status !== 'PENDING_PAYMENT') {
+      throw new ConflictError(
+        `Cannot modify order: current order status is "${order.status}", but updates require PENDING_PAYMENT.`
+      );
+    }
+
+    const hasCapturedPayment = order.payments?.some(
+      p => p.status === 'CAPTURED' || p.status === 'AUTHORIZED'
+    );
+    if (hasCapturedPayment) {
+      throw new ConflictError(
+        'Cannot modify order: payment has already been authorized or captured.'
+      );
+    }
+
+    const updatedOrder = await this.prismaClient.$transaction(async tx => {
+      // Serialize with concurrent payment capture and expiration via row lock
+      if (typeof tx.$queryRaw === 'function') {
+        await tx.$queryRaw`
+          SELECT "id" FROM "orders"
+          WHERE "id" = ${order.id}::uuid
+          FOR UPDATE
+        `;
+      }
+
+      const freshOrder =
+        (typeof tx.order.findUnique === 'function'
+          ? await tx.order.findUnique({
+              where: { id: order.id },
+              include: { payments: true },
+            })
+          : null) ?? order;
+
+      if (!freshOrder || freshOrder.status !== 'PENDING_PAYMENT') {
+        throw new ConflictError(
+          `Cannot modify order: current order status is "${freshOrder?.status ?? 'UNKNOWN'}", but updates require PENDING_PAYMENT.`
+        );
+      }
+
+      const hasCaptured = freshOrder.payments?.some(
+        p => p.status === 'CAPTURED' || p.status === 'AUTHORIZED'
+      );
+      if (hasCaptured) {
+        throw new ConflictError(
+          'Cannot modify order: payment has already been authorized or captured.'
+        );
+      }
+      // Update customer & shipping details
+      const customerEmail = validatedRequest.customer?.email ?? order.customerEmail;
+      const customerPhone = validatedRequest.customer?.phone ?? order.customerPhone;
+      const shippingRecipientName =
+        validatedRequest.customer?.fullName ?? order.shippingRecipientName;
+      const shippingPhone = validatedRequest.customer?.phone ?? order.shippingPhone;
+      const shippingAddressLine1 =
+        validatedRequest.shippingAddress?.addressLine1 ?? order.shippingAddressLine1;
+      const shippingAddressLine2 =
+        validatedRequest.shippingAddress?.addressLine2 !== undefined
+          ? validatedRequest.shippingAddress.addressLine2
+          : order.shippingAddressLine2;
+      const shippingCity = validatedRequest.shippingAddress?.city ?? order.shippingCity;
+      const shippingState = validatedRequest.shippingAddress?.state ?? order.shippingState;
+      const shippingPostalCode =
+        validatedRequest.shippingAddress?.postalCode ?? order.shippingPostalCode;
+      const shippingCountry = validatedRequest.shippingAddress?.country ?? order.shippingCountry;
+
+      // Handle coupon update under row lock
+      let appliedCouponId: string | null = order.couponId;
+      let appliedCouponCode: string | null = order.couponCode;
+      let discountAmount = order.discountAmount;
+
+      if (validatedRequest.couponCode !== undefined) {
+        if (validatedRequest.couponCode === null) {
+          appliedCouponId = null;
+          appliedCouponCode = null;
+          discountAmount = 0;
+        } else {
+          const normalizedCode = normalizeCouponCode(validatedRequest.couponCode);
+          const rawCoupon = await tx.coupon.findUnique({
+            where: { code: normalizedCode },
+          });
+
+          if (!rawCoupon) {
+            throw new NotFoundError(`Coupon code "${normalizedCode}" was not found.`);
+          }
+
+          const rows = await tx.$queryRaw<Coupon[]>`
+            SELECT * FROM "coupons"
+            WHERE "id" = ${rawCoupon.id}::uuid
+            FOR UPDATE
+          `;
+          const lockedCoupon = rows[0];
+
+          if (!lockedCoupon) {
+            throw new NotFoundError(`Coupon "${normalizedCode}" was not found.`);
+          }
+
+          validateCouponEligibility(lockedCoupon, order.subtotal);
+
+          if (lockedCoupon.usageLimit !== null) {
+            // Count other active reservations (excluding this order itself)
+            const reservationRows = await tx.$queryRaw<[{ count: bigint }]>`
+              SELECT COUNT(*)::bigint AS count FROM "orders"
+              WHERE "coupon_id" = ${lockedCoupon.id}::uuid
+                AND "status" = 'PENDING_PAYMENT'
+                AND "id" != ${order.id}::uuid
+                AND "created_at" >= (NOW() - INTERVAL '15 minutes')
+            `;
+            const otherPendingCount = Number(reservationRows[0]?.count ?? 0);
+            const occupiedSlots = lockedCoupon.timesUsed + otherPendingCount;
+
+            if (occupiedSlots >= lockedCoupon.usageLimit) {
+              throw new ConflictError(
+                `Coupon "${lockedCoupon.code}" has reached its maximum usage limit.`
+              );
+            }
+          }
+
+          discountAmount = calculateDiscountAmount(order.subtotal, lockedCoupon);
+          appliedCouponId = lockedCoupon.id;
+          appliedCouponCode = lockedCoupon.code;
+        }
+      }
+
+      const newTotal = order.subtotal - discountAmount + order.shippingFee + order.taxAmount;
+
+      // Persist order update
+      const savedOrder = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          customerEmail,
+          customerPhone,
+          shippingRecipientName,
+          shippingPhone,
+          shippingAddressLine1,
+          shippingAddressLine2,
+          shippingCity,
+          shippingState,
+          shippingPostalCode,
+          shippingCountry,
+          couponId: appliedCouponId,
+          couponCode: appliedCouponCode,
+          discountAmount,
+          total: newTotal,
+        },
+        include: {
+          items: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+      });
+
+      // Update pending payment amount if total changed
+      if (savedOrder.payments && savedOrder.payments.length > 0) {
+        await tx.payment.updateMany({
+          where: {
+            orderId: order.id,
+            status: 'PENDING',
+          },
+          data: {
+            amount: newTotal,
+            providerOrderId: null, // Reset provider order id to force new Razorpay order generation with updated amount
+          },
+        });
+      }
+
+      return savedOrder;
+    });
+
+    return this.mapToOrderResponseDto(updatedOrder);
+  }
+
+  /**
+   * Cancels an unpaid PENDING_PAYMENT order and immediately restores reserved inventory.
+   */
+  async cancelPendingOrder(
+    orderId: string,
+    requestUser?: { id: string; email: string } | null,
+    guestAccessToken?: string | null,
+    reason?: string
+  ): Promise<{ success: boolean; message: string }> {
+    validateUuid(orderId, 'orderId');
+
+    const order = await this.repository.findById(orderId);
+    if (!order) {
+      throw new NotFoundError(`Order with ID "${orderId}" was not found.`);
+    }
+
+    // Strict Authorization Check: requires user ownership or valid guest access token
+    this.authorizeOrderAccess(order, requestUser, guestAccessToken);
+
+    if (order.status === 'CANCELLED') {
+      return { success: true, message: 'Order is already cancelled.' };
+    }
+
+    if (order.status !== 'PENDING_PAYMENT') {
+      throw new ConflictError(
+        `Cannot cancel order: current order status is "${order.status}", but cancellation requires PENDING_PAYMENT.`
+      );
+    }
+
+    const cancellationReason = reason
+      ? `[CANCELLED_BY_CUSTOMER] ${reason}`
+      : '[CANCELLED_BY_CUSTOMER] Order was cancelled by customer. Reserved stock released.';
+
+    const result = await this.repository.cancelOrderAndRestoreStock(order.id, cancellationReason);
+
+    if (!result.cancelled) {
+      throw new ConflictError('Order could not be cancelled. It may have already been processed.');
+    }
+
+    return {
+      success: true,
+      message: `Order "${order.orderNumber}" cancelled successfully and reserved inventory was restored.`,
+    };
+  }
+
+  /**
+   * Retrieves an order for checkout recovery, authorized for the owning user or matching guest access token.
+   */
+  async getPendingOrderForCheckout(
+    orderId: string,
+    requestUser?: { id: string; email: string } | null,
+    guestAccessToken?: string | null
+  ): Promise<OrderResponseDto> {
+    validateUuid(orderId, 'orderId');
+
+    const order = await this.repository.findById(orderId);
+    if (!order) {
+      throw new NotFoundError(`Order with ID "${orderId}" was not found.`);
+    }
+
+    // Strict Authorization Check: requires user ownership or valid guest access token
+    this.authorizeOrderAccess(order, requestUser, guestAccessToken);
+
+    return this.mapToOrderResponseDto(order);
   }
 
   /**

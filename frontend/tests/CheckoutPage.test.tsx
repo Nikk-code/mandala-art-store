@@ -5,7 +5,16 @@ import { CheckoutPage } from '@/pages/CheckoutPage';
 import { CartProvider } from '@/context';
 import * as AuthContextModule from '@/context/AuthContext';
 import * as addressService from '@/services/address-service';
-import type { CartItem, UserDto, AddressDto } from '@/types';
+import * as checkoutService from '@/services/checkout-service';
+import * as razorpayUtil from '@/utils/razorpay';
+import type {
+  CartItem,
+  UserDto,
+  AddressDto,
+  OrderResponseDto,
+  PaymentInitializationDto,
+  PaymentVerificationResultDto,
+} from '@/types';
 
 describe('CheckoutPage UI & Checkout Flow', () => {
   const mockCartItems: CartItem[] = [
@@ -43,8 +52,65 @@ describe('CheckoutPage UI & Checkout Flow', () => {
     },
   ];
 
+  const mockOrderResponse: OrderResponseDto = {
+    id: 'order-uuid-123',
+    orderNumber: 'ORD-20261101-ABCD',
+    status: 'PENDING_PAYMENT',
+    paymentStatus: 'PENDING',
+    guestAccessToken: 'guest_token_abc123',
+    subtotal: 249900,
+    taxAmount: 0,
+    shippingFee: 0,
+    discountAmount: 0,
+    total: 249900,
+    currency: 'INR',
+    customerEmail: 'radhika@example.com',
+    customerPhone: '9876543210',
+    shippingAddress: {
+      recipientName: 'Radhika Sharma',
+      phone: '9876543210',
+      addressLine1: '402, Lotus Heritage',
+      addressLine2: null,
+      city: 'Ahmedabad',
+      state: 'Gujarat',
+      postalCode: '380015',
+      country: 'India',
+    },
+    items: [
+      {
+        id: 'item-1',
+        productId: 'prod-1',
+        productName: 'Cosmic Mandala Canvas',
+        productSku: 'MAN-001',
+        quantity: 2,
+        unitPrice: 249900,
+        total: 249900,
+      },
+    ],
+    createdAt: '2026-11-01T10:00:00.000Z',
+    updatedAt: '2026-11-01T10:00:00.000Z',
+  };
+
+  const mockPaymentInfo: PaymentInitializationDto = {
+    orderId: 'order-uuid-123',
+    orderNumber: 'ORD-20261101-ABCD',
+    razorpayOrderId: 'rzp_order_123',
+    razorpayKeyId: 'rzp_test_mock_key',
+    amount: 249900,
+    currency: 'INR',
+  };
+
+  const mockVerificationResult: PaymentVerificationResultDto = {
+    orderId: 'order-uuid-123',
+    orderNumber: 'ORD-20261101-ABCD',
+    orderStatus: 'PROCESSING',
+    paymentStatus: 'CAPTURED',
+  };
+
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    vi.restoreAllMocks();
   });
 
   const renderCheckoutPage = (items?: CartItem[]) => {
@@ -262,5 +328,270 @@ describe('CheckoutPage UI & Checkout Flow', () => {
     expect(screen.getByLabelText(/Street Address/)).toHaveValue('123 Heritage Lane');
     expect(screen.getByLabelText(/City \/ Town/)).toHaveValue('Jaipur');
     expect(screen.getByLabelText(/PIN \/ Postal Code/)).toHaveValue('302001');
+  });
+
+  const fillAndProceedToReview = async () => {
+    fireEvent.change(screen.getByLabelText(/Full Name/), { target: { value: 'Radhika Sharma' } });
+    fireEvent.change(screen.getByLabelText(/Email Address/), {
+      target: { value: 'radhika@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/Phone Number/), { target: { value: '9876543210' } });
+    fireEvent.change(screen.getByLabelText(/Street Address/), {
+      target: { value: '402, Lotus Heritage, MG Road' },
+    });
+    fireEvent.change(screen.getByLabelText(/City \/ Town/), { target: { value: 'Ahmedabad' } });
+    fireEvent.change(screen.getByLabelText(/State/), { target: { value: 'Gujarat' } });
+    fireEvent.change(screen.getByLabelText(/PIN \/ Postal Code/), { target: { value: '380015' } });
+
+    const submitBtn = screen.getByRole('button', { name: 'Continue to Payment' });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Review Order & Shipping' })
+      ).toBeInTheDocument();
+    });
+  };
+
+  it('displays error notification when payment gateway SDK fails to load', async () => {
+    vi.spyOn(checkoutService, 'createCheckoutOrder').mockResolvedValue(mockOrderResponse);
+    vi.spyOn(checkoutService, 'initializeCheckoutPayment').mockResolvedValue(mockPaymentInfo);
+    vi.spyOn(razorpayUtil, 'loadRazorpayScript').mockResolvedValue(false);
+
+    renderCheckoutPage([mockCartItems[0]]);
+    await fillAndProceedToReview();
+
+    const proceedBtn = screen.getByRole('button', { name: 'Pay via Razorpay' });
+    fireEvent.click(proceedBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Unable to load payment gateway SDK. Please check your internet connection or disable content blockers and try again.'
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('reuses active order and passes idempotency key when retrying after modal dismissal', async () => {
+    const createOrderSpy = vi
+      .spyOn(checkoutService, 'createCheckoutOrder')
+      .mockResolvedValue(mockOrderResponse);
+    const initPaymentSpy = vi
+      .spyOn(checkoutService, 'initializeCheckoutPayment')
+      .mockResolvedValue(mockPaymentInfo);
+    vi.spyOn(razorpayUtil, 'loadRazorpayScript').mockResolvedValue(true);
+
+    let modalOptions: { modal?: { ondismiss?: () => void } } | null = null;
+    class MockRazorpay {
+      constructor(options: { modal?: { ondismiss?: () => void } }) {
+        modalOptions = options;
+      }
+      open() {
+        if (modalOptions?.modal?.ondismiss) {
+          modalOptions.modal.ondismiss();
+        }
+      }
+    }
+    vi.stubGlobal('Razorpay', MockRazorpay);
+
+    renderCheckoutPage([mockCartItems[0]]);
+    await fillAndProceedToReview();
+
+    const proceedBtn = screen.getByRole('button', { name: 'Pay via Razorpay' });
+
+    // First attempt: creates order with idempotency key
+    fireEvent.click(proceedBtn);
+
+    await waitFor(() => {
+      expect(createOrderSpy).toHaveBeenCalledTimes(1);
+      expect(initPaymentSpy).toHaveBeenCalledTimes(1);
+    });
+
+    const firstIdempotencyKey = createOrderSpy.mock.calls[0][1];
+    expect(firstIdempotencyKey).toBeDefined();
+    expect(firstIdempotencyKey?.length).toBeGreaterThan(0);
+
+    // Second attempt after dismissal: reuses active order without creating another order
+    fireEvent.click(proceedBtn);
+
+    await waitFor(() => {
+      expect(createOrderSpy).toHaveBeenCalledTimes(1);
+      expect(initPaymentSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('renders View Order Details button for authenticated user upon successful payment', async () => {
+    const mockUser: UserDto = {
+      id: 'user-1',
+      email: 'aarav@example.com',
+      firstName: 'Aarav',
+      lastName: 'Sharma',
+      phone: '9876543210',
+      role: 'CUSTOMER',
+      createdAt: '2026-10-01T10:00:00.000Z',
+    };
+
+    vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+      user: mockUser,
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+      refreshUser: vi.fn(),
+      updateProfile: vi.fn(),
+    });
+
+    vi.spyOn(addressService, 'fetchAddresses').mockResolvedValue([]);
+    vi.spyOn(checkoutService, 'createCheckoutOrder').mockResolvedValue(mockOrderResponse);
+    vi.spyOn(checkoutService, 'initializeCheckoutPayment').mockResolvedValue(mockPaymentInfo);
+    vi.spyOn(checkoutService, 'verifyCheckoutPayment').mockResolvedValue(mockVerificationResult);
+    vi.spyOn(razorpayUtil, 'loadRazorpayScript').mockResolvedValue(true);
+
+    let modalHandler:
+      | ((response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => void)
+      | null = null;
+    class MockRazorpaySuccess {
+      constructor(options: {
+        handler?: (res: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => void;
+      }) {
+        if (options.handler) {
+          modalHandler = options.handler;
+        }
+      }
+      open() {
+        if (modalHandler) {
+          modalHandler({
+            razorpay_order_id: 'rzp_order_123',
+            razorpay_payment_id: 'rzp_pay_456',
+            razorpay_signature: 'rzp_sig_789',
+          });
+        }
+      }
+    }
+    vi.stubGlobal('Razorpay', MockRazorpaySuccess);
+
+    renderCheckoutPage([mockCartItems[0]]);
+    await fillAndProceedToReview();
+
+    const proceedBtn = screen.getByRole('button', { name: 'Pay via Razorpay' });
+    fireEvent.click(proceedBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Thank You for Your Order!')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View Order Details' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Explore Handcrafted Collection' })
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('updates existing pending order when address is edited after initial order creation without creating a duplicate reservation', async () => {
+    const createOrderSpy = vi
+      .spyOn(checkoutService, 'createCheckoutOrder')
+      .mockResolvedValue(mockOrderResponse);
+    const updateOrderSpy = vi.spyOn(checkoutService, 'updateCheckoutOrder').mockResolvedValue({
+      ...mockOrderResponse,
+      shippingAddress: {
+        ...mockOrderResponse.shippingAddress,
+        addressLine1: '999 Updated Lane',
+      },
+    });
+    const initPaymentSpy = vi
+      .spyOn(checkoutService, 'initializeCheckoutPayment')
+      .mockResolvedValue(mockPaymentInfo);
+    vi.spyOn(razorpayUtil, 'loadRazorpayScript').mockResolvedValue(true);
+
+    class MockRazorpayDismiss {
+      private options: any;
+      constructor(options: any) {
+        this.options = options;
+      }
+      open() {
+        if (this.options?.modal?.ondismiss) {
+          this.options.modal.ondismiss();
+        }
+      }
+    }
+    vi.stubGlobal('Razorpay', MockRazorpayDismiss);
+
+    renderCheckoutPage([mockCartItems[0]]);
+    await fillAndProceedToReview();
+
+    // 1. Initial attempt -> calls createCheckoutOrder
+    const payBtn = screen.getByRole('button', { name: 'Pay via Razorpay' });
+    fireEvent.click(payBtn);
+
+    await waitFor(() => {
+      expect(createOrderSpy).toHaveBeenCalledTimes(1);
+      expect(initPaymentSpy).toHaveBeenCalledTimes(1);
+    });
+
+    // 2. Customer edits address
+    const editBtn = screen.getByRole('button', { name: /Edit Contact & Shipping Details/i });
+    fireEvent.click(editBtn);
+
+    const address1Input = screen.getByLabelText(/Street Address/);
+    fireEvent.change(address1Input, { target: { value: '999 Updated Lane' } });
+
+    // 3. Return to review mode
+    const continueBtn = screen.getByRole('button', { name: 'Continue to Payment' });
+    fireEvent.click(continueBtn);
+
+    // 4. Submit payment again -> must call updateCheckoutOrder, NOT createCheckoutOrder!
+    const payBtn2 = screen.getByRole('button', { name: 'Pay via Razorpay' });
+    fireEvent.click(payBtn2);
+
+    await waitFor(() => {
+      expect(createOrderSpy).toHaveBeenCalledTimes(1); // STILL 1, never duplicated!
+      expect(updateOrderSpy).toHaveBeenCalledTimes(1);
+      expect(updateOrderSpy).toHaveBeenCalledWith(
+        mockOrderResponse.id,
+        expect.objectContaining({
+          shippingAddress: expect.objectContaining({
+            addressLine1: '999 Updated Lane',
+          }),
+        }),
+        'guest_token_abc123'
+      );
+      expect(initPaymentSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('recovers pending checkout from sessionStorage across page mount', async () => {
+    const matchingOrderResponse = {
+      ...mockOrderResponse,
+      items: [
+        {
+          ...mockOrderResponse.items[0],
+          quantity: 2, // matches mockCartItems[0].quantity
+        },
+      ],
+    };
+
+    sessionStorage.setItem('pending_checkout_order_id', matchingOrderResponse.id);
+    sessionStorage.setItem('pending_checkout_guest_token', 'guest_token_abc123');
+
+    const getOrderSpy = vi
+      .spyOn(checkoutService, 'getCheckoutOrder')
+      .mockResolvedValue(matchingOrderResponse);
+
+    renderCheckoutPage([mockCartItems[0]]);
+
+    await waitFor(() => {
+      expect(getOrderSpy).toHaveBeenCalledWith(matchingOrderResponse.id, 'guest_token_abc123');
+      // Recovers directly to review mode with verified customer card
+      expect(screen.getByText('Customer & Delivery Destination Verified')).toBeInTheDocument();
+      expect(screen.getByText('Radhika Sharma')).toBeInTheDocument();
+    });
   });
 });

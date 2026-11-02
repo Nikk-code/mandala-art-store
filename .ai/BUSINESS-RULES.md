@@ -63,19 +63,47 @@ This document outlines the core business logic, domain constraints, and calculat
 - **Order Creation & Stock Reservation**:
   - When checkout is initiated, an `Order` (`status = 'pending_payment'`) and a `Payment` (`status = 'pending'`) are created, and Razorpay `order_id` is generated.
   - **Atomic Stock Reservation**: For items with `availability = 'in_stock'`, available stock is reserved/decremented within the same DB transaction. This guarantees that two customers cannot purchase the same unique 1-of-1 art piece simultaneously.
+  - If stock reaches 0, `availability` atomically transitions to `sold_out`.
   - For `made_to_order` items, no stock is reserved or depleted; products remain purchasable.
   - Each order item is a **frozen snapshot** of the product at time of purchase: `product_name`, `product_sku`, `unit_price`, `quantity`.
   - Shipping address is embedded directly into the order record as immutable snapshot fields.
+- **Checkout Idempotency & Payment Modal Retry Protection**:
+  - Checkout order creation supports an `Idempotency-Key` header backed by a 10-minute server-side idempotency cache to prevent duplicate order generation and double stock decrements during concurrent submissions or retries.
+  - **Scoped Idempotency & Payload Binding**: Idempotency keys are tenant-scoped (`user:<userId>:<key>` or `guest:<customerEmail>:<key>`) and cryptographically bound to a canonical SHA-256 payload hash. Key reuse with a mismatched payload is rejected with HTTP 409 `ConflictError`. Cache hits return only matching orders. Note: process-local memory caching is single-instance and not distributed or restart-safe.
+  - The client checkout flow retains the initiated `activeOrder`. If the customer closes or dismisses the Razorpay payment modal and re-initiates payment without altering checkout state, the active order is reused, preventing out-of-stock lockout on 1-of-1 artworks.
+  - **Address & Coupon Correction**: Modifying contact info, shipping address, or coupon code updates the existing `pending_payment` order in place via `PATCH /api/checkout/orders/:orderId`. Stock reservations remain intact without duplicate reservation or out-of-stock lockout.
+  - **Cart Item Changes & Cancellation**: Modifying cart items (adding/removing products or changing quantities) explicitly cancels the superseded pending order via `POST /api/checkout/orders/:orderId/cancel` to immediately release reserved stock before starting a new checkout.
+  - **Browser Refresh Recovery**: Pending checkout order ID and email are stored in `sessionStorage`. On page refresh (F5), the customer automatically recovers their existing pending order and verified address state if cart items match, without duplicate stock reservation.
+  - If the payment gateway SDK fails to load (e.g., due to content blockers or network drops), an explicit error alert guides the customer with actionable troubleshooting steps.
+  - Upon verified payment confirmation, authenticated patrons receive a direct "View Order Details" action routing to `/orders/:orderId` alongside the "Explore Handcrafted Collection" button.
 - **Order & Payment Lifecycle**:
-  1. `pending_payment`: Order initiated, stock reserved, awaiting payment gateway confirmation.
+  1. `pending_payment`: Order initiated, stock reserved, awaiting payment gateway confirmation (15-minute reservation window).
   2. `confirmed`: Payment verified via webhook/signature; reserved stock decrement is **retained** permanently.
-  3. `payment_failed`: Gateway transaction rejected; reserved stock is **immediately released** back to inventory; terminal state for this attempt.
-  4. `cancelled`: Cancelled prior to dispatch or checkout reservation TTL expires (15 min); reserved stock is **immediately released back to inventory** (and refund initiated if already paid).
+  3. `payment_failed`: Gateway transaction rejected; reserved stock is released back to inventory; terminal state for this attempt.
+  4. `cancelled`: Cancelled by customer, superseded by cart change, or expired by expiration service after 15 minutes; reserved stock is **immediately released back to inventory**.
   5. `processing`: Art is being packaged or crafted (for made-to-order pieces).
   6. `shipped`: Handed over to logistics carrier; tracking number assigned.
   7. `delivered`: Confirmed delivery to customer.
+- **Order Expiration & Stock Compensation Lifecycle**:
+  - **15-Minute Reservation TTL**: Orders in `pending_payment` status older than 15 minutes are subject to expiration.
+  - **Scheduled Execution Requirement**: Stale order expiration is executed by `OrderExpirationService.expireStaleOrders()` and the CLI script `npm run orders:expire`. In production, this requires an external cron runner, Cloud Scheduler, or scheduled container worker invoking the command periodically. Process-local intervals are for development/testing only.
+  - **Resilient Batch Processing**: Each order cancellation executes in an isolated per-order `try/catch` block. A failure or deadlock on one order never halts the batch or prevents processing of subsequent orders. Expiration returns structured diagnostics (`ordersExamined`, `ordersExpired`, `ordersSkipped`, `ordersFailed`, `failedOrders`), and `npm run orders:expire` exits with code 1 if `ordersFailed > 0`.
+  - **Mutual Exclusive Row Locking**: Order expiration acquires an exclusive database row lock (`SELECT "id" FROM "orders" WHERE "id" = :id::uuid FOR UPDATE`) within its transaction to strictly serialize against payment capture.
+  - **Atomic Conditional Transition**: Order expiration uses atomic conditional queries (`UPDATE orders SET status = 'CANCELLED' WHERE id = :id AND status = 'PENDING_PAYMENT'`). If payment capture or a concurrent worker already transitioned the order, the query returns 0 rows and stock is NOT restored, strictly preventing double-restoration races.
+  - **Atomic Stock Restoration**: When cancellation succeeds, stock quantities are incremented for non-made-to-order items, and `sold_out` items with `stockQuantity > 0` are returned to `in_stock`. Pending payments are marked `failed`.
+  - **Coupon Reservation Release**: Coupon occupied slots count `timesUsed + active unexpired PENDING_PAYMENT reservations (created within last 15 min)`. Once cancelled, the order is excluded from pending counts, instantly freeing capacity.
+  - **Delayed Payment Reconciliation**: If payment is captured after an order has expired and been cancelled, the system does not confirm the order without stock. Payment capture also acquires the exclusive row lock (`FOR UPDATE`) and guards status update with `UPDATE orders SET status = 'CONFIRMED' WHERE id = :id AND status = 'PENDING_PAYMENT'`. If count is 0, the payment is recorded truthfully as `CAPTURED` while the order remains `CANCELLED` with an `[EXPIRED_ORDER_PAYMENT_RECONCILIATION]` banner in customer notes for administrative review or refund, preventing inventory overselling.
+- **Guest Checkout Security & Cryptographic Access Tokens**:
+  - **Token Generation**: For guest checkout orders (`userId === null`), the backend generates a cryptographically secure 256-bit random token (`crypto.randomBytes(32)` -> 64 hex characters).
+  - **Storage**: The database stores only the SHA-256 digest in `guest_access_token_hash` (`VARCHAR(64)`). The plaintext token is never persisted.
+  - **Delivery**: Plaintext token is returned exclusively in the initial `POST /api/checkout/orders` response or upon idempotent replay from the same session. Plaintext tokens are NEVER exposed in URLs, query strings, or GET responses.
+  - **Authorization Enforcement**: Guest access to `GET /api/checkout/orders/:orderId`, `PATCH /api/checkout/orders/:orderId`, and `POST /api/checkout/orders/:orderId/cancel` strictly requires the `X-Guest-Access-Token` request header.
+  - **Constant-Time Verification**: Verification hashes the provided header token and compares it to `order.guestAccessTokenHash` using `crypto.timingSafeEqual` over 32-byte buffers, eliminating timing side channels.
+  - **No Email Fallback**: All email-based authorization fallbacks (`x-guest-email`, email in query or body) are strictly removed to eliminate IDOR vulnerabilities. Knowing a customer's email or order ID does not grant access.
+  - **Cross-Order & Registered Order Isolation**: A guest access token cannot authorize access to a registered customer's order, and an access token for Order A cannot access Order B. Unmatched tokens or orders return HTTP `404 Not Found`.
+  - **Frontend Client Lifecycle**: In `CheckoutPage.tsx`, the guest access token is stored in `sessionStorage` under `pending_checkout_guest_token` and held in `guestAccessTokenRef`. It is transmitted on recovery, address patch, and cart cancellation, and cleared from storage upon payment verification, cancellation, or cart divergence.
 - **Valid Status Transitions**:
-  - `pending_payment` → `confirmed` (success), `payment_failed` (gateway rejection), `cancelled` (user abort/timeout)
+  - `pending_payment` → `confirmed` (success), `payment_failed` (gateway rejection), `cancelled` (user abort, cart change, or 15-min timeout)
   - `payment_failed` → terminal (a retry requires starting a new checkout with fresh stock reservation)
   - `confirmed` → `processing`, `cancelled` (before dispatch; triggers refund + stock release)
   - `processing` → `shipped`
@@ -94,7 +122,7 @@ This document outlines the core business logic, domain constraints, and calculat
 - **Atomic Reservation**: Checkout uses an atomic `UPDATE products SET stock_quantity = stock_quantity - :qty ... WHERE stock_quantity >= :qty AND availability = 'in_stock'` pattern. If 0 rows update, checkout fails cleanly with out-of-stock notification.
 - **Admin Delta Adjustments**: Admin positive/negative stock adjustments execute atomic conditional database queries (`stockQuantity: { increment: delta }` or `stockQuantity: { decrement: abs(delta) } WHERE stockQuantity >= abs(delta)`). Concurrent operations serialize safely without lost updates, and decrements exceeding stock are rejected with `ConflictError` (HTTP 409).
 - **Exact-Quantity (Set) Optimistic Concurrency**: Exact stock updates transmit `expectedStock`. If concurrent orders or stock changes modified inventory between UI load and save, the update is rejected with `ConflictError` (HTTP 409). Physical recounts can override this protection with `force: true`.
-- **Automatic Stock Compensation**: If an order fails payment, is cancelled, or expires without payment, the backend executes an atomic compensation query (`UPDATE products SET stock_quantity = stock_quantity + :qty ...`) to immediately return stock to the store.
+- **Atomic Stock Restoration & Expiration**: When an order is cancelled by the customer, superseded by cart changes, or expired by the expiration service (`OrderExpirationService` / `npm run orders:expire`), the backend atomically transitions the order status to `CANCELLED` and executes atomic inventory restoration (`stockQuantity: { increment: quantity }`) for reserved items, and restores `sold_out` items with positive inventory to `in_stock`. Because stock restoration is guarded by the atomic transition from `PENDING_PAYMENT`, repeated sweeps or concurrent worker processes never double-restore stock. Scheduled execution of `npm run orders:expire` requires a configured production cron runner or worker scheduler.
 - **Out-of-Stock Protection**: If stock reaches 0 via checkout or admin decrement, `availability` automatically transitions to `sold_out`. If stock rises above 0, `sold_out` automatically transitions to `in_stock`.
 - **Made-to-Order**: Items with `availability = 'made_to_order'` are crafted on demand and always purchasable without stock depletion. Auto-transitions never alter `made_to_order` availability.
 

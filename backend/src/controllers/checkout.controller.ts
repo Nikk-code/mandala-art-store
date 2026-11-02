@@ -64,3 +64,83 @@ export async function verifyPayment(
     next(error);
   }
 }
+
+export async function updateOrder(
+  req: Request,
+  res: Response<ApiSuccessResponse<{ order: OrderResponseDto }>>,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { orderId } = req.params;
+    const guestAccessToken = req.headers['x-guest-access-token'] as string | undefined;
+
+    const order = await orderService.updatePendingOrder(
+      orderId,
+      req.body,
+      req.user ?? null,
+      guestAccessToken
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        order,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function cancelOrder(
+  req: Request,
+  res: Response<ApiSuccessResponse<{ message: string }>>,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { orderId } = req.params;
+    const guestAccessToken = req.headers['x-guest-access-token'] as string | undefined;
+
+    const result = await orderService.cancelPendingOrder(
+      orderId,
+      req.user ?? null,
+      guestAccessToken,
+      req.body?.reason
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: result.message,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getCheckoutOrder(
+  req: Request,
+  res: Response<ApiSuccessResponse<{ order: OrderResponseDto }>>,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { orderId } = req.params;
+    const guestAccessToken = req.headers['x-guest-access-token'] as string | undefined;
+
+    const order = await orderService.getPendingOrderForCheckout(
+      orderId,
+      req.user ?? null,
+      guestAccessToken
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        order,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
