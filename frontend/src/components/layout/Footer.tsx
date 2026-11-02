@@ -93,13 +93,13 @@ export function Footer(): ReactNode {
             © {new Date().getFullYear()} {APP_NAME}. Handcrafted in India. All rights reserved.
           </p>
           <div className="flex space-x-6">
-            <Link to="/" className="hover:text-art-charcoal transition-colors">
+            <Link to="/privacy-policy" className="hover:text-art-charcoal transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/" className="hover:text-art-charcoal transition-colors">
+            <Link to="/terms-of-craft" className="hover:text-art-charcoal transition-colors">
               Terms of Craft
             </Link>
-            <Link to="/" className="hover:text-art-charcoal transition-colors">
+            <Link to="/care-guide" className="hover:text-art-charcoal transition-colors">
               Care Guide
             </Link>
           </div>

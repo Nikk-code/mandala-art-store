@@ -13,6 +13,9 @@ import {
   RegisterPage,
   AccountPage,
   WishlistPage,
+  PrivacyPolicyPage,
+  TermsOfCraftPage,
+  CareGuidePage,
   AdminDashboardPage,
   AdminProductsPage,
   AdminCategoriesPage,
@@ -121,6 +124,10 @@ export function App(): ReactNode {
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
                 <Route path="account" element={<AccountPage />} />
+                <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="terms-of-craft" element={<TermsOfCraftPage />} />
+                <Route path="terms" element={<TermsOfCraftPage />} />
+                <Route path="care-guide" element={<CareGuidePage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Routes>
