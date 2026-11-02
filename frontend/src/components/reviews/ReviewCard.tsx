@@ -48,7 +48,7 @@ export function ReviewCard({
 
   return (
     <article
-      className={`rounded-2xl border border-art-stone/80 bg-white p-5 shadow-sm space-y-3 transition-colors hover:border-art-ochre/40 ${className}`}
+      className={`rounded-2xl border border-art-stone/80 dark:border-art-darkborder bg-white dark:bg-art-darkcard p-5 shadow-sm space-y-3 transition-colors hover:border-art-ochre/40 ${className}`}
       aria-labelledby={`review-author-${review.id}`}
     >
       {/* Header: Author Avatar, Name, Verified Badge, Date */}
@@ -56,7 +56,7 @@ export function ReviewCard({
         <div className="flex items-center gap-3">
           {/* Avatar Initials */}
           <div
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-art-ochre/15 text-art-charcoal font-serif font-bold text-sm border border-art-ochre/30"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-art-ochre/15 text-art-charcoal dark:text-stone-100 font-serif font-bold text-sm border border-art-ochre/30"
             aria-hidden="true"
           >
             {authorInitials}
@@ -66,7 +66,7 @@ export function ReviewCard({
             <div className="flex flex-wrap items-center gap-2">
               <span
                 id={`review-author-${review.id}`}
-                className="font-medium text-sm text-art-charcoal"
+                className="font-medium text-sm text-art-charcoal dark:text-stone-100"
               >
                 {authorName}
               </span>
@@ -152,13 +152,15 @@ export function ReviewCard({
       <div className="space-y-1">
         <StarRating rating={review.rating} size="sm" />
         {review.title && (
-          <h4 className="font-serif font-bold text-sm text-art-charcoal pt-0.5">{review.title}</h4>
+          <h4 className="font-serif font-bold text-sm text-art-charcoal dark:text-stone-100 pt-0.5">
+            {review.title}
+          </h4>
         )}
       </div>
 
       {/* Review Body */}
       {review.body && (
-        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed whitespace-pre-line">
+        <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
           {review.body}
         </p>
       )}

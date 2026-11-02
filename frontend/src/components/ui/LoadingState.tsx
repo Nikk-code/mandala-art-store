@@ -41,7 +41,9 @@ export function LoadingState({
           />
         </svg>
       </div>
-      <p className="text-sm font-medium text-stone-600 tracking-wide">{message}</p>
+      <p className="text-sm font-medium text-stone-600 dark:text-stone-300 tracking-wide">
+        {message}
+      </p>
       <span className="sr-only">Loading</span>
     </div>
   );

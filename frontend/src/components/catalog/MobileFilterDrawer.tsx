@@ -39,10 +39,13 @@ export function MobileFilterDrawer({
       />
 
       {/* Slide-in Drawer Container */}
-      <div className="relative ml-auto flex h-full w-full max-w-xs flex-col overflow-y-auto bg-white p-6 shadow-2xl z-10 animate-fadeIn">
+      <div className="relative ml-auto flex h-full w-full max-w-xs flex-col overflow-y-auto bg-white dark:bg-art-midnight dark:border-l dark:border-art-darkborder p-6 shadow-2xl z-10 animate-fadeIn">
         {/* Drawer Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-art-stone mb-4">
-          <h2 id="mobile-filters-title" className="font-serif text-xl font-bold text-art-charcoal">
+        <div className="flex items-center justify-between pb-4 border-b border-art-stone dark:border-art-darkborder mb-4">
+          <h2
+            id="mobile-filters-title"
+            className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100"
+          >
             Refine Artworks
           </h2>
           <IconButton
@@ -75,11 +78,11 @@ export function MobileFilterDrawer({
         </div>
 
         {/* Action Button */}
-        <div className="pt-6 border-t border-art-stone mt-6">
+        <div className="pt-6 border-t border-art-stone dark:border-art-darkborder mt-6">
           <button
             type="button"
             onClick={onClose}
-            className="w-full bg-art-charcoal text-white text-sm font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-stone-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px]"
+            className="w-full bg-art-charcoal dark:bg-art-terracotta text-white text-sm font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-stone-800 dark:hover:bg-[#8F3F21] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px]"
           >
             Apply & View Artworks
           </button>

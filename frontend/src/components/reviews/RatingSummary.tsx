@@ -14,19 +14,19 @@ export function RatingSummary({ summary, className = '' }: RatingSummaryProps): 
 
   return (
     <div
-      className={`rounded-2xl border border-art-stone bg-white p-6 shadow-sm ${className}`}
+      className={`rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm ${className}`}
       aria-label="Product rating summary"
     >
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         {/* Score Overview */}
-        <div className="md:col-span-5 flex flex-col items-center justify-center text-center p-4 border-b md:border-b-0 md:border-r border-art-stone/60">
-          <div className="text-5xl font-serif font-bold text-art-charcoal">
+        <div className="md:col-span-5 flex flex-col items-center justify-center text-center p-4 border-b md:border-b-0 md:border-r border-art-stone/60 dark:border-art-darkborder">
+          <div className="text-5xl font-serif font-bold text-art-charcoal dark:text-stone-100">
             {totalReviews > 0 ? averageRating.toFixed(1) : '—'}
           </div>
           <div className="mt-2">
             <StarRating rating={averageRating} size="lg" />
           </div>
-          <p className="mt-2 text-xs font-medium text-stone-600">
+          <p className="mt-2 text-xs font-medium text-stone-600 dark:text-stone-400">
             {totalReviews === 0
               ? 'No customer reviews yet'
               : `Based on ${totalReviews} customer review${totalReviews > 1 ? 's' : ''}`}
@@ -42,14 +42,14 @@ export function RatingSummary({ summary, className = '' }: RatingSummaryProps): 
             return (
               <div key={star} className="flex items-center gap-3 text-xs">
                 {/* Star label */}
-                <div className="w-12 flex items-center justify-end gap-1 font-medium text-stone-600">
+                <div className="w-12 flex items-center justify-end gap-1 font-medium text-stone-600 dark:text-stone-400">
                   <span>{star}</span>
                   <span className="text-amber-400">★</span>
                 </div>
 
                 {/* Progress track */}
                 <div
-                  className="flex-1 h-2.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200"
+                  className="flex-1 h-2.5 bg-stone-100 dark:bg-art-darkstone rounded-full overflow-hidden border border-stone-200 dark:border-art-darkborder"
                   role="progressbar"
                   aria-valuenow={percentage}
                   aria-valuemin={0}
@@ -63,7 +63,7 @@ export function RatingSummary({ summary, className = '' }: RatingSummaryProps): 
                 </div>
 
                 {/* Count & Percentage */}
-                <div className="w-14 text-right text-stone-500 font-medium">
+                <div className="w-14 text-right text-stone-500 dark:text-stone-400 font-medium">
                   {count} <span className="text-stone-400 text-[10px]">({percentage}%)</span>
                 </div>
               </div>

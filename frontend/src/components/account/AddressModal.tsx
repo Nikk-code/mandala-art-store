@@ -185,17 +185,20 @@ export function AddressModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="address-modal-title"
-        className="relative w-full max-w-lg rounded-2xl bg-white p-6 sm:p-8 shadow-2xl border border-art-stone max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-art-darkcard p-6 sm:p-8 shadow-2xl border border-art-stone dark:border-art-darkborder max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex items-center justify-between border-b border-art-stone/60 pb-4 mb-6">
-          <h2 id="address-modal-title" className="font-serif text-xl font-bold text-art-charcoal">
+        <div className="flex items-center justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-4 mb-6">
+          <h2
+            id="address-modal-title"
+            className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100"
+          >
             {initialData ? 'Edit Delivery Address' : 'Add Delivery Address'}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="rounded-lg p-1.5 text-stone-400 hover:text-art-charcoal hover:bg-art-stone/30 transition"
+            className="rounded-lg p-1.5 text-stone-400 hover:text-art-charcoal dark:hover:text-stone-100 hover:bg-art-stone/30 dark:hover:bg-art-darkstone transition"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -317,13 +320,13 @@ export function AddressModal({
                 onChange={e => setFormData(p => ({ ...p, isDefault: e.target.checked }))}
                 className="h-4 w-4 rounded border-art-stone text-art-ochre focus:ring-art-ochre cursor-pointer"
               />
-              <span className="text-xs font-semibold text-art-charcoal">
+              <span className="text-xs font-semibold text-art-charcoal dark:text-stone-200">
                 Set as default delivery address
               </span>
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-art-stone/60">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-art-stone/60 dark:border-art-darkborder">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>

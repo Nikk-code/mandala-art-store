@@ -28,7 +28,10 @@ export function Input({
   return (
     <div className={`space-y-1.5 ${containerClassName}`}>
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="block text-xs font-semibold text-art-charcoal tracking-wide">
+        <label
+          htmlFor={id}
+          className="block text-xs font-semibold text-art-charcoal dark:text-stone-200 tracking-wide"
+        >
           {label}
           {required && <span className="ml-1 text-art-terracotta">*</span>}
         </label>
@@ -41,12 +44,12 @@ export function Input({
           disabled={disabled}
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
-          className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-art-charcoal placeholder-stone-400 transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-400 min-h-[44px] ${
+          className={`w-full rounded-xl border bg-white dark:bg-art-darkcard px-4 py-2.5 text-sm text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-stone-50 dark:disabled:bg-art-darkstone disabled:text-stone-400 dark:disabled:text-stone-600 min-h-[44px] ${
             endAdornment ? 'pr-11' : ''
           } ${
             error
-              ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-              : 'border-art-stone focus:border-art-ochre focus:ring-art-ochre/20'
+              ? 'border-red-400 focus:border-red-500 focus:ring-red-200 dark:border-red-500 dark:focus:ring-red-950/40'
+              : 'border-art-stone dark:border-art-darkborder focus:border-art-ochre focus:ring-art-ochre/20'
           } ${className}`}
           {...props}
         />

@@ -114,10 +114,10 @@ export function OrderConfirmationPage(): ReactNode {
       {/* 1. Breadcrumbs */}
       <nav
         aria-label="Breadcrumb"
-        className="border-b border-art-stone bg-white/70 backdrop-blur-sm sticky top-0 z-20"
+        className="border-b border-art-stone dark:border-art-darkborder bg-white/70 dark:bg-art-midnight/80 backdrop-blur-sm sticky top-0 z-20"
       >
         <Container size="7xl">
-          <ol className="flex items-center space-x-2 py-3.5 text-xs text-stone-500">
+          <ol className="flex items-center space-x-2 py-3.5 text-xs text-stone-500 dark:text-stone-400">
             <li>
               <Link
                 to="/"
@@ -126,7 +126,7 @@ export function OrderConfirmationPage(): ReactNode {
                 Home
               </Link>
             </li>
-            <li aria-hidden="true" className="text-stone-300">
+            <li aria-hidden="true" className="text-stone-300 dark:text-stone-600">
               /
             </li>
             <li>
@@ -137,10 +137,10 @@ export function OrderConfirmationPage(): ReactNode {
                 My Orders
               </Link>
             </li>
-            <li aria-hidden="true" className="text-stone-300">
+            <li aria-hidden="true" className="text-stone-300 dark:text-stone-600">
               /
             </li>
-            <li aria-current="page" className="font-medium text-art-charcoal">
+            <li aria-current="page" className="font-medium text-art-charcoal dark:text-stone-100">
               Order {order.orderNumber}
             </li>
           </ol>
@@ -150,17 +150,17 @@ export function OrderConfirmationPage(): ReactNode {
       {/* 2. Order Confirmation Header */}
       <Section background="cream" spacing="md">
         <Container size="7xl">
-          <div className="rounded-2xl border border-art-stone bg-white p-6 sm:p-10 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-art-stone/60 pb-6">
+          <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 sm:p-10 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-art-stone/60 dark:border-art-darkborder pb-6">
               <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 text-2xl font-bold">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-2xl font-bold">
                   ✓
                 </span>
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
                     {isPaid ? 'Payment Verified & Confirmed' : 'Order Placed'}
                   </span>
-                  <h1 className="font-serif text-2xl sm:text-3xl font-bold text-art-charcoal mt-1">
+                  <h1 className="font-serif text-2xl sm:text-3xl font-bold text-art-charcoal dark:text-stone-100 mt-1">
                     Order Reference #{order.orderNumber}
                   </h1>
                   <p className="text-xs text-stone-500 mt-1">

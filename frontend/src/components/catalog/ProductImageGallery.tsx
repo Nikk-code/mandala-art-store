@@ -55,7 +55,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
   return (
     <div className="space-y-4">
       {/* 1. Main Display Area */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-art-stone bg-stone-100 shadow-sm">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-stone-100 dark:bg-stone-900 shadow-sm">
         {activeImage?.url && !imageError[selectedIndex] ? (
           <>
             <img
@@ -79,7 +79,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
             <button
               type="button"
               onClick={() => setIsLightboxOpen(true)}
-              className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-xl bg-white/90 px-3 py-2 text-xs font-semibold text-art-charcoal shadow-md backdrop-blur-sm transition-colors hover:bg-white min-h-[44px] min-w-[44px] justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+              className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-xl bg-white/90 dark:bg-art-darkcard/90 px-3 py-2 text-xs font-semibold text-art-charcoal dark:text-stone-100 shadow-md backdrop-blur-sm transition-colors hover:bg-white dark:hover:bg-art-darkcard min-h-[44px] min-w-[44px] justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
               aria-label="Open fullscreen image viewer"
             >
               <svg
@@ -100,16 +100,22 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
           </>
         ) : (
           <div
-            className="flex h-full w-full flex-col items-center justify-center p-8 text-center bg-art-cream"
+            className="flex h-full w-full flex-col items-center justify-center p-8 text-center bg-art-cream dark:bg-art-midnight"
             aria-label="Image placeholder"
           >
             <div className="relative mb-3 flex h-20 w-20 items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-art-ochre/30" />
               <div className="absolute inset-2 rounded-full border border-dashed border-art-terracotta/40" />
-              <span className="font-serif text-2xl font-bold text-art-charcoal">ॐ</span>
+              <span className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
+                ॐ
+              </span>
             </div>
-            <p className="font-serif text-sm font-semibold text-art-charcoal">{productName}</p>
-            <span className="text-xs text-stone-500 mt-1">Artisan Original</span>
+            <p className="font-serif text-sm font-semibold text-art-charcoal dark:text-stone-100">
+              {productName}
+            </p>
+            <span className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+              Artisan Original
+            </span>
           </div>
         )}
 
@@ -119,7 +125,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
             <button
               type="button"
               onClick={handlePrevImage}
-              className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-art-charcoal shadow-md backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+              className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/80 dark:bg-stone-900/80 text-art-charcoal dark:text-stone-100 shadow-md backdrop-blur-sm transition-colors hover:bg-white dark:hover:bg-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
               aria-label="Previous image"
             >
               <svg
@@ -135,7 +141,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
             <button
               type="button"
               onClick={handleNextImage}
-              className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-art-charcoal shadow-md backdrop-blur-sm transition-colors hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+              className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white/80 dark:bg-stone-900/80 text-art-charcoal dark:text-stone-100 shadow-md backdrop-blur-sm transition-colors hover:bg-white dark:hover:bg-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
               aria-label="Next image"
             >
               <svg

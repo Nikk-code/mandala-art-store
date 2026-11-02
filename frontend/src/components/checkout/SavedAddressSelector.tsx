@@ -20,13 +20,13 @@ export function SavedAddressSelector({
   if (addresses.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-art-stone bg-white p-5 sm:p-6 shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-art-stone/60 pb-3">
+    <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-5 sm:p-6 shadow-sm space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-art-stone/60 dark:border-art-darkborder pb-3">
         <div>
-          <h2 className="font-serif text-base font-bold text-art-charcoal">
+          <h2 className="font-serif text-base font-bold text-art-charcoal dark:text-stone-100">
             Saved Delivery Addresses
           </h2>
-          <p className="text-xs text-stone-500">
+          <p className="text-xs text-stone-500 dark:text-stone-400">
             Select a verified delivery destination or enter a different address below.
           </p>
         </div>
@@ -61,7 +61,7 @@ export function SavedAddressSelector({
               className={`text-left rounded-xl p-4 border transition-all text-xs flex flex-col justify-between ${
                 isSelected
                   ? 'border-art-ochre bg-art-ochre/10 shadow-sm ring-1 ring-art-ochre'
-                  : 'border-art-stone bg-white hover:border-art-stone/80'
+                  : 'border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkstone hover:border-art-stone/80'
               } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
             >
               <div>
@@ -71,12 +71,12 @@ export function SavedAddressSelector({
                       className={`h-4 w-4 rounded-full border flex items-center justify-center text-[10px] ${
                         isSelected
                           ? 'border-art-ochre bg-art-ochre text-white'
-                          : 'border-stone-300 bg-white'
+                          : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800'
                       }`}
                     >
                       {isSelected ? '✓' : ''}
                     </span>
-                    <span className="font-serif font-bold text-art-charcoal text-xs">
+                    <span className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-xs">
                       {addr.recipientName}
                     </span>
                   </div>
@@ -87,9 +87,11 @@ export function SavedAddressSelector({
                   )}
                 </div>
 
-                <p className="text-[11px] text-stone-500 mb-1">📞 {addr.phone}</p>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 mb-1">
+                  📞 {addr.phone}
+                </p>
 
-                <p className="text-[11px] text-stone-600 line-clamp-2 leading-relaxed">
+                <p className="text-[11px] text-stone-600 dark:text-stone-300 line-clamp-2 leading-relaxed">
                   {addr.addressLine1}
                   {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}, {addr.city}, {addr.state} —{' '}
                   {addr.postalCode}

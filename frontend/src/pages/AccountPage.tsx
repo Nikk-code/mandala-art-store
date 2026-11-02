@@ -133,23 +133,29 @@ export function AccountPage(): ReactNode {
     <Container className="py-10 max-w-4xl">
       {/* Page Title & Breadcrumbs */}
       <div className="mb-8">
-        <nav className="mb-3 text-xs text-stone-500 font-medium" aria-label="Breadcrumb">
+        <nav
+          className="mb-3 text-xs text-stone-500 dark:text-stone-400 font-medium"
+          aria-label="Breadcrumb"
+        >
           <ol className="flex items-center space-x-2">
             <li>
-              <Link to="/" className="hover:text-art-charcoal transition-colors">
+              <Link
+                to="/"
+                className="hover:text-art-charcoal dark:hover:text-stone-100 transition-colors"
+              >
                 Home
               </Link>
             </li>
             <li>/</li>
-            <li className="text-art-charcoal font-semibold" aria-current="page">
+            <li className="text-art-charcoal dark:text-stone-100 font-semibold" aria-current="page">
               My Account
             </li>
           </ol>
         </nav>
-        <h1 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal sm:text-4xl">
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 sm:text-4xl">
           Patron Account
         </h1>
-        <p className="mt-2 text-sm text-stone-600">
+        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
           Manage your personal details and view your art collection order history.
         </p>
       </div>
@@ -157,18 +163,20 @@ export function AccountPage(): ReactNode {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Left Column: Patron Overview Card */}
         <div className="md:col-span-1 space-y-6">
-          <Section className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm">
+          <Section className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm">
             <div className="flex flex-col items-center text-center">
               <div
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-art-cream text-art-ochre font-serif text-2xl font-bold border-2 border-art-ochre/30 shadow-inner mb-4"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-art-cream dark:bg-art-midnight text-art-ochre font-serif text-2xl font-bold border-2 border-art-ochre/30 shadow-inner mb-4"
                 aria-hidden="true"
               >
                 {userInitials}
               </div>
-              <h2 className="font-serif text-lg font-bold text-art-charcoal">
+              <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
                 {user.firstName} {user.lastName}
               </h2>
-              <p className="text-xs text-stone-500 mt-0.5 truncate max-w-full">{user.email}</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 truncate max-w-full">
+                {user.email}
+              </p>
 
               <div className="mt-3">
                 <Badge variant="ochre">
@@ -176,12 +184,14 @@ export function AccountPage(): ReactNode {
                 </Badge>
               </div>
 
-              <div className="w-full border-t border-art-stone/60 my-5" />
+              <div className="w-full border-t border-art-stone/60 dark:border-art-darkborder my-5" />
 
-              <div className="w-full text-left space-y-3 text-xs text-stone-600">
+              <div className="w-full text-left space-y-3 text-xs text-stone-600 dark:text-stone-300">
                 <div className="flex justify-between items-center">
                   <span className="text-stone-400">Member Since</span>
-                  <span className="font-medium text-art-charcoal">{formattedDate}</span>
+                  <span className="font-medium text-art-charcoal dark:text-stone-100">
+                    {formattedDate}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-stone-400">Account Status</span>
@@ -195,22 +205,22 @@ export function AccountPage(): ReactNode {
 
           {/* Admin Portal Quick Card (Admins Only) */}
           {user.role === 'ADMIN' && (
-            <Section className="rounded-2xl border border-art-ochre/50 bg-amber-50/60 p-5">
+            <Section className="rounded-2xl border border-art-ochre/50 dark:border-art-ochre/40 bg-amber-50/60 dark:bg-art-darkcard p-5">
               <div className="flex items-center gap-2 mb-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-art-ochre text-art-charcoal">
                   Staff Access
                 </span>
               </div>
-              <h3 className="font-serif text-sm font-bold text-art-charcoal mb-2">
+              <h3 className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100 mb-2">
                 Administrator Portal
               </h3>
-              <p className="text-xs text-stone-600 mb-4 leading-relaxed">
+              <p className="text-xs text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">
                 Access store operations, system infrastructure metadata, and upcoming administrative
                 modules.
               </p>
               <Link
                 to="/admin"
-                className="inline-flex w-full items-center justify-center rounded-xl bg-art-charcoal px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-art-charcoal dark:bg-art-terracotta px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-stone-800 dark:hover:bg-[#8F3F21] focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
               >
                 Open Admin Dashboard →
               </Link>
@@ -218,24 +228,28 @@ export function AccountPage(): ReactNode {
           )}
 
           {/* Quick Navigation Card */}
-          <Section className="rounded-2xl border border-art-stone bg-art-cream/40 p-5">
-            <h3 className="font-serif text-sm font-bold text-art-charcoal mb-3">Order History</h3>
-            <p className="text-xs text-stone-600 mb-4 leading-relaxed">
+          <Section className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-art-cream/40 dark:bg-art-darkcard p-5">
+            <h3 className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100 mb-3">
+              Order History
+            </h3>
+            <p className="text-xs text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">
               Track pending and confirmed artwork dispatches, certificates of authenticity, and
               receipts.
             </p>
             <Link
               to="/orders"
-              className="inline-flex w-full items-center justify-center rounded-xl bg-art-charcoal px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-stone-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-art-charcoal dark:bg-stone-800 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-stone-800 dark:hover:bg-stone-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
             >
               View Order History →
             </Link>
           </Section>
 
           {/* Wishlist Quick Card */}
-          <Section className="rounded-2xl border border-art-stone bg-art-cream/40 p-5">
-            <h3 className="font-serif text-sm font-bold text-art-charcoal mb-3">Saved Artworks</h3>
-            <p className="text-xs text-stone-600 mb-4 leading-relaxed">
+          <Section className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-art-cream/40 dark:bg-art-darkcard p-5">
+            <h3 className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100 mb-3">
+              Saved Artworks
+            </h3>
+            <p className="text-xs text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">
               Review handcrafted mandalas, canvas pieces, and traditional art saved to your personal
               wishlist.
             </p>
@@ -250,10 +264,12 @@ export function AccountPage(): ReactNode {
 
         {/* Right Column: Profile Edit Form & Saved Addresses */}
         <div className="md:col-span-2 space-y-8">
-          <Section className="rounded-2xl border border-art-stone bg-white p-6 sm:p-8 shadow-sm">
-            <div className="mb-6 border-b border-art-stone/60 pb-4">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">Profile Details</h2>
-              <p className="mt-1 text-xs text-stone-500">
+          <Section className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 sm:p-8 shadow-sm">
+            <div className="mb-6 border-b border-art-stone/60 dark:border-art-darkborder pb-4">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
+                Profile Details
+              </h2>
+              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                 Update your contact details for smooth checkout and artwork dispatch delivery.
               </p>
             </div>

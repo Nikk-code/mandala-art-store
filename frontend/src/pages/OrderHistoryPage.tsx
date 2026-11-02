@@ -79,10 +79,10 @@ export function OrderHistoryPage(): ReactNode {
       {/* 1. Breadcrumbs */}
       <nav
         aria-label="Breadcrumb"
-        className="border-b border-art-stone bg-white/70 backdrop-blur-sm sticky top-0 z-20"
+        className="border-b border-art-stone dark:border-art-darkborder bg-white/70 dark:bg-art-midnight/80 backdrop-blur-sm sticky top-0 z-20"
       >
         <Container size="7xl">
-          <ol className="flex items-center space-x-2 py-3.5 text-xs text-stone-500">
+          <ol className="flex items-center space-x-2 py-3.5 text-xs text-stone-500 dark:text-stone-400">
             <li>
               <Link
                 to="/"
@@ -91,10 +91,10 @@ export function OrderHistoryPage(): ReactNode {
                 Home
               </Link>
             </li>
-            <li aria-hidden="true" className="text-stone-300">
+            <li aria-hidden="true" className="text-stone-300 dark:text-stone-600">
               /
             </li>
-            <li aria-current="page" className="font-medium text-art-charcoal">
+            <li aria-current="page" className="font-medium text-art-charcoal dark:text-stone-100">
               My Orders
             </li>
           </ol>
@@ -108,10 +108,10 @@ export function OrderHistoryPage(): ReactNode {
             <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
               Customer Account
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal mt-1">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-1">
               My Artwork Orders
             </h1>
-            <p className="mt-1.5 text-sm text-stone-600 max-w-2xl leading-relaxed">
+            <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed">
               Track fulfillment progress, view payment verification status, and review historical
               invoices for your commissioned artworks.
             </p>
@@ -120,11 +120,11 @@ export function OrderHistoryPage(): ReactNode {
           {/* 3. Main Content Area */}
           <div className="mt-6">
             {loading ? (
-              <div className="py-20 rounded-2xl bg-white border border-art-stone">
+              <div className="py-20 rounded-2xl bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder">
                 <LoadingState message="Loading your order history..." />
               </div>
             ) : error ? (
-              <div className="py-12 rounded-2xl bg-white border border-art-stone p-6">
+              <div className="py-12 rounded-2xl bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder p-6">
                 <ErrorState
                   title="Unable to Load Orders"
                   message={error}
@@ -132,7 +132,7 @@ export function OrderHistoryPage(): ReactNode {
                 />
               </div>
             ) : orders.length === 0 ? (
-              <div className="py-16 rounded-2xl bg-white p-8 border border-art-stone">
+              <div className="py-16 rounded-2xl bg-white dark:bg-art-darkcard p-8 border border-art-stone dark:border-art-darkborder">
                 <EmptyState
                   title="No Orders Placed Yet"
                   description="You have not placed any artwork orders with us. Explore our authentic handcrafted mandala collections to place your first order."
@@ -142,7 +142,7 @@ export function OrderHistoryPage(): ReactNode {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="flex items-center justify-between text-xs text-stone-500 px-1">
+                <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 px-1">
                   <span>
                     Showing {orders.length} of {totalCount} total orders
                   </span>
@@ -153,12 +153,12 @@ export function OrderHistoryPage(): ReactNode {
                   {orders.map(order => (
                     <div
                       key={order.id}
-                      className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm hover:shadow-md transition-all space-y-4"
+                      className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm hover:shadow-md transition-all space-y-4"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-art-stone/60 pb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-art-stone/60 dark:border-art-darkborder pb-4">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-base text-art-charcoal">
+                            <span className="font-mono font-bold text-base text-art-charcoal dark:text-stone-100">
                               #{order.orderNumber}
                             </span>
                             <Badge
@@ -212,7 +212,7 @@ export function OrderHistoryPage(): ReactNode {
                         <div className="flex items-end justify-start md:justify-end pt-2 md:pt-0">
                           <Link
                             to={`/orders/${order.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-xl border border-art-stone bg-stone-50 px-4 py-2.5 text-xs font-bold text-art-charcoal hover:bg-art-cream hover:border-art-ochre/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-art-stone dark:border-art-darkborder bg-stone-50 dark:bg-art-darkstone px-4 py-2.5 text-xs font-bold text-art-charcoal dark:text-stone-100 hover:bg-art-cream dark:hover:bg-art-darkcard hover:border-art-ochre/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
                           >
                             <span>View Order Details</span>
                             <span aria-hidden="true">→</span>

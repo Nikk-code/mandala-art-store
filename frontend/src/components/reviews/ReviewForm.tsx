@@ -78,11 +78,11 @@ export function ReviewForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`rounded-2xl border border-art-ochre/30 bg-art-cream/60 p-5 sm:p-6 shadow-sm space-y-4 ${className}`}
+      className={`rounded-2xl border border-art-ochre/30 bg-art-cream/60 dark:bg-art-darkcard dark:border-art-darkborder p-5 sm:p-6 shadow-sm space-y-4 ${className}`}
       aria-label={isEditing ? 'Edit your review' : `Review ${productName}`}
     >
-      <div className="flex items-center justify-between border-b border-art-stone/60 pb-3">
-        <h3 className="font-serif text-base sm:text-lg font-bold text-art-charcoal">
+      <div className="flex items-center justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-3">
+        <h3 className="font-serif text-base sm:text-lg font-bold text-art-charcoal dark:text-stone-100">
           {isEditing ? 'Edit Your Artwork Review' : `Review “${productName}”`}
         </h3>
         {onCancel && (
@@ -90,7 +90,7 @@ export function ReviewForm({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="text-xs text-stone-500 hover:text-art-charcoal p-1"
+            className="text-xs text-stone-500 hover:text-art-charcoal dark:hover:text-stone-200 p-1"
           >
             Cancel
           </button>
@@ -100,7 +100,7 @@ export function ReviewForm({
       {formError && (
         <div
           role="alert"
-          className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700 font-medium"
+          className="rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 p-3 text-xs text-red-700 dark:text-red-300 font-medium"
         >
           {formError}
         </div>
@@ -108,7 +108,7 @@ export function ReviewForm({
 
       {/* Star Rating Picker */}
       <div className="space-y-1">
-        <label className="block text-xs font-semibold text-art-charcoal">
+        <label className="block text-xs font-semibold text-art-charcoal dark:text-stone-200">
           Your Rating <span className="text-red-500">*</span>
         </label>
         <div className="flex items-center gap-3">
@@ -118,13 +118,18 @@ export function ReviewForm({
             size="lg"
             onRatingChange={newRating => setRating(newRating)}
           />
-          <span className="text-xs font-bold text-art-charcoal">{rating} of 5 stars</span>
+          <span className="text-xs font-bold text-art-charcoal dark:text-stone-100">
+            {rating} of 5 stars
+          </span>
         </div>
       </div>
 
       {/* Review Headline / Title */}
       <div className="space-y-1">
-        <label htmlFor="review-title" className="block text-xs font-semibold text-art-charcoal">
+        <label
+          htmlFor="review-title"
+          className="block text-xs font-semibold text-art-charcoal dark:text-stone-200"
+        >
           Review Headline <span className="text-stone-400 font-normal">(Optional)</span>
         </label>
         <input
@@ -135,14 +140,17 @@ export function ReviewForm({
           placeholder="e.g., Exquisite craftsmanship, beautiful textures"
           maxLength={200}
           disabled={isSubmitting}
-          className="w-full rounded-xl border border-art-stone bg-white px-3.5 py-2 text-xs sm:text-sm text-art-charcoal placeholder-stone-400 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre disabled:opacity-60"
+          className="w-full rounded-xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkstone px-3.5 py-2 text-xs sm:text-sm text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre disabled:opacity-60"
         />
       </div>
 
       {/* Written Review Body */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <label htmlFor="review-body" className="block text-xs font-semibold text-art-charcoal">
+          <label
+            htmlFor="review-body"
+            className="block text-xs font-semibold text-art-charcoal dark:text-stone-200"
+          >
             Written Review <span className="text-red-500">*</span>
           </label>
           <span className="text-[11px] text-stone-400 font-medium">{body.length} / 2000</span>
@@ -156,7 +164,7 @@ export function ReviewForm({
           maxLength={2000}
           disabled={isSubmitting}
           required
-          className="w-full rounded-xl border border-art-stone bg-white p-3 text-xs sm:text-sm text-art-charcoal placeholder-stone-400 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre disabled:opacity-60"
+          className="w-full rounded-xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkstone p-3 text-xs sm:text-sm text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre disabled:opacity-60"
         />
       </div>
 

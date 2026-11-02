@@ -12,12 +12,13 @@ export interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-art-charcoal text-white hover:bg-stone-800 active:bg-black focus-visible:ring-art-ochre',
+    'bg-art-charcoal text-white hover:bg-stone-800 active:bg-black focus-visible:ring-art-ochre dark:bg-art-terracotta dark:hover:bg-[#8F3F21] dark:active:bg-[#79341B] dark:text-white',
   secondary:
-    'bg-white text-art-charcoal border border-art-stone hover:bg-stone-50 hover:border-art-sand active:bg-stone-100 focus-visible:ring-art-ochre',
+    'bg-white text-art-charcoal border border-art-stone hover:bg-stone-50 hover:border-art-sand active:bg-stone-100 focus-visible:ring-art-ochre dark:bg-art-darkcard dark:text-stone-100 dark:border-art-darkborder dark:hover:bg-art-darkstone dark:hover:border-stone-600',
   outline:
-    'bg-transparent text-art-charcoal border border-art-charcoal hover:bg-art-charcoal hover:text-white focus-visible:ring-art-ochre',
-  ghost: 'bg-transparent text-art-charcoal hover:bg-stone-100/70 focus-visible:ring-art-ochre',
+    'bg-transparent text-art-charcoal border border-art-charcoal hover:bg-art-charcoal hover:text-white focus-visible:ring-art-ochre dark:text-stone-200 dark:border-stone-500 dark:hover:bg-art-darkstone dark:hover:text-white',
+  ghost:
+    'bg-transparent text-art-charcoal hover:bg-stone-100/70 focus-visible:ring-art-ochre dark:text-stone-200 dark:hover:bg-art-darkstone/70',
   terracotta:
     'bg-art-terracotta text-white hover:bg-[#8F3F21] active:bg-[#79341B] focus-visible:ring-art-terracotta',
 };

@@ -276,12 +276,12 @@ export function ProductReviewsSection({
   return (
     <section id="reviews" className={`space-y-8 ${className}`} aria-label="Customer Reviews">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-art-stone pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-art-stone dark:border-art-darkborder pb-4">
         <div>
-          <h2 className="font-serif text-xl sm:text-2xl font-bold text-art-charcoal">
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-art-charcoal dark:text-stone-100">
             Customer Reviews & Ratings
           </h2>
-          <p className="text-xs sm:text-sm text-stone-600 mt-0.5">
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-0.5">
             Verified reflections from art collectors across India
           </p>
         </div>
@@ -447,7 +447,7 @@ export function ProductReviewsSection({
                         {/* Header: Title, Status Badge, Edit/Delete Actions */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-art-stone/60 pb-3">
                           <div className="flex flex-wrap items-center gap-2.5">
-                            <h4 className="font-serif text-sm sm:text-base font-bold text-art-charcoal">
+                            <h4 className="font-serif text-sm sm:text-base font-bold text-art-charcoal dark:text-stone-100">
                               Your Review
                             </h4>
                             {renderAuthorStatusBadge(eligibility.existingReview.status)}
@@ -591,20 +591,20 @@ export function ProductReviewsSection({
 
                         {/* Author Review Preview for PENDING or REJECTED reviews (since they are not in the public list below) */}
                         {eligibility.existingReview.status !== 'APPROVED' && (
-                          <div className="bg-white/80 rounded-xl p-3.5 border border-stone-200 text-xs space-y-2">
+                          <div className="bg-white/80 dark:bg-art-darkcard rounded-xl p-3.5 border border-stone-200 dark:border-art-darkborder text-xs space-y-2">
                             <div className="flex items-center gap-2">
                               <StarRating rating={eligibility.existingReview.rating} size="sm" />
-                              <span className="font-bold text-art-charcoal text-xs">
+                              <span className="font-bold text-art-charcoal dark:text-stone-100 text-xs">
                                 {eligibility.existingReview.rating} of 5 stars
                               </span>
                             </div>
                             {eligibility.existingReview.title && (
-                              <h5 className="font-serif font-bold text-art-charcoal text-xs sm:text-sm">
+                              <h5 className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-xs sm:text-sm">
                                 {eligibility.existingReview.title}
                               </h5>
                             )}
                             {eligibility.existingReview.body && (
-                              <p className="text-stone-700 leading-relaxed whitespace-pre-line">
+                              <p className="text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line">
                                 {eligibility.existingReview.body}
                               </p>
                             )}

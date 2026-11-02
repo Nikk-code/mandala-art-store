@@ -56,9 +56,9 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
   };
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-art-stone bg-white shadow-sm transition-all duration-200 hover:border-art-ochre/40 hover:shadow-art">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard shadow-sm transition-all duration-200 hover:border-art-ochre/40 hover:shadow-art">
       {/* Product Image Area */}
-      <div className="relative aspect-square w-full overflow-hidden bg-stone-100">
+      <div className="relative aspect-square w-full overflow-hidden bg-stone-100 dark:bg-stone-900">
         <Link
           to={`/products/${product.slug}`}
           className="block h-full w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
@@ -74,14 +74,18 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
             />
           ) : (
             <div
-              className="flex h-full w-full flex-col items-center justify-center p-6 text-center bg-art-cream"
+              className="flex h-full w-full flex-col items-center justify-center p-6 text-center bg-art-cream dark:bg-art-midnight"
               aria-label="Artwork placeholder"
             >
               <div className="relative mb-2 flex h-14 w-14 items-center justify-center">
                 <div className="absolute inset-0 rounded-full border border-art-ochre/30" />
-                <span className="font-serif text-lg font-bold text-art-charcoal">ॐ</span>
+                <span className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
+                  ॐ
+                </span>
               </div>
-              <span className="text-xs font-medium text-stone-500">{product.name}</span>
+              <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                {product.name}
+              </span>
             </div>
           )}
         </Link>
@@ -92,7 +96,7 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
             {availability.label}
           </Badge>
           {product.isHandmade && (
-            <span className="text-[10px] uppercase font-semibold text-stone-600 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded shadow-sm">
+            <span className="text-[10px] uppercase font-semibold text-stone-600 dark:text-stone-300 bg-white/90 dark:bg-stone-900/90 backdrop-blur-sm px-2 py-0.5 rounded shadow-sm">
               Handcrafted
             </span>
           )}
@@ -104,7 +108,7 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
           onClick={handleRemove}
           disabled={isRemoving}
           aria-label={`Remove ${product.name} from wishlist`}
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-stone-400 shadow-sm transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 dark:bg-stone-900/90 text-stone-400 dark:text-stone-300 shadow-sm transition hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
         >
           <svg
             className="h-4 w-4"
@@ -125,7 +129,7 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
           {product.category.name}
         </div>
 
-        <h3 className="font-serif text-base font-bold text-art-charcoal line-clamp-1 group-hover:text-art-ochre transition-colors">
+        <h3 className="font-serif text-base font-bold text-art-charcoal dark:text-stone-100 line-clamp-1 group-hover:text-art-ochre transition-colors">
           <Link
             to={`/products/${product.slug}`}
             className="hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
@@ -135,25 +139,28 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
         </h3>
 
         {product.dimensions && (
-          <p className="mt-1 text-xs text-stone-500">
-            Dimensions: <span className="font-medium text-stone-700">{product.dimensions}</span>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Dimensions:{' '}
+            <span className="font-medium text-stone-700 dark:text-stone-300">
+              {product.dimensions}
+            </span>
           </p>
         )}
 
         {/* Pricing */}
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="font-serif text-lg font-bold text-art-charcoal">
+          <span className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
             {formatPrice(product.price)}
           </span>
           {hasDiscount && (
-            <span className="text-xs text-stone-600 line-through">
+            <span className="text-xs text-stone-600 dark:text-stone-400 line-through">
               {formatPrice(product.compareAtPrice!)}
             </span>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-4 pt-3 border-t border-art-stone/60 space-y-2">
+        <div className="mt-4 pt-3 border-t border-art-stone/60 dark:border-art-darkborder space-y-2">
           {product.availability === 'SOLD_OUT' ? (
             <Button
               variant="secondary"
@@ -176,7 +183,7 @@ export function WishlistCard({ item }: WishlistCardProps): ReactNode {
 
           <Link
             to={`/products/${product.slug}`}
-            className="inline-flex w-full items-center justify-center rounded-lg py-1.5 text-xs font-semibold text-stone-600 hover:text-art-charcoal hover:bg-art-stone/30 transition-colors text-center"
+            className="inline-flex w-full items-center justify-center rounded-lg py-1.5 text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-art-charcoal dark:hover:text-stone-100 hover:bg-art-stone/30 dark:hover:bg-art-darkstone/40 transition-colors text-center"
           >
             View Artwork Details →
           </Link>

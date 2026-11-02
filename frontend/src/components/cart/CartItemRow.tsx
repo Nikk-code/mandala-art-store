@@ -16,13 +16,13 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
   const lineTotal = item.price * item.quantity;
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-6 border-b border-art-stone/80 last:border-b-0">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-6 border-b border-art-stone/80 dark:border-art-darkborder last:border-b-0">
       {/* 1. Image + Info Group */}
       <div className="flex items-start space-x-4 flex-1 min-w-0">
         {/* Artwork Thumbnail */}
         <Link
           to={`/products/${item.slug}`}
-          className="relative aspect-square h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-xl border border-art-stone bg-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+          className="relative aspect-square h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-xl border border-art-stone dark:border-art-darkborder bg-stone-100 dark:bg-stone-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
         >
           {item.imageUrl && !imageError ? (
             <img
@@ -34,10 +34,12 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
             />
           ) : (
             <div
-              className="flex h-full w-full flex-col items-center justify-center p-2 text-center bg-art-cream"
+              className="flex h-full w-full flex-col items-center justify-center p-2 text-center bg-art-cream dark:bg-art-midnight"
               aria-label="Artwork thumbnail placeholder"
             >
-              <span className="font-serif text-sm font-bold text-art-charcoal">ॐ</span>
+              <span className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100">
+                ॐ
+              </span>
             </div>
           )}
         </Link>
@@ -49,7 +51,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
               {item.categoryName}
             </span>
             {item.isHandmade && (
-              <span className="text-[10px] uppercase font-semibold text-stone-600 bg-art-stone/50 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] uppercase font-semibold text-stone-600 dark:text-stone-300 bg-art-stone/50 dark:bg-art-darkstone px-1.5 py-0.5 rounded">
                 Handcrafted
               </span>
             )}
@@ -60,40 +62,45 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
 
           <Link
             to={`/products/${item.slug}`}
-            className="block font-serif text-base font-bold text-art-charcoal hover:text-art-ochre transition-colors truncate focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
+            className="block font-serif text-base font-bold text-art-charcoal dark:text-stone-100 hover:text-art-ochre transition-colors truncate focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
           >
             {item.name}
           </Link>
 
           {item.dimensions && (
-            <p className="text-xs text-stone-500">
-              Size: <span className="font-medium text-stone-700">{item.dimensions}</span>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              Size:{' '}
+              <span className="font-medium text-stone-700 dark:text-stone-300">
+                {item.dimensions}
+              </span>
             </p>
           )}
 
-          <div className="text-xs text-stone-600">
+          <div className="text-xs text-stone-600 dark:text-stone-400">
             Unit Price:{' '}
-            <span className="font-semibold text-art-charcoal">{formatPrice(item.price)}</span>
+            <span className="font-semibold text-art-charcoal dark:text-stone-100">
+              {formatPrice(item.price)}
+            </span>
           </div>
         </div>
       </div>
 
       {/* 2. Quantity & Total Controls Group */}
-      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-art-stone/40">
+      <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-art-stone/40 dark:border-art-darkborder">
         {/* Quantity Stepper */}
-        <div className="flex items-center border border-art-stone rounded-xl bg-white shadow-sm overflow-hidden">
+        <div className="flex items-center border border-art-stone dark:border-art-darkborder rounded-xl bg-white dark:bg-art-darkcard shadow-sm overflow-hidden">
           <button
             type="button"
             onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
             disabled={item.quantity <= 1}
-            className="flex h-11 w-11 items-center justify-center text-art-charcoal hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
+            className="flex h-11 w-11 items-center justify-center text-art-charcoal dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-art-darkstone disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
             aria-label={`Decrease quantity for ${item.name}`}
           >
             <span className="text-lg font-bold">−</span>
           </button>
 
           <span
-            className="w-10 text-center font-serif text-sm font-bold text-art-charcoal"
+            className="w-10 text-center font-serif text-sm font-bold text-art-charcoal dark:text-stone-100"
             aria-label={`Current quantity: ${item.quantity}`}
           >
             {item.quantity}
@@ -102,7 +109,7 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
           <button
             type="button"
             onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-            className="flex h-11 w-11 items-center justify-center text-art-charcoal hover:bg-stone-100 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
+            className="flex h-11 w-11 items-center justify-center text-art-charcoal dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-art-darkstone transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
             aria-label={`Increase quantity for ${item.name}`}
           >
             <span className="text-lg font-bold">+</span>
@@ -111,8 +118,8 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
 
         {/* Item Total Price */}
         <div className="text-right min-w-[80px]">
-          <span className="text-xs text-stone-600 block sm:hidden">Total</span>
-          <span className="font-serif text-base sm:text-lg font-bold text-art-charcoal">
+          <span className="text-xs text-stone-600 dark:text-stone-400 block sm:hidden">Total</span>
+          <span className="font-serif text-base sm:text-lg font-bold text-art-charcoal dark:text-stone-100">
             {formatPrice(lineTotal)}
           </span>
         </div>

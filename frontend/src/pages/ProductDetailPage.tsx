@@ -167,7 +167,7 @@ export function ProductDetailPage(): ReactNode {
             </li>
             <li
               aria-current="page"
-              className="font-medium text-art-charcoal truncate max-w-xs sm:max-w-sm"
+              className="font-medium text-art-charcoal dark:text-stone-100 truncate max-w-xs sm:max-w-sm"
             >
               {product.name}
             </li>
@@ -211,16 +211,16 @@ export function ProductDetailPage(): ReactNode {
 
               {/* Product Title & Reviews Preview */}
               <div>
-                <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-art-charcoal leading-tight">
+                <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 leading-tight">
                   {product.name}
                 </h1>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-stone-600">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-stone-600 dark:text-stone-400">
                   <div className="flex items-center gap-1.5">
                     <StarRating
                       rating={reviewSummary?.averageRating ?? product.averageRating ?? 0}
                       size="sm"
                     />
-                    <span className="font-bold text-art-charcoal text-xs">
+                    <span className="font-bold text-art-charcoal dark:text-stone-100 text-xs">
                       {(reviewSummary?.totalReviews ?? product.totalReviews ?? 0) > 0
                         ? (reviewSummary?.averageRating ?? product.averageRating ?? 0).toFixed(1)
                         : 'New'}
@@ -237,20 +237,23 @@ export function ProductDetailPage(): ReactNode {
                   </a>
                   <span className="text-stone-300">·</span>
                   <span>
-                    Item SKU: <span className="font-mono text-stone-700">{product.sku}</span>
+                    Item SKU:{' '}
+                    <span className="font-mono text-stone-700 dark:text-stone-300">
+                      {product.sku}
+                    </span>
                   </span>
                 </div>
               </div>
 
               {/* Price & Availability Banner */}
-              <div className="rounded-2xl border border-art-stone bg-white p-5 shadow-sm space-y-4">
+              <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-5 shadow-sm space-y-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                   <div className="flex items-baseline space-x-3">
-                    <span className="font-serif text-3xl font-bold text-art-charcoal tracking-tight">
+                    <span className="font-serif text-3xl font-bold text-art-charcoal dark:text-stone-100 tracking-tight">
                       {formatPrice(product.price)}
                     </span>
                     {hasDiscount && (
-                      <span className="text-base text-stone-600 line-through">
+                      <span className="text-base text-stone-600 dark:text-stone-400 line-through">
                         {formatPrice(product.compareAtPrice!)}
                       </span>
                     )}
@@ -262,7 +265,7 @@ export function ProductDetailPage(): ReactNode {
                 </div>
 
                 {/* Availability context note */}
-                <p className="text-xs text-stone-600 leading-relaxed border-t border-art-stone/50 pt-3">
+                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed border-t border-art-stone/50 dark:border-art-darkborder pt-3">
                   {product.availability === 'IN_STOCK' &&
                     '✓ Ready to dispatch in custom reinforced wooden art packaging.'}
                   {product.availability === 'MADE_TO_ORDER' &&
@@ -285,7 +288,7 @@ export function ProductDetailPage(): ReactNode {
                     </Button>
                   ) : addedToCart ? (
                     <div className="space-y-2 animate-fadeIn">
-                      <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 py-3 text-xs sm:text-sm font-semibold text-emerald-800">
+                      <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 py-3 text-xs sm:text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                         <svg
                           className="h-5 w-5 text-emerald-600"
                           fill="none"
@@ -327,7 +330,7 @@ export function ProductDetailPage(): ReactNode {
                         </Button>
                         <Link
                           to="/cart"
-                          className="flex-1 inline-flex items-center justify-center rounded-xl bg-art-charcoal px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-stone-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+                          className="flex-1 inline-flex items-center justify-center rounded-xl bg-art-charcoal dark:bg-art-terracotta px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-stone-800 dark:hover:bg-[#8F3F21] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
                         >
                           View Cart →
                         </Link>
@@ -381,21 +384,21 @@ export function ProductDetailPage(): ReactNode {
 
               {/* Short Description */}
               {product.shortDescription && (
-                <div className="rounded-xl bg-art-stone/30 p-4 text-xs sm:text-sm text-stone-700 leading-relaxed italic border border-art-stone/60">
+                <div className="rounded-xl bg-art-stone/30 dark:bg-art-darkcard p-4 text-xs sm:text-sm text-stone-700 dark:text-stone-200 leading-relaxed italic border border-art-stone/60 dark:border-art-darkborder">
                   &ldquo;{product.shortDescription}&rdquo;
                 </div>
               )}
 
               {/* Specifications Card */}
-              <div className="rounded-2xl border border-art-stone bg-white p-5 shadow-sm space-y-3">
-                <h2 className="font-serif text-base font-bold text-art-charcoal border-b border-art-stone/60 pb-2">
+              <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-5 shadow-sm space-y-3">
+                <h2 className="font-serif text-base font-bold text-art-charcoal dark:text-stone-100 border-b border-art-stone/60 dark:border-art-darkborder pb-2">
                   Artwork Specifications
                 </h2>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-xs">
                   {product.dimensions && (
                     <div>
-                      <dt className="text-stone-600 font-medium">Dimensions</dt>
-                      <dd className="font-semibold text-art-charcoal mt-0.5">
+                      <dt className="text-stone-600 dark:text-stone-400 font-medium">Dimensions</dt>
+                      <dd className="font-semibold text-art-charcoal dark:text-stone-100 mt-0.5">
                         {product.dimensions}
                       </dd>
                     </div>
@@ -403,21 +406,27 @@ export function ProductDetailPage(): ReactNode {
 
                   {product.material && (
                     <div>
-                      <dt className="text-stone-600 font-medium">Material & Medium</dt>
-                      <dd className="font-semibold text-art-charcoal mt-0.5">{product.material}</dd>
+                      <dt className="text-stone-600 dark:text-stone-400 font-medium">
+                        Material & Medium
+                      </dt>
+                      <dd className="font-semibold text-art-charcoal dark:text-stone-100 mt-0.5">
+                        {product.material}
+                      </dd>
                     </div>
                   )}
 
                   {formattedWeight && (
                     <div>
-                      <dt className="text-stone-600 font-medium">Weight</dt>
-                      <dd className="font-semibold text-art-charcoal mt-0.5">{formattedWeight}</dd>
+                      <dt className="text-stone-600 dark:text-stone-400 font-medium">Weight</dt>
+                      <dd className="font-semibold text-art-charcoal dark:text-stone-100 mt-0.5">
+                        {formattedWeight}
+                      </dd>
                     </div>
                   )}
 
                   <div>
-                    <dt className="text-stone-600 font-medium">Authenticity</dt>
-                    <dd className="font-semibold text-art-charcoal mt-0.5">
+                    <dt className="text-stone-600 dark:text-stone-400 font-medium">Authenticity</dt>
+                    <dd className="font-semibold text-art-charcoal dark:text-stone-100 mt-0.5">
                       {product.isHandmade ? '100% Handcrafted Original' : 'Art Print'}
                     </dd>
                   </div>
@@ -426,37 +435,49 @@ export function ProductDetailPage(): ReactNode {
 
               {/* Detailed Description */}
               <div className="space-y-3 pt-2">
-                <h2 className="font-serif text-lg font-bold text-art-charcoal">
+                <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
                   Artisan Story & Details
                 </h2>
-                <div className="text-sm text-stone-700 leading-relaxed whitespace-pre-line space-y-3">
+                <div className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed whitespace-pre-line space-y-3">
                   {product.description}
                 </div>
               </div>
 
               {/* Heritage & Quality Pillars */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-art-stone">
-                <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white/60 border border-art-stone/50">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-art-stone dark:border-art-darkborder">
+                <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white/60 dark:bg-art-darkcard border border-art-stone/50 dark:border-art-darkborder">
                   <span className="text-art-ochre text-lg font-bold">✓</span>
                   <div>
-                    <h3 className="text-xs font-bold text-art-charcoal">Folk Artistry</h3>
-                    <p className="text-[11px] text-stone-600">Pure traditional craft</p>
+                    <h3 className="text-xs font-bold text-art-charcoal dark:text-stone-100">
+                      Folk Artistry
+                    </h3>
+                    <p className="text-[11px] text-stone-600 dark:text-stone-400">
+                      Pure traditional craft
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white/60 border border-art-stone/50">
+                <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white/60 dark:bg-art-darkcard border border-art-stone/50 dark:border-art-darkborder">
                   <span className="text-art-ochre text-lg font-bold">📦</span>
                   <div>
-                    <h3 className="text-xs font-bold text-art-charcoal">Wooden Crating</h3>
-                    <p className="text-[11px] text-stone-600">Safe art packaging</p>
+                    <h3 className="text-xs font-bold text-art-charcoal dark:text-stone-100">
+                      Wooden Crating
+                    </h3>
+                    <p className="text-[11px] text-stone-600 dark:text-stone-400">
+                      Safe art packaging
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white/60 border border-art-stone/50">
+                <div className="flex items-start space-x-2.5 p-2.5 rounded-xl bg-white/60 dark:bg-art-darkcard border border-art-stone/50 dark:border-art-darkborder">
                   <span className="text-art-ochre text-lg font-bold">🛡️</span>
                   <div>
-                    <h3 className="text-xs font-bold text-art-charcoal">Insured Transit</h3>
-                    <p className="text-[11px] text-stone-600">Door-to-door delivery</p>
+                    <h3 className="text-xs font-bold text-art-charcoal dark:text-stone-100">
+                      Insured Transit
+                    </h3>
+                    <p className="text-[11px] text-stone-600 dark:text-stone-400">
+                      Door-to-door delivery
+                    </p>
                   </div>
                 </div>
               </div>
@@ -464,7 +485,7 @@ export function ProductDetailPage(): ReactNode {
           </div>
 
           {/* Product Reviews & Ratings Section */}
-          <div className="mt-16 pt-12 border-t border-art-stone">
+          <div className="mt-16 pt-12 border-t border-art-stone dark:border-art-darkborder">
             <ProductReviewsSection
               productId={product.id}
               productName={product.name}

@@ -109,15 +109,15 @@ export function RegisterPage(): ReactNode {
     <div className="pb-20">
       <Section background="cream" spacing="lg">
         <Container size="sm">
-          <div className="rounded-2xl border border-art-stone bg-white p-8 sm:p-10 shadow-sm space-y-6 animate-fadeIn">
+          <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-8 sm:p-10 shadow-sm space-y-6 animate-fadeIn">
             <div className="text-center space-y-2">
               <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
                 Artisan Patron Membership
               </span>
-              <h1 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal">
+              <h1 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal dark:text-stone-100">
                 Create Customer Account
               </h1>
-              <p className="text-sm text-stone-600">
+              <p className="text-sm text-stone-600 dark:text-stone-300">
                 Join our patron collective to track artwork orders and access verified provenance.
               </p>
             </div>
@@ -231,12 +231,12 @@ export function RegisterPage(): ReactNode {
               </div>
             </form>
 
-            <div className="text-center pt-2 border-t border-art-stone/60 text-xs text-stone-600">
+            <div className="text-center pt-2 border-t border-art-stone/60 dark:border-art-darkborder text-xs text-stone-600 dark:text-stone-400">
               <p>
                 Already have an account?{' '}
                 <Link
                   to={`/login${redirectPath !== '/orders' ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}`}
-                  className="font-bold text-art-terracotta hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-art-terracotta rounded"
+                  className="font-bold text-art-terracotta dark:text-art-ochre hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-art-terracotta rounded"
                 >
                   Sign In
                 </Link>

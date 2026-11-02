@@ -445,8 +445,8 @@ export function CheckoutPage(): ReactNode {
       <div className="pb-20">
         <Section background="cream" spacing="lg">
           <Container size="md">
-            <div className="rounded-2xl border border-art-stone bg-white p-8 sm:p-12 text-center shadow-sm space-y-6 animate-fadeIn">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-3xl font-bold">
+            <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-8 sm:p-12 text-center shadow-sm space-y-6 animate-fadeIn">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-3xl font-bold">
                 ✓
               </div>
               <div className="space-y-2">
@@ -498,7 +498,7 @@ export function CheckoutPage(): ReactNode {
                   onClick={() => navigate('/products')}
                   className={
                     user
-                      ? 'inline-flex items-center justify-center rounded-xl border border-art-stone bg-white px-6 py-3 text-xs font-bold uppercase tracking-wider text-stone-700 shadow-sm hover:bg-stone-50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre'
+                      ? 'inline-flex items-center justify-center rounded-xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkstone px-6 py-3 text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-art-darkcard transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre'
                       : 'inline-flex items-center justify-center rounded-xl bg-art-terracotta px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-sm hover:bg-art-terracotta/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta'
                   }
                 >
@@ -517,10 +517,10 @@ export function CheckoutPage(): ReactNode {
       {/* 1. Breadcrumbs Navigation */}
       <nav
         aria-label="Breadcrumb"
-        className="border-b border-art-stone bg-white/70 backdrop-blur-sm sticky top-0 z-20"
+        className="border-b border-art-stone dark:border-art-darkborder bg-white/70 dark:bg-art-midnight/80 backdrop-blur-sm sticky top-0 z-20"
       >
         <Container size="7xl">
-          <ol className="flex items-center space-x-2 py-3.5 text-xs text-stone-500">
+          <ol className="flex items-center space-x-2 py-3.5 text-xs text-stone-500 dark:text-stone-400">
             <li>
               <Link
                 to="/"
@@ -529,7 +529,7 @@ export function CheckoutPage(): ReactNode {
                 Home
               </Link>
             </li>
-            <li aria-hidden="true" className="text-stone-300">
+            <li aria-hidden="true" className="text-stone-300 dark:text-stone-600">
               /
             </li>
             <li>
@@ -540,10 +540,10 @@ export function CheckoutPage(): ReactNode {
                 Cart
               </Link>
             </li>
-            <li aria-hidden="true" className="text-stone-300">
+            <li aria-hidden="true" className="text-stone-300 dark:text-stone-600">
               /
             </li>
-            <li aria-current="page" className="font-medium text-art-charcoal">
+            <li aria-current="page" className="font-medium text-art-charcoal dark:text-stone-100">
               Checkout
             </li>
           </ol>
@@ -557,10 +557,10 @@ export function CheckoutPage(): ReactNode {
             <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
               Order Fulfillment
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal mt-1">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-1">
               {isReviewMode ? 'Review Order & Shipping' : 'Artwork Checkout'}
             </h1>
-            <p className="mt-1.5 text-sm text-stone-600 max-w-2xl leading-relaxed">
+            <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed">
               {isReviewMode
                 ? 'Your contact and delivery destination are verified. Confirm details before proceeding to payment.'
                 : 'Enter your shipping address and contact details for bespoke artisan delivery.'}
@@ -568,7 +568,7 @@ export function CheckoutPage(): ReactNode {
           </div>
 
           {items.length === 0 ? (
-            <div className="py-16 rounded-2xl bg-white p-8 border border-art-stone mt-6">
+            <div className="py-16 rounded-2xl bg-white dark:bg-art-darkcard p-8 border border-art-stone dark:border-art-darkborder mt-6">
               <EmptyState
                 title="Your Cart is Empty"
                 description="Your shopping cart has no artworks. Please browse our handcrafted collections to add items before checking out."
@@ -627,13 +627,13 @@ export function CheckoutPage(): ReactNode {
                     )}
 
                     {/* Verified Customer & Shipping Card */}
-                    <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-5">
-                      <div className="flex items-center justify-between border-b border-art-stone/60 pb-3">
+                    <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm space-y-5">
+                      <div className="flex items-center justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
                             ✓
                           </span>
-                          <h2 className="font-serif text-lg font-bold text-art-charcoal">
+                          <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
                             Customer & Delivery Destination Verified
                           </h2>
                         </div>

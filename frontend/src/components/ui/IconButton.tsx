@@ -10,10 +10,11 @@ export interface IconButtonProps extends ComponentPropsWithoutRef<'button'> {
 
 const variantClasses: Record<'default' | 'ghost' | 'filled', string> = {
   default:
-    'text-art-charcoal hover:text-art-ochre hover:bg-stone-100/60 focus-visible:ring-art-ochre',
+    'text-art-charcoal hover:text-art-ochre hover:bg-stone-100/60 focus-visible:ring-art-ochre dark:text-stone-200 dark:hover:text-art-ochre dark:hover:bg-art-darkstone/60',
   ghost:
-    'text-stone-600 hover:text-art-charcoal hover:bg-stone-100/40 focus-visible:ring-art-ochre',
-  filled: 'bg-white text-art-charcoal shadow-sm border border-art-stone hover:bg-stone-50',
+    'text-stone-600 hover:text-art-charcoal hover:bg-stone-100/40 focus-visible:ring-art-ochre dark:text-stone-300 dark:hover:text-stone-100 dark:hover:bg-art-darkstone/40',
+  filled:
+    'bg-white text-art-charcoal shadow-sm border border-art-stone hover:bg-stone-50 dark:bg-art-darkcard dark:text-stone-200 dark:border-art-darkborder dark:hover:bg-art-darkstone',
 };
 
 const sizeClasses: Record<'sm' | 'md' | 'lg', string> = {

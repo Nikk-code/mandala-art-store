@@ -148,16 +148,20 @@ export function ProductsPage(): ReactNode {
   return (
     <div className="space-y-0 pb-16">
       {/* 1. Page Header */}
-      <Section background="stone" spacing="sm" className="border-b border-art-stone">
+      <Section
+        background="stone"
+        spacing="sm"
+        className="border-b border-art-stone dark:border-art-darkborder"
+      >
         <Container size="7xl">
           <div className="py-4">
             <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
               Artisan Catalog
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal mt-1">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-1">
               {activeCategoryObj ? activeCategoryObj.name : 'Explore All Artworks'}
             </h1>
-            <p className="mt-1.5 text-sm text-stone-600 max-w-2xl leading-relaxed">
+            <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed">
               {activeCategoryObj?.description ||
                 'Discover individually handcrafted Sacred Mandalas, Kutchi Lippan Kaam reliefs, and spiritual paintings created by master artisans.'}
             </p>
@@ -169,11 +173,11 @@ export function ProductsPage(): ReactNode {
       <Section background="cream" spacing="md">
         <Container size="7xl">
           {/* Mobile Filter Trigger Bar */}
-          <div className="lg:hidden flex items-center justify-between pb-4 border-b border-art-stone/80 mb-4">
+          <div className="lg:hidden flex items-center justify-between pb-4 border-b border-art-stone/80 dark:border-art-darkborder mb-4">
             <button
               type="button"
               onClick={() => setMobileDrawerOpen(true)}
-              className="inline-flex items-center space-x-2 bg-white border border-art-stone px-4 py-2.5 rounded-xl text-xs font-semibold text-art-charcoal shadow-sm hover:bg-stone-50 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+              className="inline-flex items-center space-x-2 bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder px-4 py-2.5 rounded-xl text-xs font-semibold text-art-charcoal dark:text-stone-200 shadow-sm hover:bg-stone-50 dark:hover:bg-art-darkstone min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
               aria-label="Open filter and sorting options"
             >
               <svg
@@ -197,7 +201,7 @@ export function ProductsPage(): ReactNode {
               )}
             </button>
 
-            <span className="text-xs text-stone-500 font-medium">
+            <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
               {isLoading ? 'Searching...' : `${pagination.totalItems} artworks`}
             </span>
           </div>
@@ -206,7 +210,7 @@ export function ProductsPage(): ReactNode {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Desktop Left Sidebar Filters */}
             <div className="hidden lg:block lg:col-span-1">
-              <div className="sticky top-24 rounded-2xl bg-white border border-art-stone p-6 shadow-sm">
+              <div className="sticky top-24 rounded-2xl bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder p-6 shadow-sm">
                 <CatalogFilters
                   categories={categories}
                   values={filterValues}
@@ -229,7 +233,7 @@ export function ProductsPage(): ReactNode {
                   onClearAll={handleResetFilters}
                 />
 
-                <div className="hidden lg:block text-xs text-stone-500 font-medium whitespace-nowrap ml-auto">
+                <div className="hidden lg:block text-xs text-stone-500 dark:text-stone-400 font-medium whitespace-nowrap ml-auto">
                   {!isLoading && (
                     <span>
                       Showing {products.length} of {pagination.totalItems} artworks
@@ -240,13 +244,13 @@ export function ProductsPage(): ReactNode {
 
               {/* State Handling: Loading, Error, Empty, or Product Grid */}
               {isLoading && (
-                <div className="py-20 rounded-2xl bg-white/60 border border-art-stone">
+                <div className="py-20 rounded-2xl bg-white/60 dark:bg-art-darkcard/60 border border-art-stone dark:border-art-darkborder">
                   <LoadingState message="Fetching curated catalog creations..." />
                 </div>
               )}
 
               {error && (
-                <div className="rounded-2xl bg-white p-8 border border-art-stone">
+                <div className="rounded-2xl bg-white dark:bg-art-darkcard p-8 border border-art-stone dark:border-art-darkborder">
                   <ErrorState
                     title="Unable to load artworks"
                     message={error.message || 'Please check your connection and try again.'}
@@ -256,7 +260,7 @@ export function ProductsPage(): ReactNode {
               )}
 
               {!isLoading && !error && products.length === 0 && (
-                <div className="rounded-2xl bg-white p-8 border border-art-stone">
+                <div className="rounded-2xl bg-white dark:bg-art-darkcard p-8 border border-art-stone dark:border-art-darkborder">
                   <EmptyState
                     title="No artworks found"
                     description="No artworks matched your current filters. Try changing category, availability, or clearing filters."

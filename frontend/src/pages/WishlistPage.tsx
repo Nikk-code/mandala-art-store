@@ -29,8 +29,8 @@ export function WishlistPage(): ReactNode {
   if (!isAuthenticated) {
     return (
       <Container className="py-16">
-        <div className="mx-auto max-w-md text-center bg-white rounded-3xl border border-art-stone p-8 shadow-sm">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+        <div className="mx-auto max-w-md text-center bg-white dark:bg-art-darkcard rounded-3xl border border-art-stone dark:border-art-darkborder p-8 shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500">
             <svg
               className="h-8 w-8"
               fill="none"
@@ -46,10 +46,10 @@ export function WishlistPage(): ReactNode {
               />
             </svg>
           </div>
-          <h1 className="font-serif text-2xl font-bold text-art-charcoal">
+          <h1 className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
             Sign In to View Your Wishlist
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-stone-600 leading-relaxed">
+          <p className="mt-2 text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
             Curate and preserve your personal collection of handcrafted mandalas, Lippan art, and
             spiritual canvas pieces across your devices.
           </p>
@@ -69,7 +69,7 @@ export function WishlistPage(): ReactNode {
               Create Account
             </Button>
           </div>
-          <div className="mt-6 border-t border-art-stone/60 pt-4">
+          <div className="mt-6 border-t border-art-stone/60 dark:border-art-darkborder pt-4">
             <Link to="/products" className="text-xs font-semibold text-art-ochre hover:underline">
               ← Explore Sacred Artworks Catalog
             </Link>
@@ -139,25 +139,31 @@ export function WishlistPage(): ReactNode {
     <Section spacing="lg">
       <Container>
         {/* Header Section */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-art-stone pb-6">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-art-stone dark:border-art-darkborder pb-6">
           <div>
-            <nav className="mb-2 text-xs text-stone-500" aria-label="Breadcrumbs">
+            <nav
+              className="mb-2 text-xs text-stone-500 dark:text-stone-400"
+              aria-label="Breadcrumbs"
+            >
               <ol className="flex items-center space-x-2">
                 <li>
-                  <Link to="/" className="hover:text-art-charcoal">
+                  <Link to="/" className="hover:text-art-charcoal dark:hover:text-stone-100">
                     Home
                   </Link>
                 </li>
                 <li>/</li>
-                <li className="font-semibold text-art-charcoal" aria-current="page">
+                <li
+                  className="font-semibold text-art-charcoal dark:text-stone-100"
+                  aria-current="page"
+                >
                   Wishlist
                 </li>
               </ol>
             </nav>
-            <h1 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal sm:text-4xl">
+            <h1 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 sm:text-4xl">
               Saved Artworks
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-stone-600">
+            <p className="mt-1 text-xs sm:text-sm text-stone-600 dark:text-stone-300">
               {itemCount} {itemCount === 1 ? 'artwork' : 'artworks'} saved to your collection.
             </p>
           </div>

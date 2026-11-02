@@ -42,11 +42,13 @@ export function ActiveFilterChips({
       className={`flex flex-wrap items-center gap-2 pt-1 pb-3 ${className}`}
       aria-label="Active filters"
     >
-      <span className="text-xs font-semibold text-stone-500 mr-1">Active Filters:</span>
+      <span className="text-xs font-semibold text-stone-500 dark:text-stone-400 mr-1">
+        Active Filters:
+      </span>
 
       {/* Category Chip */}
       {activeCategory && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-art-charcoal text-white shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-art-charcoal dark:bg-art-terracotta text-white shadow-sm">
           <span>Category: {activeCategory.name}</span>
           <button
             type="button"
@@ -61,7 +63,7 @@ export function ActiveFilterChips({
 
       {/* Availability Chip */}
       {availabilityInfo && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-art-ochre/15 text-art-charcoal border border-art-ochre/30 shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-art-ochre/15 text-art-charcoal dark:bg-art-ochre/25 dark:text-art-ochre border border-art-ochre/30 dark:border-art-ochre/50 shadow-sm">
           <span>Availability: {availabilityInfo.label}</span>
           <button
             type="button"
@@ -76,7 +78,7 @@ export function ActiveFilterChips({
 
       {/* Sort Chip */}
       {isCustomSort && values.sort && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-art-stone text-art-charcoal border border-stone-300 shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-art-stone dark:bg-art-darkstone text-art-charcoal dark:text-stone-200 border border-stone-300 dark:border-art-darkborder shadow-sm">
           <span>Sort: {SORT_LABELS[values.sort] || values.sort}</span>
           <button
             type="button"

@@ -88,13 +88,13 @@ export function SavedAddressesSection(): ReactNode {
   };
 
   return (
-    <Section className="rounded-2xl border border-art-stone bg-white p-6 sm:p-8 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-art-stone/60 pb-4 mb-6 gap-3">
+    <Section className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 sm:p-8 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-4 mb-6 gap-3">
         <div>
-          <h2 className="font-serif text-xl font-bold text-art-charcoal">
+          <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
             Saved Delivery Addresses
           </h2>
-          <p className="mt-1 text-xs text-stone-500">
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
             Manage your shipping destinations for streamlined artwork delivery.
           </p>
         </div>
@@ -170,10 +170,10 @@ export function SavedAddressesSection(): ReactNode {
               />
             </svg>
           </div>
-          <h3 className="font-serif text-sm font-bold text-art-charcoal mb-1">
+          <h3 className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100 mb-1">
             No saved addresses yet
           </h3>
-          <p className="text-xs text-stone-500 mb-4 max-w-sm mx-auto">
+          <p className="text-xs text-stone-500 dark:text-stone-400 mb-4 max-w-sm mx-auto">
             Add your residential or studio address to expedite checkout during authentic art
             purchases.
           </p>
@@ -188,21 +188,23 @@ export function SavedAddressesSection(): ReactNode {
               key={addr.id}
               className={`rounded-xl border p-5 transition flex flex-col justify-between ${
                 addr.isDefault
-                  ? 'border-art-ochre/50 bg-art-cream/20 shadow-sm'
-                  : 'border-art-stone bg-white hover:border-art-stone/80'
+                  ? 'border-art-ochre/50 bg-art-cream/20 dark:bg-art-darkstone/50 shadow-sm'
+                  : 'border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard hover:border-art-stone/80'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-serif text-sm font-bold text-art-charcoal">
+                  <h3 className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100">
                     {addr.recipientName}
                   </h3>
                   {addr.isDefault && <Badge variant="ochre">Default Address</Badge>}
                 </div>
 
-                <p className="text-xs text-stone-500 font-medium mb-2">📞 {addr.phone}</p>
+                <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mb-2">
+                  📞 {addr.phone}
+                </p>
 
-                <p className="text-xs text-stone-600 leading-relaxed">
+                <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                   {addr.addressLine1}
                   {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
                   <br />
@@ -212,7 +214,7 @@ export function SavedAddressesSection(): ReactNode {
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-art-stone/40 flex items-center justify-between gap-2 text-xs">
+              <div className="mt-4 pt-3 border-t border-art-stone/40 dark:border-art-darkborder flex items-center justify-between gap-2 text-xs">
                 <div>
                   {!addr.isDefault && (
                     <button
@@ -229,7 +231,7 @@ export function SavedAddressesSection(): ReactNode {
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(addr)}
-                    className="text-stone-600 hover:text-art-charcoal font-medium transition"
+                    className="text-stone-600 dark:text-stone-300 hover:text-art-charcoal dark:hover:text-stone-100 font-medium transition"
                   >
                     Edit
                   </button>

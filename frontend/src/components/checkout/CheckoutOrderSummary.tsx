@@ -64,14 +64,18 @@ export function CheckoutOrderSummary({
   const effectiveTotal = Math.max(100, subtotalPaise - discountAmount);
 
   return (
-    <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-6">
-      <div className="flex items-center justify-between border-b border-art-stone/60 pb-3">
-        <h2 className="font-serif text-lg font-bold text-art-charcoal">Order Summary</h2>
-        <span className="text-xs text-stone-500 font-medium">{itemCount} items</span>
+    <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm space-y-6">
+      <div className="flex items-center justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-3">
+        <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
+          Order Summary
+        </h2>
+        <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+          {itemCount} items
+        </span>
       </div>
 
       {/* Cart Items Preview List */}
-      <div className="divide-y divide-art-stone/50 max-h-80 overflow-y-auto pr-1 -mr-1">
+      <div className="divide-y divide-art-stone/50 dark:divide-art-darkborder max-h-80 overflow-y-auto pr-1 -mr-1">
         {items.map(item => {
           const availability = getAvailabilityInfo(item.availability);
           const lineTotal = item.price * item.quantity;
@@ -80,7 +84,7 @@ export function CheckoutOrderSummary({
           return (
             <div key={item.productId} className="py-3.5 flex items-start gap-3 first:pt-0">
               {/* Thumbnail */}
-              <div className="relative aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-art-stone bg-stone-100">
+              <div className="relative aspect-square h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-art-stone dark:border-art-darkborder bg-stone-100 dark:bg-stone-900">
                 {item.imageUrl && !hasError ? (
                   <img
                     src={item.imageUrl}
@@ -91,13 +95,13 @@ export function CheckoutOrderSummary({
                   />
                 ) : (
                   <div
-                    className="flex h-full w-full items-center justify-center bg-art-cream text-art-charcoal font-serif font-bold text-xs"
+                    className="flex h-full w-full items-center justify-center bg-art-cream dark:bg-art-midnight text-art-charcoal dark:text-stone-100 font-serif font-bold text-xs"
                     aria-label="Artwork thumbnail placeholder"
                   >
                     ॐ
                   </div>
                 )}
-                <span className="absolute -top-1.5 -right-1.5 bg-art-charcoal text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow">
+                <span className="absolute -top-1.5 -right-1.5 bg-art-charcoal dark:bg-art-terracotta text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow">
                   {item.quantity}
                 </span>
               </div>
@@ -114,19 +118,19 @@ export function CheckoutOrderSummary({
                     </Badge>
                   )}
                 </div>
-                <h3 className="font-serif text-xs font-bold text-art-charcoal truncate">
+                <h3 className="font-serif text-xs font-bold text-art-charcoal dark:text-stone-100 truncate">
                   {item.name}
                 </h3>
-                <div className="text-[11px] text-stone-500">
+                <div className="text-[11px] text-stone-500 dark:text-stone-400">
                   <span>Qty: {item.quantity}</span>
-                  <span className="mx-1.5 text-stone-300">•</span>
+                  <span className="mx-1.5 text-stone-300 dark:text-stone-600">•</span>
                   <span>{formatPrice(item.price)} each</span>
                 </div>
               </div>
 
               {/* Line Total */}
               <div className="text-right">
-                <span className="font-serif text-xs font-bold text-art-charcoal">
+                <span className="font-serif text-xs font-bold text-art-charcoal dark:text-stone-100">
                   {formatPrice(lineTotal)}
                 </span>
               </div>
@@ -136,10 +140,10 @@ export function CheckoutOrderSummary({
       </div>
 
       {/* Promotional Coupon Section */}
-      <div className="border-t border-art-stone/60 pt-4 space-y-3">
+      <div className="border-t border-art-stone/60 dark:border-art-darkborder pt-4 space-y-3">
         <label
           htmlFor="checkoutCouponInput"
-          className="block text-xs font-semibold text-art-charcoal"
+          className="block text-xs font-semibold text-art-charcoal dark:text-stone-200"
         >
           Promotional Code
         </label>
@@ -243,9 +247,11 @@ export function CheckoutOrderSummary({
           <span className="text-stone-500 italic">Included in catalog prices</span>
         </div>
 
-        <div className="border-t border-art-stone pt-3 flex justify-between items-baseline">
-          <span className="font-serif text-sm font-bold text-art-charcoal">Estimated Total</span>
-          <span className="font-serif text-xl font-bold text-art-charcoal tracking-tight">
+        <div className="border-t border-art-stone dark:border-art-darkborder pt-3 flex justify-between items-baseline">
+          <span className="font-serif text-sm font-bold text-art-charcoal dark:text-stone-100">
+            Estimated Total
+          </span>
+          <span className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100 tracking-tight">
             {formatPrice(effectiveTotal)}
           </span>
         </div>
@@ -303,7 +309,7 @@ export function CheckoutOrderSummary({
       </div>
 
       {/* Artisan Value Guarantees */}
-      <div className="rounded-xl bg-art-cream/60 p-3.5 border border-art-stone/60 space-y-2 text-[11px] text-stone-600">
+      <div className="rounded-xl bg-art-cream/60 dark:bg-art-darkstone p-3.5 border border-art-stone/60 dark:border-art-darkborder space-y-2 text-[11px] text-stone-600 dark:text-stone-300">
         <div className="flex items-center gap-2">
           <span className="text-art-ochre font-bold">✓</span>
           <span>100% Authentic Handcrafted Heritage Artwork</span>

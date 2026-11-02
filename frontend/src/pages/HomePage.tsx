@@ -63,7 +63,7 @@ export function HomePage(): ReactNode {
       <Section background="cream" spacing="xl" className="relative overflow-hidden">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-art-sand/40 blur-3xl"
+          className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-art-sand/40 dark:bg-art-ochre/10 blur-3xl"
         />
 
         <Container size="7xl">
@@ -72,19 +72,19 @@ export function HomePage(): ReactNode {
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center space-x-2">
                 <Badge variant="ochre">Authentic Vedic & Kutchi Craftsmanship</Badge>
-                <span className="text-xs text-stone-500 font-medium hidden sm:inline">
+                <span className="text-xs text-stone-500 dark:text-stone-400 font-medium hidden sm:inline">
                   • 100% Hand-Painted Originals
                 </span>
               </div>
 
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-art-charcoal leading-[1.15]">
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 leading-[1.15]">
                 Timeless sacred art to bring{' '}
                 <span className="italic text-art-ochre font-normal">serenity</span> and{' '}
                 <span className="italic text-art-terracotta font-normal">harmony</span> into your
                 home.
               </h1>
 
-              <p className="text-base sm:text-lg text-stone-700 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-base sm:text-lg text-stone-700 dark:text-stone-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 Individually handcrafted Mandalas and traditional Lippan Kaam mirror reliefs. Made
                 using natural earthen clays, mineral pigments, and mindful meditative precision.
               </p>
@@ -102,7 +102,7 @@ export function HomePage(): ReactNode {
                 </a>
               </div>
 
-              <div className="pt-6 border-t border-art-stone/60 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-stone-600 font-medium">
+              <div className="pt-6 border-t border-art-stone/60 dark:border-art-darkborder flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-stone-600 dark:text-stone-300 font-medium">
                 <div className="flex items-center space-x-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-art-ochre" aria-hidden="true" />
                   <span>Museum-Grade Archival Materials</span>
@@ -112,7 +112,10 @@ export function HomePage(): ReactNode {
                   <span>Made to Order Dimensions</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-art-charcoal" aria-hidden="true" />
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-art-charcoal dark:bg-stone-300"
+                    aria-hidden="true"
+                  />
                   <span>All-India Protective Transit</span>
                 </div>
               </div>
@@ -120,20 +123,22 @@ export function HomePage(): ReactNode {
 
             {/* Right Visual Area */}
             <div className="lg:col-span-5 flex justify-center">
-              <div className="relative w-full max-w-md aspect-square rounded-3xl bg-art-stone/50 border border-art-stone p-6 flex flex-col items-center justify-center text-center shadow-art">
+              <div className="relative w-full max-w-md aspect-square rounded-3xl bg-art-stone/50 dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder p-6 flex flex-col items-center justify-center text-center shadow-art">
                 <div className="relative flex items-center justify-center w-48 h-48 sm:w-56 sm:h-56 mb-6">
                   <div className="absolute inset-0 rounded-full border border-art-ochre/30 animate-spin-slow" />
                   <div className="absolute inset-4 rounded-full border border-dashed border-art-terracotta/40" />
-                  <div className="absolute inset-10 rounded-full border border-art-charcoal/20" />
-                  <div className="absolute inset-16 rounded-full bg-art-sand/60 flex items-center justify-center">
-                    <span className="font-serif text-2xl font-bold text-art-charcoal">ॐ</span>
+                  <div className="absolute inset-10 rounded-full border border-art-charcoal/20 dark:border-stone-600/40" />
+                  <div className="absolute inset-16 rounded-full bg-art-sand/60 dark:bg-art-darkstone flex items-center justify-center">
+                    <span className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
+                      ॐ
+                    </span>
                   </div>
                 </div>
 
-                <h3 className="font-serif text-lg font-bold text-art-charcoal">
+                <h3 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
                   Sacred Geometry Showcase
                 </h3>
-                <p className="mt-1 text-xs text-stone-600 max-w-xs">
+                <p className="mt-1 text-xs text-stone-600 dark:text-stone-300 max-w-xs">
                   Hand-painted with 000-fine natural brushes on solid reclaimed wood and organic mud
                   panels.
                 </p>
@@ -153,10 +158,10 @@ export function HomePage(): ReactNode {
             <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
               Artisanal Lineage
             </span>
-            <h2 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal mt-2">
+            <h2 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-2">
               Explore by Craft Tradition
             </h2>
-            <p className="mt-2 text-sm text-stone-600">
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
               Each discipline carries centuries of sacred heritage, meditational geometry, and
               architectural charm.
             </p>
@@ -198,10 +203,10 @@ export function HomePage(): ReactNode {
               <span className="text-xs font-semibold uppercase tracking-widest text-art-ochre">
                 Curated Originals
               </span>
-              <h2 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal mt-2">
+              <h2 className="font-serif text-3xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-2">
                 Featured Artworks
               </h2>
-              <p className="mt-2 text-sm text-stone-600 max-w-xl">
+              <p className="mt-2 text-sm text-stone-600 dark:text-stone-300 max-w-xl">
                 Authentic pieces currently available in stock or custom-crafted to order by our
                 master painters.
               </p>
@@ -209,7 +214,7 @@ export function HomePage(): ReactNode {
             <div className="hidden sm:block">
               <Link
                 to="/products"
-                className="text-xs font-semibold text-art-charcoal hover:text-art-ochre transition-colors"
+                className="text-xs font-semibold text-art-charcoal dark:text-stone-300 dark:hover:text-art-ochre hover:text-art-ochre transition-colors"
               >
                 View Full Catalog →
               </Link>
@@ -248,7 +253,7 @@ export function HomePage(): ReactNode {
       <Section id="artisan-heritage" background="white" spacing="lg">
         <Container size="7xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            <div className="p-6 rounded-2xl bg-art-cream/60 border border-art-stone space-y-3">
+            <div className="p-6 rounded-2xl bg-art-cream/60 dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder space-y-3">
               <div className="w-10 h-10 rounded-xl bg-art-ochre/15 text-art-ochre flex items-center justify-center mx-auto md:mx-0">
                 <svg
                   className="w-6 h-6"
@@ -265,16 +270,16 @@ export function HomePage(): ReactNode {
                   />
                 </svg>
               </div>
-              <h3 className="font-serif text-lg font-bold text-art-charcoal">
+              <h3 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
                 100% Genuine Handcrafted
               </h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
+              <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                 Zero machine-printed posters. Every canvas and mirror panel is individually shaped,
                 sculpted, and painted by dedicated Indian craftsmen.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-art-cream/60 border border-art-stone space-y-3">
+            <div className="p-6 rounded-2xl bg-art-cream/60 dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder space-y-3">
               <div className="w-10 h-10 rounded-xl bg-art-terracotta/15 text-art-terracotta flex items-center justify-center mx-auto md:mx-0">
                 <svg
                   className="w-6 h-6"
@@ -291,17 +296,17 @@ export function HomePage(): ReactNode {
                   />
                 </svg>
               </div>
-              <h3 className="font-serif text-lg font-bold text-art-charcoal">
+              <h3 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
                 Reinforced Wooden Crating
               </h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
+              <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                 Delicate mud-relief and convex mirror inlays are encased in multi-layer shockproof
                 packaging for safe transit anywhere in India.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-art-cream/60 border border-art-stone space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-art-charcoal/10 text-art-charcoal flex items-center justify-center mx-auto md:mx-0">
+            <div className="p-6 rounded-2xl bg-art-cream/60 dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-art-charcoal/10 dark:bg-art-ochre/15 text-art-charcoal dark:text-art-ochre flex items-center justify-center mx-auto md:mx-0">
                 <svg
                   className="w-6 h-6"
                   fill="none"
@@ -317,8 +322,10 @@ export function HomePage(): ReactNode {
                   />
                 </svg>
               </div>
-              <h3 className="font-serif text-lg font-bold text-art-charcoal">Fair Trade Lineage</h3>
-              <p className="text-xs text-stone-600 leading-relaxed">
+              <h3 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
+                Fair Trade Lineage
+              </h3>
+              <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
                 Direct economic benefit to traditional artisans, preserving rare generational craft
                 techniques and spiritual symbolism.
               </p>

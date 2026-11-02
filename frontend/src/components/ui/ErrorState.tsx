@@ -37,8 +37,10 @@ export function ErrorState({
           />
         </svg>
       </div>
-      <h3 className="font-serif text-xl font-bold text-art-charcoal mb-2">{title}</h3>
-      <p className="text-sm text-stone-600 mb-6 leading-relaxed">{message}</p>
+      <h3 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100 mb-2">
+        {title}
+      </h3>
+      <p className="text-sm text-stone-600 dark:text-stone-300 mb-6 leading-relaxed">{message}</p>
       {onRetry && (
         <Button variant="terracotta" size="sm" onClick={onRetry}>
           {retryLabel}

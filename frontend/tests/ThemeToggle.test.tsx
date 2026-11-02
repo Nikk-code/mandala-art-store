@@ -94,3 +94,4 @@ describe('Theme Context & ThemeToggle Component', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(false);
   });
 });
+

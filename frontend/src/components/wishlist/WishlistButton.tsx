@@ -68,8 +68,8 @@ export function WishlistButton({
         aria-pressed={inWishlist}
         className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${
           inWishlist
-            ? 'border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100'
-            : 'border border-art-stone bg-white text-art-charcoal hover:bg-art-cream hover:border-art-ochre/60'
+            ? 'border border-rose-300 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/60'
+            : 'border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard text-art-charcoal dark:text-stone-100 hover:bg-art-cream dark:hover:bg-art-darkstone hover:border-art-ochre/60'
         } ${isPending ? 'opacity-60 cursor-wait' : ''} ${className}`}
       >
         <svg
@@ -108,8 +108,8 @@ export function WishlistButton({
       disabled={isPending}
       aria-label={label}
       aria-pressed={inWishlist}
-      className={`inline-flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${buttonDimensions} ${
-        inWishlist ? 'text-rose-600' : 'text-stone-500 hover:text-rose-600'
+      className={`inline-flex items-center justify-center rounded-full bg-white/90 dark:bg-stone-900/90 dark:hover:bg-stone-800 backdrop-blur-sm shadow-md transition-all duration-200 hover:scale-110 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${buttonDimensions} ${
+        inWishlist ? 'text-rose-600' : 'text-stone-500 dark:text-stone-400 hover:text-rose-600'
       } ${isPending ? 'opacity-60 cursor-wait' : ''} ${className}`}
     >
       <svg

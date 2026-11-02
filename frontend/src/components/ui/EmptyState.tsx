@@ -24,7 +24,7 @@ export function EmptyState({
       aria-label={title}
       className={`flex flex-col items-center justify-center py-16 px-4 text-center max-w-md mx-auto ${className}`}
     >
-      <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-stone-100 text-stone-500 mb-4 border border-art-stone">
+      <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-stone-100 dark:bg-art-darkstone text-stone-500 dark:text-stone-400 mb-4 border border-art-stone dark:border-art-darkborder">
         {icon || (
           <svg
             className="w-8 h-8 text-stone-400"
@@ -42,8 +42,14 @@ export function EmptyState({
           </svg>
         )}
       </div>
-      <h3 className="font-serif text-xl font-bold text-art-charcoal mb-2">{title}</h3>
-      {description && <p className="text-sm text-stone-600 mb-6 leading-relaxed">{description}</p>}
+      <h3 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100 mb-2">
+        {title}
+      </h3>
+      {description && (
+        <p className="text-sm text-stone-600 dark:text-stone-300 mb-6 leading-relaxed">
+          {description}
+        </p>
+      )}
       {actionLabel && onAction && (
         <Button variant="outline" size="sm" onClick={onAction}>
           {actionLabel}

@@ -43,8 +43,10 @@ export function CatalogFilters({
   return (
     <aside className={`space-y-6 ${className}`} aria-label="Catalog filters">
       {/* Filter Header & Reset Action */}
-      <div className="flex items-center justify-between pb-3 border-b border-art-stone">
-        <h2 className="font-serif text-lg font-bold text-art-charcoal">Filters</h2>
+      <div className="flex items-center justify-between pb-3 border-b border-art-stone dark:border-art-darkborder">
+        <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
+          Filters
+        </h2>
         {hasActiveFilters && (
           <button
             type="button"
@@ -58,7 +60,7 @@ export function CatalogFilters({
 
       {/* 1. Category Filter Group */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-900">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-900 dark:text-stone-200">
           Art Category
         </h3>
         <div className="space-y-1">
@@ -68,8 +70,8 @@ export function CatalogFilters({
             onClick={() => onChange({ category: undefined })}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${
               !values.category
-                ? 'bg-art-charcoal text-white font-semibold shadow-sm'
-                : 'text-stone-700 hover:bg-art-cream'
+                ? 'bg-art-charcoal dark:bg-art-terracotta text-white font-semibold shadow-sm'
+                : 'text-stone-700 dark:text-stone-300 hover:bg-art-cream dark:hover:bg-art-darkstone'
             }`}
           >
             <span>All Artworks</span>
@@ -86,8 +88,8 @@ export function CatalogFilters({
                 onClick={() => onChange({ category: isSelected ? undefined : cat.slug })}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${
                   isSelected
-                    ? 'bg-art-charcoal text-white font-semibold shadow-sm'
-                    : 'text-stone-700 hover:bg-art-cream'
+                    ? 'bg-art-charcoal dark:bg-art-terracotta text-white font-semibold shadow-sm'
+                    : 'text-stone-700 dark:text-stone-300 hover:bg-art-cream dark:hover:bg-art-darkstone'
                 }`}
               >
                 <span>{cat.name}</span>
@@ -99,8 +101,8 @@ export function CatalogFilters({
       </div>
 
       {/* 2. Availability Filter Group */}
-      <div className="space-y-3 pt-3 border-t border-art-stone/60">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-900">
+      <div className="space-y-3 pt-3 border-t border-art-stone/60 dark:border-art-darkborder">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-900 dark:text-stone-200">
           Availability
         </h3>
         <div className="space-y-1">
@@ -114,8 +116,8 @@ export function CatalogFilters({
                 onClick={() => onChange({ availability: option.value || undefined })}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors text-left min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${
                   isSelected
-                    ? 'bg-art-ochre/15 text-art-charcoal font-semibold border border-art-ochre/30'
-                    : 'text-stone-700 hover:bg-art-cream'
+                    ? 'bg-art-ochre/15 text-art-charcoal dark:bg-art-ochre/25 dark:text-art-ochre font-semibold border border-art-ochre/30 dark:border-art-ochre/50'
+                    : 'text-stone-700 dark:text-stone-300 hover:bg-art-cream dark:hover:bg-art-darkstone'
                 }`}
               >
                 <span>{option.label}</span>
@@ -131,10 +133,10 @@ export function CatalogFilters({
       </div>
 
       {/* 3. Sort Filter Group */}
-      <div className="space-y-3 pt-3 border-t border-art-stone/60">
+      <div className="space-y-3 pt-3 border-t border-art-stone/60 dark:border-art-darkborder">
         <label
           htmlFor="catalog-sort-select"
-          className="block text-xs font-semibold uppercase tracking-widest text-stone-900"
+          className="block text-xs font-semibold uppercase tracking-widest text-stone-900 dark:text-stone-200"
         >
           Sort Order
         </label>
@@ -145,7 +147,7 @@ export function CatalogFilters({
             onChange={e =>
               onChange({ sort: e.target.value as 'newest' | 'price_asc' | 'price_desc' })
             }
-            className="w-full appearance-none rounded-xl border border-art-stone bg-white px-3.5 py-2.5 pr-8 text-xs font-medium text-art-charcoal shadow-sm transition-colors focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre min-h-[44px]"
+            className="w-full appearance-none rounded-xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkstone px-3.5 py-2.5 pr-8 text-xs font-medium text-art-charcoal dark:text-stone-200 shadow-sm transition-colors focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre min-h-[44px]"
           >
             {SORT_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>

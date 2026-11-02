@@ -116,10 +116,12 @@ export function ChangePasswordSection(): ReactNode {
   };
 
   return (
-    <Section className="rounded-2xl border border-art-stone bg-white p-6 sm:p-8 shadow-sm">
-      <div className="mb-6 border-b border-art-stone/60 pb-4">
-        <h2 className="font-serif text-xl font-bold text-art-charcoal">Change Password</h2>
-        <p className="mt-1 text-xs text-stone-500">
+    <Section className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 sm:p-8 shadow-sm">
+      <div className="mb-6 border-b border-art-stone/60 dark:border-art-darkborder pb-4">
+        <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
+          Change Password
+        </h2>
+        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
           Ensure your patron account is guarded with a strong, distinct security key.
         </p>
       </div>

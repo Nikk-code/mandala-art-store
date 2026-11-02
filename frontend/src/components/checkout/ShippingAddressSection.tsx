@@ -16,20 +16,22 @@ export function ShippingAddressSection({
   disabled = false,
 }: ShippingAddressSectionProps): ReactNode {
   return (
-    <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-5">
-      <div className="flex items-center justify-between border-b border-art-stone/60 pb-3">
+    <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm space-y-5">
+      <div className="flex items-center justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-3">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-art-ochre">
             Step 2 of 2
           </span>
-          <h2 className="font-serif text-lg font-bold text-art-charcoal">
+          <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
             Shipping & Art Delivery Address
           </h2>
         </div>
-        <span className="text-xs text-stone-500 font-medium">Pan-India Delivery</span>
+        <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+          Pan-India Delivery
+        </span>
       </div>
 
-      <p className="text-xs text-stone-600">
+      <p className="text-xs text-stone-600 dark:text-stone-300">
         All original artworks are packaged in custom shock-absorbing reinforced wooden crates for
         safe transit.
       </p>

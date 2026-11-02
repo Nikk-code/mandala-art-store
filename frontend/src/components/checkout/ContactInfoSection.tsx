@@ -16,18 +16,22 @@ export function ContactInfoSection({
   disabled = false,
 }: ContactInfoSectionProps): ReactNode {
   return (
-    <div className="rounded-2xl border border-art-stone bg-white p-6 shadow-sm space-y-5">
-      <div className="flex items-center justify-between border-b border-art-stone/60 pb-3">
+    <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 shadow-sm space-y-5">
+      <div className="flex items-center justify-between border-b border-art-stone/60 dark:border-art-darkborder pb-3">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-art-ochre">
             Step 1 of 2
           </span>
-          <h2 className="font-serif text-lg font-bold text-art-charcoal">Contact Information</h2>
+          <h2 className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
+            Contact Information
+          </h2>
         </div>
-        <span className="text-xs text-stone-500 font-medium">Guest Checkout</span>
+        <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+          Guest Checkout
+        </span>
       </div>
 
-      <p className="text-xs text-stone-600">
+      <p className="text-xs text-stone-600 dark:text-stone-300">
         We will send your order confirmation, crafting timeline updates, and courier tracking
         details to this contact.
       </p>

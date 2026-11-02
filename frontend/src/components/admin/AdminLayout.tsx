@@ -26,7 +26,7 @@ export function AdminLayout({ children }: AdminLayoutProps): ReactNode {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100/70 text-art-charcoal flex flex-col font-sans">
+    <div className="min-h-screen bg-stone-100/70 dark:bg-art-midnight text-art-charcoal dark:text-stone-100 flex flex-col font-sans">
       {/* Top Administrative Header */}
       <header className="bg-art-charcoal text-white shadow-md border-b border-stone-800 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -116,7 +116,7 @@ export function AdminLayout({ children }: AdminLayoutProps): ReactNode {
       <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">{children}</main>
 
       {/* Admin Footer */}
-      <footer className="border-t border-stone-200 bg-white/70 py-4 text-center text-xs text-stone-500">
+      <footer className="border-t border-stone-200 dark:border-art-darkborder bg-white/70 dark:bg-art-darkcard py-4 text-center text-xs text-stone-500 dark:text-stone-400">
         <p>Mandala Art Store Administrative System • Role: Explicit ADMIN Required</p>
       </footer>
     </div>
