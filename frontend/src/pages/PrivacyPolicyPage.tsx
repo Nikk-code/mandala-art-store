@@ -4,16 +4,16 @@ import { APP_NAME } from '@/constants';
 
 export function PrivacyPolicyPage(): ReactNode {
   return (
-    <div className="bg-art-stone/20 min-h-screen py-12 sm:py-16">
+    <div className="bg-art-stone/20 dark:bg-art-midnight min-h-screen py-12 sm:py-16 transition-colors duration-200">
       <Container size="7xl">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-art-stone/60 shadow-sm p-6 sm:p-12">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-art-darkcard rounded-2xl border border-art-stone/60 dark:border-art-darkborder shadow-sm p-6 sm:p-12">
           {/* Header */}
-          <div className="border-b border-art-stone/40 pb-8 mb-8">
+          <div className="border-b border-art-stone/40 dark:border-art-darkborder pb-8 mb-8">
             <Badge variant="ochre">Data Privacy & Security</Badge>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal mt-3">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-3">
               Privacy Policy
             </h1>
-            <p className="mt-2 text-sm text-stone-600">
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
               Last updated:{' '}
               {new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })} •
               Effective for {APP_NAME}
@@ -21,9 +21,9 @@ export function PrivacyPolicyPage(): ReactNode {
           </div>
 
           {/* Content sections */}
-          <div className="space-y-8 text-sm text-stone-700 leading-relaxed">
+          <div className="space-y-8 text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 1. Our Commitment to Your Privacy
               </h2>
               <p>
@@ -41,7 +41,7 @@ export function PrivacyPolicyPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 2. Information We Collect
               </h2>
               <p>
@@ -50,28 +50,36 @@ export function PrivacyPolicyPage(): ReactNode {
               </p>
               <ul className="list-disc pl-5 space-y-1.5">
                 <li>
-                  <strong className="text-stone-900">Contact & Identity Details:</strong> Full name,
-                  email address, and phone number provided during account registration or checkout.
+                  <strong className="text-stone-900 dark:text-stone-100">
+                    Contact & Identity Details:
+                  </strong>{' '}
+                  Full name, email address, and phone number provided during account registration or
+                  checkout.
                 </li>
                 <li>
-                  <strong className="text-stone-900">Delivery Information:</strong> Complete street
-                  address, apartment/suite number, city, state, postal code (PIN code), and country
-                  for physical dispatch of artworks.
+                  <strong className="text-stone-900 dark:text-stone-100">
+                    Delivery Information:
+                  </strong>{' '}
+                  Complete street address, apartment/suite number, city, state, postal code (PIN
+                  code), and country for physical dispatch of artworks.
                 </li>
                 <li>
-                  <strong className="text-stone-900">Order & Transaction History:</strong> Records
-                  of purchased artworks, dimensions, pricing, coupon discounts, order timestamps,
-                  and delivery tracking milestones.
+                  <strong className="text-stone-900 dark:text-stone-100">
+                    Order & Transaction History:
+                  </strong>{' '}
+                  Records of purchased artworks, dimensions, pricing, coupon discounts, order
+                  timestamps, and delivery tracking milestones.
                 </li>
                 <li>
-                  <strong className="text-stone-900">Artisan Feedback:</strong> Verified purchase
-                  reviews, star ratings, and testimonials submitted on our artworks.
+                  <strong className="text-stone-900 dark:text-stone-100">Artisan Feedback:</strong>{' '}
+                  Verified purchase reviews, star ratings, and testimonials submitted on our
+                  artworks.
                 </li>
               </ul>
             </section>
 
-            <section className="space-y-3 bg-art-stone/30 p-5 rounded-xl border border-art-stone/60">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal flex items-center gap-2">
+            <section className="space-y-3 bg-art-stone/30 dark:bg-art-midnight/60 p-5 rounded-xl border border-art-stone/60 dark:border-art-darkborder">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100 flex items-center gap-2">
                 <span>3. Payment Gateway Security (Razorpay)</span>
               </h2>
               <p>
@@ -88,7 +96,7 @@ export function PrivacyPolicyPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 4. How We Use Your Information
               </h2>
               <p>Your information is used strictly for legitimate business purposes:</p>
@@ -108,14 +116,14 @@ export function PrivacyPolicyPage(): ReactNode {
                   reservations.
                 </li>
               </ul>
-              <p className="font-medium text-stone-900">
+              <p className="font-medium text-stone-900 dark:text-stone-100">
                 We will never sell, rent, or trade your personal information to third-party
                 advertisers.
               </p>
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 5. Cookies & Session Storage
               </h2>
               <p>
@@ -126,7 +134,7 @@ export function PrivacyPolicyPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 6. Your Rights & Contact Details
               </h2>
               <p>
@@ -134,9 +142,11 @@ export function PrivacyPolicyPage(): ReactNode {
                 your account and personal details at any time through your Account page or by
                 contacting our team.
               </p>
-              <div className="bg-stone-50 p-4 rounded-lg border border-stone-200 mt-2">
-                <p className="font-semibold text-art-charcoal">{APP_NAME} Privacy & Support</p>
-                <p className="text-stone-600 mt-0.5">
+              <div className="bg-stone-50 dark:bg-art-midnight/60 p-4 rounded-lg border border-stone-200 dark:border-art-darkborder mt-2">
+                <p className="font-semibold text-art-charcoal dark:text-stone-100">
+                  {APP_NAME} Privacy & Support
+                </p>
+                <p className="text-stone-600 dark:text-stone-400 mt-0.5">
                   Email:{' '}
                   <a
                     href="mailto:support@mandalaartstore.com"
@@ -145,7 +155,9 @@ export function PrivacyPolicyPage(): ReactNode {
                     support@mandalaartstore.com
                   </a>
                 </p>
-                <p className="text-stone-600">Location: Pune, Maharashtra, India</p>
+                <p className="text-stone-600 dark:text-stone-400">
+                  Location: Pune, Maharashtra, India
+                </p>
               </div>
             </section>
           </div>

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { APP_NAME } from '@/constants';
-import { IconButton } from '@/components/ui';
+import { IconButton, ThemeToggle } from '@/components/ui';
 import { useCart, useAuth, useWishlist } from '@/context';
 
 interface NavItem {
@@ -25,9 +25,9 @@ export function Header(): ReactNode {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-art-stone/80 bg-white/95 backdrop-blur-md transition-shadow duration-200 shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b border-art-stone/80 dark:border-art-darkborder bg-white/95 dark:bg-art-midnight/95 backdrop-blur-md transition-all duration-200 shadow-sm">
       {/* Top Banner / Announcement Bar */}
-      <div className="bg-art-charcoal text-art-sand text-[11px] font-medium tracking-widest uppercase py-1.5 px-4 text-center">
+      <div className="bg-art-charcoal dark:bg-black text-art-sand text-[11px] font-medium tracking-widest uppercase py-1.5 px-4 text-center">
         <span>Curated Sacred Geometry & Traditional Lippan Artistry • Handcrafted in India</span>
       </div>
 
@@ -73,7 +73,7 @@ export function Header(): ReactNode {
             to="/"
             className="group flex flex-col items-center sm:items-start text-center sm:text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre rounded-lg p-1"
           >
-            <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-art-charcoal group-hover:text-art-ochre transition-colors duration-200">
+            <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 group-hover:text-art-ochre transition-colors duration-200">
               {APP_NAME}
             </span>
             <span className="text-[10px] tracking-widest uppercase font-semibold text-art-ochre hidden sm:block">
@@ -91,8 +91,8 @@ export function Header(): ReactNode {
               className={({ isActive }) =>
                 `text-sm font-medium tracking-wide transition-colors duration-150 py-1 border-b-2 ${
                   isActive && item.href === '/'
-                    ? 'text-art-charcoal border-art-ochre'
-                    : 'text-stone-600 border-transparent hover:text-art-charcoal hover:border-art-sand'
+                    ? 'text-art-charcoal dark:text-stone-100 border-art-ochre'
+                    : 'text-stone-600 dark:text-stone-300 border-transparent hover:text-art-charcoal dark:hover:text-stone-100 hover:border-art-sand'
                 }`
               }
             >
@@ -106,11 +106,11 @@ export function Header(): ReactNode {
           {/* Account Menu (Desktop) */}
           <div className="hidden sm:flex items-center text-xs">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2.5 pl-2 border-l border-art-stone/60">
+              <div className="flex items-center gap-2.5 pl-2 border-l border-art-stone/60 dark:border-art-darkborder">
                 {user.role === 'ADMIN' && (
                   <Link
                     to="/admin"
-                    className="inline-flex items-center gap-1 font-semibold text-art-ochre hover:text-art-charcoal bg-amber-50 px-2 py-0.5 rounded border border-art-ochre/30 transition-colors"
+                    className="inline-flex items-center gap-1 font-semibold text-art-ochre hover:text-art-charcoal bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-art-ochre/30 transition-colors"
                     title="Open Administrator Portal"
                   >
                     <svg
@@ -132,7 +132,7 @@ export function Header(): ReactNode {
                 )}
                 <Link
                   to="/account"
-                  className="font-medium text-art-charcoal hover:text-art-ochre transition-colors truncate max-w-[120px]"
+                  className="font-medium text-art-charcoal dark:text-stone-100 hover:text-art-ochre transition-colors truncate max-w-[120px]"
                   title="View Account Profile"
                 >
                   {user.firstName}
@@ -140,16 +140,16 @@ export function Header(): ReactNode {
                 <button
                   type="button"
                   onClick={() => logout()}
-                  className="text-stone-500 hover:text-art-terracotta transition-colors font-semibold"
+                  className="text-stone-500 dark:text-stone-400 hover:text-art-terracotta transition-colors font-semibold"
                 >
                   Sign Out
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 pl-2 border-l border-art-stone/60">
+              <div className="flex items-center gap-2 pl-2 border-l border-art-stone/60 dark:border-art-darkborder">
                 <Link
                   to="/login"
-                  className="font-medium text-stone-600 hover:text-art-charcoal transition-colors py-1 px-2 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
+                  className="font-medium text-stone-600 dark:text-stone-300 hover:text-art-charcoal dark:hover:text-stone-100 transition-colors py-1 px-2 rounded focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre"
                 >
                   Sign In
                 </Link>
@@ -166,7 +166,7 @@ export function Header(): ReactNode {
           {/* Wishlist Icon Link */}
           <Link
             to="/wishlist"
-            className="relative inline-flex items-center justify-center rounded-lg p-2 text-art-charcoal hover:bg-art-cream hover:text-rose-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px] min-w-[44px]"
+            className="relative inline-flex items-center justify-center rounded-lg p-2 text-art-charcoal dark:text-stone-300 hover:bg-art-cream dark:hover:bg-art-darkborder/70 hover:text-rose-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px] min-w-[44px]"
             aria-label={`Wishlist with ${wishlistItemCount} ${wishlistItemCount === 1 ? 'item' : 'items'}`}
           >
             <svg
@@ -185,7 +185,7 @@ export function Header(): ReactNode {
             {wishlistItemCount > 0 ? (
               <span
                 aria-hidden="true"
-                className="absolute top-1 right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
+                className="absolute top-1 right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-art-midnight"
               >
                 {wishlistItemCount}
               </span>
@@ -195,7 +195,7 @@ export function Header(): ReactNode {
           {/* Cart Icon Link */}
           <Link
             to="/cart"
-            className="relative inline-flex items-center justify-center rounded-lg p-2 text-art-charcoal hover:bg-art-cream hover:text-art-ochre transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px] min-w-[44px]"
+            className="relative inline-flex items-center justify-center rounded-lg p-2 text-art-charcoal dark:text-stone-300 hover:bg-art-cream dark:hover:bg-art-darkborder/70 hover:text-art-ochre transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre min-h-[44px] min-w-[44px]"
             aria-label={`Shopping cart with ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
           >
             <svg
@@ -215,24 +215,27 @@ export function Header(): ReactNode {
             {itemCount > 0 ? (
               <span
                 aria-hidden="true"
-                className="absolute top-1 right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-art-ochre px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white"
+                className="absolute top-1 right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-art-ochre px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-art-midnight"
               >
                 {itemCount}
               </span>
             ) : (
               <span
                 aria-hidden="true"
-                className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-stone-300 ring-2 ring-white"
+                className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-stone-300 dark:bg-stone-600 ring-2 ring-white dark:ring-art-midnight"
               />
             )}
           </Link>
+
+          {/* Dark / Light Mode Switch */}
+          <ThemeToggle />
         </div>
       </div>
 
       {/* Mobile navigation drawer */}
       {mobileMenuOpen && (
         <nav
-          className="lg:hidden border-t border-art-stone bg-white px-4 pt-3 pb-6 space-y-2 shadow-lg animate-fadeIn"
+          className="lg:hidden border-t border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard px-4 pt-3 pb-6 space-y-2 shadow-lg animate-fadeIn"
           aria-label="Mobile Navigation"
         >
           {NAVIGATION_ITEMS.map(item => (
@@ -240,7 +243,7 @@ export function Header(): ReactNode {
               key={item.name}
               to={item.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-base font-medium text-art-charcoal hover:bg-art-cream hover:text-art-ochre transition-colors"
+              className="block rounded-lg px-3 py-2.5 text-base font-medium text-art-charcoal dark:text-stone-100 hover:bg-art-cream dark:hover:bg-art-darkborder/50 hover:text-art-ochre transition-colors"
             >
               {item.name}
             </Link>
@@ -249,7 +252,7 @@ export function Header(): ReactNode {
           <Link
             to="/wishlist"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-medium text-art-charcoal hover:bg-art-cream hover:text-rose-600 transition-colors"
+            className="flex items-center justify-between rounded-lg px-3 py-2.5 text-base font-medium text-art-charcoal dark:text-stone-100 hover:bg-art-cream dark:hover:bg-art-darkborder/50 hover:text-rose-600 transition-colors"
           >
             <span>My Wishlist</span>
             {wishlistItemCount > 0 && (
@@ -312,7 +315,7 @@ export function Header(): ReactNode {
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex items-center justify-center rounded-xl border border-art-stone bg-white px-4 py-2.5 text-xs font-bold text-art-charcoal shadow-sm hover:bg-stone-50"
+                  className="inline-flex items-center justify-center rounded-xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-midnight px-4 py-2.5 text-xs font-bold text-art-charcoal dark:text-stone-100 shadow-sm hover:bg-stone-50 dark:hover:bg-art-darkcard"
                 >
                   Sign In
                 </Link>

@@ -25,9 +25,9 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
       className={`group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre rounded-2xl ${className}`}
       onClick={onClick}
     >
-      <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-art-stone/80 bg-white transition-all duration-200 hover:border-art-ochre/40 hover:shadow-art">
+      <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-art-stone/80 dark:border-art-darkborder bg-white dark:bg-art-darkcard transition-all duration-200 hover:border-art-ochre/40 hover:shadow-art">
         {/* Image Area with Aspect Ratio */}
-        <div className="relative aspect-square w-full overflow-hidden bg-stone-100">
+        <div className="relative aspect-square w-full overflow-hidden bg-stone-100 dark:bg-stone-900">
           {primaryImage?.url && !imageError ? (
             <img
               src={primaryImage.url}
@@ -38,16 +38,20 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
             />
           ) : (
             <div
-              className="flex h-full w-full flex-col items-center justify-center p-6 text-center bg-art-cream"
+              className="flex h-full w-full flex-col items-center justify-center p-6 text-center bg-art-cream dark:bg-art-midnight"
               aria-label="Image placeholder"
             >
               {/* Concentric subtle art circles */}
               <div className="relative mb-2 flex h-16 w-16 items-center justify-center">
                 <div className="absolute inset-0 rounded-full border border-art-ochre/30" />
                 <div className="absolute inset-2 rounded-full border border-dashed border-art-terracotta/40" />
-                <span className="font-serif text-lg font-bold text-art-charcoal">ॐ</span>
+                <span className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100">
+                  ॐ
+                </span>
               </div>
-              <span className="text-xs font-medium text-stone-500">{product.name}</span>
+              <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                {product.name}
+              </span>
             </div>
           )}
 
@@ -82,27 +86,27 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
               {product.category.name}
             </span>
             {product.isHandmade && (
-              <span className="text-[10px] uppercase font-semibold text-stone-600 bg-art-stone/50 px-2 py-0.5 rounded">
+              <span className="text-[10px] uppercase font-semibold text-stone-600 dark:text-stone-300 bg-art-stone/50 dark:bg-art-darkstone px-2 py-0.5 rounded">
                 Handcrafted
               </span>
             )}
           </div>
 
           {/* Product Title */}
-          <h3 className="font-serif text-base font-bold text-art-charcoal line-clamp-1 group-hover:text-art-ochre transition-colors">
+          <h3 className="font-serif text-base font-bold text-art-charcoal dark:text-stone-100 line-clamp-1 group-hover:text-art-ochre transition-colors">
             {product.name}
           </h3>
 
           {/* Rating Preview */}
           {product.totalReviews !== undefined && product.totalReviews > 0 && (
             <div
-              className="mt-1 flex items-center gap-1.5 text-xs text-stone-600"
+              className="mt-1 flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400"
               aria-label={`Rated ${product.averageRating?.toFixed(1)} out of 5 stars (${product.totalReviews} reviews)`}
             >
               <span className="text-amber-400 text-xs leading-none" aria-hidden="true">
                 ★
               </span>
-              <span className="font-bold text-art-charcoal text-xs leading-none">
+              <span className="font-bold text-art-charcoal dark:text-stone-100 text-xs leading-none">
                 {product.averageRating?.toFixed(1)}
               </span>
               <span className="text-stone-400 text-[11px] leading-none">
@@ -113,26 +117,26 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
 
           {/* Short Description */}
           {product.shortDescription && (
-            <p className="mt-1 text-xs text-stone-600 line-clamp-2 leading-relaxed">
+            <p className="mt-1 text-xs text-stone-600 dark:text-stone-300 line-clamp-2 leading-relaxed">
               {product.shortDescription}
             </p>
           )}
 
           {/* Dimensions & Material Preview */}
           {product.dimensions && (
-            <p className="mt-2 text-[11px] text-stone-500">
+            <p className="mt-2 text-[11px] text-stone-500 dark:text-stone-400">
               Size: <span className="font-medium">{product.dimensions}</span>
             </p>
           )}
 
           {/* Price Row */}
-          <div className="mt-auto pt-3 border-t border-art-stone/40 flex items-baseline justify-between">
+          <div className="mt-auto pt-3 border-t border-art-stone/40 dark:border-art-darkborder flex items-baseline justify-between">
             <div className="flex items-baseline space-x-2">
-              <span className="text-lg font-bold text-art-charcoal tracking-tight">
+              <span className="text-lg font-bold text-art-charcoal dark:text-stone-100 tracking-tight">
                 {formatPrice(product.price)}
               </span>
               {hasDiscount && (
-                <span className="text-xs text-stone-600 line-through">
+                <span className="text-xs text-stone-600 dark:text-stone-400 line-through">
                   {formatPrice(product.compareAtPrice!)}
                 </span>
               )}

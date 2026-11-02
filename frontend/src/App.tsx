@@ -26,7 +26,7 @@ import {
 } from '@/pages';
 
 import { AdminRoute } from '@/components/admin';
-import { CartProvider, AuthProvider, WishlistProvider } from '@/context';
+import { CartProvider, AuthProvider, WishlistProvider, ThemeProvider } from '@/context';
 
 function NotFoundPage(): ReactNode {
   return (
@@ -47,94 +47,96 @@ function NotFoundPage(): ReactNode {
 
 export function App(): ReactNode {
   return (
-    <AuthProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Protected Administrator Dashboard & Management Area */}
-              <Route
-                path="admin"
-                element={
-                  <AdminRoute>
-                    <AdminDashboardPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="admin/products"
-                element={
-                  <AdminRoute>
-                    <AdminProductsPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="admin/categories"
-                element={
-                  <AdminRoute>
-                    <AdminCategoriesPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="admin/inventory"
-                element={
-                  <AdminRoute>
-                    <AdminInventoryPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="admin/orders"
-                element={
-                  <AdminRoute>
-                    <AdminOrdersPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="admin/coupons"
-                element={
-                  <AdminRoute>
-                    <AdminCouponsPage />
-                  </AdminRoute>
-                }
-              />
-              <Route
-                path="admin/reviews"
-                element={
-                  <AdminRoute>
-                    <AdminReviewsPage />
-                  </AdminRoute>
-                }
-              />
+    <ThemeProvider>
+      <AuthProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Protected Administrator Dashboard & Management Area */}
+                <Route
+                  path="admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboardPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="admin/products"
+                  element={
+                    <AdminRoute>
+                      <AdminProductsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="admin/categories"
+                  element={
+                    <AdminRoute>
+                      <AdminCategoriesPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="admin/inventory"
+                  element={
+                    <AdminRoute>
+                      <AdminInventoryPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="admin/orders"
+                  element={
+                    <AdminRoute>
+                      <AdminOrdersPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="admin/coupons"
+                  element={
+                    <AdminRoute>
+                      <AdminCouponsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="admin/reviews"
+                  element={
+                    <AdminRoute>
+                      <AdminReviewsPage />
+                    </AdminRoute>
+                  }
+                />
 
-              {/* Public Storefront Area */}
-              <Route path="/" element={<RootLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="products" element={<ProductsPage />} />
-                <Route path="products/:slug" element={<ProductDetailPage />} />
-                <Route path="cart" element={<CartPage />} />
-                <Route path="wishlist" element={<WishlistPage />} />
-                <Route path="checkout" element={<CheckoutPage />} />
-                <Route path="orders" element={<OrderHistoryPage />} />
-                <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
-                <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-                <Route path="login" element={<LoginPage />} />
-                <Route path="register" element={<RegisterPage />} />
-                <Route path="account" element={<AccountPage />} />
-                <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
-                <Route path="terms-of-craft" element={<TermsOfCraftPage />} />
-                <Route path="terms" element={<TermsOfCraftPage />} />
-                <Route path="care-guide" element={<CareGuidePage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </CartProvider>
-      </WishlistProvider>
-    </AuthProvider>
+                {/* Public Storefront Area */}
+                <Route path="/" element={<RootLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="products" element={<ProductsPage />} />
+                  <Route path="products/:slug" element={<ProductDetailPage />} />
+                  <Route path="cart" element={<CartPage />} />
+                  <Route path="wishlist" element={<WishlistPage />} />
+                  <Route path="checkout" element={<CheckoutPage />} />
+                  <Route path="orders" element={<OrderHistoryPage />} />
+                  <Route path="orders/:orderId" element={<OrderConfirmationPage />} />
+                  <Route path="order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+                  <Route path="login" element={<LoginPage />} />
+                  <Route path="register" element={<RegisterPage />} />
+                  <Route path="account" element={<AccountPage />} />
+                  <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+                  <Route path="terms-of-craft" element={<TermsOfCraftPage />} />
+                  <Route path="terms" element={<TermsOfCraftPage />} />
+                  <Route path="care-guide" element={<CareGuidePage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </CartProvider>
+        </WishlistProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -4,30 +4,30 @@ import { APP_NAME } from '@/constants';
 
 export function CareGuidePage(): ReactNode {
   return (
-    <div className="bg-art-stone/20 min-h-screen py-12 sm:py-16">
+    <div className="bg-art-stone/20 dark:bg-art-midnight min-h-screen py-12 sm:py-16 transition-colors duration-200">
       <Container size="7xl">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-art-stone/60 shadow-sm p-6 sm:p-12">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-art-darkcard rounded-2xl border border-art-stone/60 dark:border-art-darkborder shadow-sm p-6 sm:p-12">
           {/* Header */}
-          <div className="border-b border-art-stone/40 pb-8 mb-8">
+          <div className="border-b border-art-stone/40 dark:border-art-darkborder pb-8 mb-8">
             <Badge variant="stone">Archival Preservation</Badge>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal mt-3">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-3">
               Artisan Care & Preservation Guide
             </h1>
-            <p className="mt-2 text-sm text-stone-600">
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
               Essential instructions to ensure your handcrafted mandalas and Lippan Kaam mirrors
               from {APP_NAME} remain pristine for generations.
             </p>
           </div>
 
           {/* Guide sections */}
-          <div className="space-y-10 text-sm text-stone-700 leading-relaxed">
+          <div className="space-y-10 text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
             {/* 1. Lippan Kaam Art */}
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-ochre/20 text-art-charcoal font-serif font-bold text-sm">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-ochre/20 text-art-charcoal dark:text-stone-100 font-serif font-bold text-sm">
                   1
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-art-charcoal">
+                <h2 className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
                   Caring for Lippan Kaam (Mud-Relief & Mirror Art)
                 </h2>
               </div>
@@ -85,10 +85,10 @@ export function CareGuidePage(): ReactNode {
             {/* 2. Sacred Mandala Paintings */}
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-terracotta/20 text-art-charcoal font-serif font-bold text-sm">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-terracotta/20 text-art-charcoal dark:text-stone-100 font-serif font-bold text-sm">
                   2
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-art-charcoal">
+                <h2 className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
                   Preserving Sacred Mandala Paintings & Canvas Panels
                 </h2>
               </div>
@@ -97,8 +97,8 @@ export function CareGuidePage(): ReactNode {
                 gold leafing finished with archival protective varnishes.
               </p>
 
-              <div className="space-y-3 bg-stone-50 p-5 rounded-xl border border-stone-200">
-                <ul className="space-y-2.5 text-xs text-stone-800">
+              <div className="space-y-3 bg-stone-50 dark:bg-art-midnight/60 p-5 rounded-xl border border-stone-200 dark:border-art-darkborder">
+                <ul className="space-y-2.5 text-xs text-stone-800 dark:text-stone-200">
                   <li>
                     <strong>Sunlight Protection:</strong> Avoid hanging mandalas in paths of
                     intense, direct, prolonged afternoon sunlight. UV rays can fade vibrant pigments
@@ -121,10 +121,10 @@ export function CareGuidePage(): ReactNode {
             {/* 3. Hanging & Installation Guidelines */}
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-stone text-art-charcoal font-serif font-bold text-sm">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-stone dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 font-serif font-bold text-sm">
                   3
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-art-charcoal">
+                <h2 className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
                   Safe Hanging & Wall Installation
                 </h2>
               </div>
@@ -132,7 +132,7 @@ export function CareGuidePage(): ReactNode {
                 Due to the solid wood substrates and authentic clay composition, handcrafted Lippan
                 art panels carry substantial weight compared to commercial paper posters:
               </p>
-              <div className="bg-art-stone/30 p-5 rounded-xl border border-art-stone/60 space-y-2">
+              <div className="bg-art-stone/30 dark:bg-art-midnight/60 p-5 rounded-xl border border-art-stone/60 dark:border-art-darkborder space-y-2">
                 <p className="font-semibold text-xs text-stone-900">Installation Checklist:</p>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs text-stone-700">
                   <li>

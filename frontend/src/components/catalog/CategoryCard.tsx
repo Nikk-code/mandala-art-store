@@ -43,18 +43,18 @@ export function CategoryCard({ category, className = '', onClick }: CategoryCard
         </div>
 
         <div>
-          <h3 className="font-serif text-xl font-bold text-art-charcoal group-hover:text-art-ochre transition-colors">
+          <h3 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100 group-hover:text-art-ochre transition-colors">
             {category.name}
           </h3>
           {category.description && (
-            <p className="mt-1 text-xs text-stone-600 line-clamp-2 leading-relaxed">
+            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
               {category.description}
             </p>
           )}
         </div>
       </div>
 
-      <div className="mt-6 pt-3 border-t border-art-stone/60 flex items-center justify-between text-xs font-semibold text-art-charcoal group-hover:text-art-ochre">
+      <div className="mt-6 pt-3 border-t border-art-stone/60 dark:border-art-darkborder flex items-center justify-between text-xs font-semibold text-art-charcoal dark:text-stone-300 group-hover:text-art-ochre">
         <span>Explore Collection</span>
         <span aria-hidden="true">→</span>
       </div>
@@ -68,7 +68,7 @@ export function CategoryCard({ category, className = '', onClick }: CategoryCard
         tabIndex={0}
         onClick={onClick}
         onKeyDown={e => e.key === 'Enter' && onClick()}
-        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone bg-white p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art cursor-pointer ${className}`}
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art cursor-pointer ${className}`}
       >
         {content}
       </div>
@@ -78,7 +78,7 @@ export function CategoryCard({ category, className = '', onClick }: CategoryCard
   return (
     <Link
       to={`/products?category=${category.slug}`}
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone bg-white p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art ${className}`}
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art ${className}`}
     >
       {content}
     </Link>

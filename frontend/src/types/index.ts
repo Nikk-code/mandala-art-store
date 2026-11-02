@@ -34,3 +34,4 @@ export * from './wishlist';
 export * from './review';
 export * from './admin';
 export * from './coupon';
+export * from './theme';

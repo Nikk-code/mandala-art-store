@@ -4,7 +4,7 @@ import { Header, Footer } from '@/components/layout';
 
 export function RootLayout(): ReactNode {
   return (
-    <div className="flex min-h-screen flex-col bg-art-cream text-art-charcoal selection:bg-art-ochre selection:text-white">
+    <div className="flex min-h-screen flex-col bg-art-cream dark:bg-art-midnight text-art-charcoal dark:text-stone-100 transition-colors duration-200 selection:bg-art-ochre selection:text-white">
       {/* Skip to Content Accessibility Link */}
       <a
         href="#main-content"

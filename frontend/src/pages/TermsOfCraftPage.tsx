@@ -4,24 +4,24 @@ import { APP_NAME } from '@/constants';
 
 export function TermsOfCraftPage(): ReactNode {
   return (
-    <div className="bg-art-stone/20 min-h-screen py-12 sm:py-16">
+    <div className="bg-art-stone/20 dark:bg-art-midnight min-h-screen py-12 sm:py-16 transition-colors duration-200">
       <Container size="7xl">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-art-stone/60 shadow-sm p-6 sm:p-12">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-art-darkcard rounded-2xl border border-art-stone/60 dark:border-art-darkborder shadow-sm p-6 sm:p-12">
           {/* Header */}
-          <div className="border-b border-art-stone/40 pb-8 mb-8">
+          <div className="border-b border-art-stone/40 dark:border-art-darkborder pb-8 mb-8">
             <Badge variant="terracotta">Artisan Agreement</Badge>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal mt-3">
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 mt-3">
               Terms of Craft & Purchase
             </h1>
-            <p className="mt-2 text-sm text-stone-600">
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
               Authentic handmade policies, transit safety, and patron guarantees for {APP_NAME}
             </p>
           </div>
 
           {/* Content sections */}
-          <div className="space-y-8 text-sm text-stone-700 leading-relaxed">
+          <div className="space-y-8 text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 1. Authenticity & The Nature of Handcrafted Art
               </h2>
               <p>
@@ -30,8 +30,8 @@ export function TermsOfCraftPage(): ReactNode {
                 artisans shape clay reliefs, position individual reflective mirrors, and paint
                 intricate geometric lines entirely by hand.
               </p>
-              <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/70 text-amber-900">
-                <p className="font-semibold text-xs uppercase tracking-wider text-amber-800 mb-1">
+              <div className="bg-amber-50/60 dark:bg-amber-950/40 p-4 rounded-xl border border-amber-200/70 dark:border-amber-900/60 text-amber-900 dark:text-amber-200">
+                <p className="font-semibold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1">
                   Artisanal Variation Notice
                 </p>
                 <p className="text-xs leading-normal">
@@ -104,8 +104,8 @@ export function TermsOfCraftPage(): ReactNode {
               </ul>
             </section>
 
-            <section className="space-y-3 bg-art-stone/30 p-5 rounded-xl border border-art-stone/60">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+            <section className="space-y-3 bg-art-stone/30 dark:bg-art-midnight/60 p-5 rounded-xl border border-art-stone/60 dark:border-art-darkborder">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 5. Transit Damage, Replacements & Returns
               </h2>
               <p>

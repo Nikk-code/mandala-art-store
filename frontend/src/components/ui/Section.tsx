@@ -20,10 +20,10 @@ const spacingClasses: Record<SectionSpacing, string> = {
 
 const bgClasses: Record<SectionBackground, string> = {
   transparent: 'bg-transparent',
-  cream: 'bg-art-cream',
-  white: 'bg-white',
-  stone: 'bg-stone-50 border-y border-art-stone',
-  charcoal: 'bg-art-charcoal text-white',
+  cream: 'bg-art-cream dark:bg-art-midnight',
+  white: 'bg-white dark:bg-art-midnight',
+  stone: 'bg-stone-50 dark:bg-art-darkcard/50 border-y border-art-stone dark:border-art-darkborder',
+  charcoal: 'bg-art-charcoal dark:bg-black text-white',
 };
 
 export function Section({
