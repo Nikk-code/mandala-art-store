@@ -38,7 +38,7 @@ describe('Legal & Artisan Care Pages', () => {
     expect(screen.getByText(/Unboxing Video Requirement/i)).toBeInTheDocument();
   });
 
-  it('renders CareGuidePage with Lippan Kaam and Mandala preservation guides', () => {
+  it('renders CareGuidePage with Lippan Art and Mandala preservation guides', () => {
     render(
       <MemoryRouter>
         <CareGuidePage />
@@ -49,7 +49,7 @@ describe('Legal & Artisan Care Pages', () => {
       screen.getByRole('heading', { level: 1, name: /Artisan Care & Preservation Guide/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 2, name: /Caring for Lippan Kaam/i })
+      screen.getByRole('heading', { level: 2, name: /Caring for Lippan Art/i })
     ).toBeInTheDocument();
     expect(screen.getByText(/NEVER Use Water or Sprays/i)).toBeInTheDocument();
     expect(

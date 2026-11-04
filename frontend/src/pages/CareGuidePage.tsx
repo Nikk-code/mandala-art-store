@@ -14,25 +14,25 @@ export function CareGuidePage(): ReactNode {
               Artisan Care & Preservation Guide
             </h1>
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-              Essential instructions to ensure your handcrafted mandalas and Lippan Kaam mirrors
-              from {APP_NAME} remain pristine for generations.
+              Essential instructions to ensure your handcrafted mandalas and Lippan Art mirrors from{' '}
+              {APP_NAME} remain pristine for generations.
             </p>
           </div>
 
           {/* Guide sections */}
           <div className="space-y-10 text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-            {/* 1. Lippan Kaam Art */}
+            {/* 1. Lippan Art */}
             <section className="space-y-4">
               <div className="flex items-center gap-3">
                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-art-ochre/20 text-art-charcoal dark:text-stone-100 font-serif font-bold text-sm">
                   1
                 </span>
                 <h2 className="font-serif text-2xl font-bold text-art-charcoal dark:text-stone-100">
-                  Caring for Lippan Kaam (Mud-Relief & Mirror Art)
+                  Caring for Lippan Art (Mud-Relief & Mirror Art)
                 </h2>
               </div>
               <p>
-                Lippan Kaam is an ancient Gujarati folk craft traditionally made with organic clay,
+                Lippan Art is an ancient Gujarati folk craft traditionally made with organic clay,
                 camel dung adhesive substitutes, and convex glass mirrors (aabhla). Modern
                 handcrafted Lippan art uses refined chalk-clay compounds on sturdy wood panels,
                 creating lasting architectural beauty.

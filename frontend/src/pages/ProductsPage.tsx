@@ -163,7 +163,7 @@ export function ProductsPage(): ReactNode {
             </h1>
             <p className="mt-1.5 text-sm text-stone-600 dark:text-stone-300 max-w-2xl leading-relaxed">
               {activeCategoryObj?.description ||
-                'Discover individually handcrafted Sacred Mandalas, Kutchi Lippan Kaam reliefs, and spiritual paintings created by master artisans.'}
+                'Discover individually handcrafted Sacred Mandalas, Kutchi Lippan Art reliefs, and spiritual paintings created by master artisans.'}
             </p>
           </div>
         </Container>

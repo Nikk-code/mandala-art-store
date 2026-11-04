@@ -41,7 +41,7 @@ export function Footer(): ReactNode {
               </li>
               <li>
                 <span className="hover:text-art-charcoal dark:hover:text-art-ochre cursor-default transition-colors">
-                  Lippan Kaam Mirrors
+                  Lippan Art Mirrors
                 </span>
               </li>
               <li>
@@ -65,7 +65,7 @@ export function Footer(): ReactNode {
             <ul className="space-y-2.5 text-sm text-stone-600 dark:text-stone-400">
               <li>
                 <span className="hover:text-art-charcoal dark:hover:text-art-ochre cursor-default transition-colors">
-                  The Art of Lippan Kaam
+                  Traditional Lippan Art
                 </span>
               </li>
               <li>

@@ -25,7 +25,7 @@ export function TermsOfCraftPage(): ReactNode {
                 1. Authenticity & The Nature of Handcrafted Art
               </h2>
               <p>
-                Every sacred mandala, Lippan Kaam mud-and-mirror panel, and textured painting
+                Every sacred mandala, Lippan Art mud-and-mirror panel, and textured painting
                 showcased on {APP_NAME} is an authentic, individually created masterpiece. Our
                 artisans shape clay reliefs, position individual reflective mirrors, and paint
                 intricate geometric lines entirely by hand.
@@ -45,7 +45,7 @@ export function TermsOfCraftPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 2. Pricing, Invoicing & Taxes
               </h2>
               <ul className="list-disc pl-5 space-y-1.5">
@@ -66,7 +66,7 @@ export function TermsOfCraftPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 3. Order Reservation & Expiration Policy
               </h2>
               <p>
@@ -79,7 +79,7 @@ export function TermsOfCraftPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 4. Multi-Layer Protective Packaging & Transit
               </h2>
               <p>
@@ -138,7 +138,7 @@ export function TermsOfCraftPage(): ReactNode {
             </section>
 
             <section className="space-y-3">
-              <h2 className="font-serif text-xl font-bold text-art-charcoal">
+              <h2 className="font-serif text-xl font-bold text-art-charcoal dark:text-stone-100">
                 6. Intellectual Property & Artisan Rights
               </h2>
               <p>

@@ -85,7 +85,7 @@ export function HomePage(): ReactNode {
               </h1>
 
               <p className="text-base sm:text-lg text-stone-700 dark:text-stone-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                Individually handcrafted Mandalas and traditional Lippan Kaam mirror reliefs. Made
+                Individually handcrafted Mandalas and traditional Lippan Art mirror reliefs. Made
                 using natural earthen clays, mineral pigments, and mindful meditative precision.
               </p>
 

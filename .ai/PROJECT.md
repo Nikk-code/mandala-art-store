@@ -5,7 +5,7 @@
 The Mandala Art Store is a production-quality ecommerce platform designed for a specialized handmade art business. The business specializes in authentic, artisanal artwork including:
 
 - **Mandala Art**: Intricate spiritual and geometric circular patterns, dot mandalas, and traditional designs.
-- **Lippen Art**: Traditional Gujarati mud and mirror relief art (Lippan Kaam) crafted with clay, mirrors, and detailed embossing.
+- **Lippan Art**: Traditional Gujarati mud and mirror relief art crafted with clay, mirrors, and detailed embossing.
 - **Handmade Paintings & Canvas Art**: Acrylic, watercolor, and mixed-media traditional and contemporary art pieces.
 - **Handmade Crafts & Future Extensions**: Wall hangings, coasters, wooden art pieces, and custom commissioned works.
 
