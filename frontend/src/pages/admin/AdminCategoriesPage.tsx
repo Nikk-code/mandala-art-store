@@ -171,10 +171,10 @@ export function AdminCategoriesPage(): ReactNode {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal dark:text-stone-100">
             Category Management
           </h1>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1">
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1">
             Organize art collections, manage display hierarchy, and configure category media.
           </p>
         </div>
@@ -242,15 +242,15 @@ export function AdminCategoriesPage(): ReactNode {
           {categories.map(cat => (
             <div
               key={cat.id}
-              className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm flex flex-col justify-between hover:border-art-ochre/60 transition-colors"
+              className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder overflow-hidden shadow-sm flex flex-col justify-between hover:border-art-ochre/60 dark:hover:border-art-ochre/60 transition-colors"
             >
               <div>
                 {/* Thumbnail Header */}
-                <div className="relative h-36 bg-stone-100 overflow-hidden">
+                <div className="relative h-36 bg-stone-100 dark:bg-art-darkstone overflow-hidden">
                   {cat.imageUrl ? (
                     <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-400 text-xs">
+                    <div className="w-full h-full flex items-center justify-center text-stone-400 dark:text-stone-500 text-xs">
                       No Header Image
                     </div>
                   )}
@@ -267,29 +267,33 @@ export function AdminCategoriesPage(): ReactNode {
                 {/* Content */}
                 <div className="p-5 space-y-2">
                   <div className="flex items-baseline justify-between">
-                    <h3 className="font-serif font-bold text-lg text-art-charcoal">{cat.name}</h3>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-stone-100 text-stone-700">
+                    <h3 className="font-serif font-bold text-lg text-art-charcoal dark:text-stone-100">
+                      {cat.name}
+                    </h3>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-stone-100 dark:bg-art-darkstone text-stone-700 dark:text-stone-300">
                       {cat.productCount} {cat.productCount === 1 ? 'artwork' : 'artworks'}
                     </span>
                   </div>
 
-                  <p className="text-xs font-mono text-stone-500">/{cat.slug}</p>
+                  <p className="text-xs font-mono text-stone-500 dark:text-stone-400">
+                    /{cat.slug}
+                  </p>
 
-                  <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-3 leading-relaxed">
                     {cat.description || 'No description provided.'}
                   </p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="p-4 border-t border-stone-100 bg-stone-50/50 flex items-center justify-between">
+              <div className="p-4 border-t border-stone-100 dark:border-art-darkborder bg-stone-50/50 dark:bg-art-darkstone/50 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => handleToggleActive(cat)}
                   className={`text-xs font-semibold px-3 py-1.5 rounded transition-colors ${
                     cat.isActive
-                      ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                      ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60'
+                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                   }`}
                   title={
                     cat.productCount > 0 && cat.isActive
@@ -304,7 +308,7 @@ export function AdminCategoriesPage(): ReactNode {
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(cat)}
-                    className="text-xs font-semibold px-3 py-1.5 rounded bg-white border border-stone-300 hover:bg-stone-50 text-stone-700"
+                    className="text-xs font-semibold px-3 py-1.5 rounded bg-white dark:bg-art-darkstone border border-stone-300 dark:border-art-darkborder hover:bg-stone-50 dark:hover:bg-art-darkcard text-stone-700 dark:text-stone-200"
                   >
                     Edit
                   </button>
@@ -315,8 +319,8 @@ export function AdminCategoriesPage(): ReactNode {
                     disabled={cat.productCount > 0}
                     className={`text-xs font-semibold px-3 py-1.5 rounded transition-colors ${
                       cat.productCount > 0
-                        ? 'text-stone-300 cursor-not-allowed'
-                        : 'text-rose-600 hover:bg-rose-50'
+                        ? 'text-stone-300 dark:text-stone-600 cursor-not-allowed'
+                        : 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50'
                     }`}
                     title={
                       cat.productCount > 0
@@ -335,70 +339,78 @@ export function AdminCategoriesPage(): ReactNode {
 
       {/* Create / Edit Category Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-lg w-full p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
-              <h2 className="text-xl font-serif font-bold text-art-charcoal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm">
+          <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder shadow-2xl max-w-lg w-full p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-stone-200 dark:border-art-darkborder pb-3">
+              <h2 className="text-xl font-serif font-bold text-art-charcoal dark:text-stone-100">
                 {editingCategory ? 'Edit Category' : 'Create Category'}
               </h2>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-700 text-2xl font-bold"
+                className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-2xl font-bold"
               >
                 ×
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSubmitForm} className="space-y-4 text-xs sm:text-sm">
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Category Name *</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
+                  Category Name *
+                </label>
                 <input
                   type="text"
                   required
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
                   placeholder="e.g. Lippan Art"
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Slug (Optional)</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
+                  Slug (Optional)
+                </label>
                 <input
                   type="text"
                   value={formSlug}
                   onChange={e => setFormSlug(e.target.value)}
                   placeholder="e.g. lippan-art (auto-generated if empty)"
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre font-mono text-xs"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:ring-2 focus:ring-art-ochre font-mono text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Image URL</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
+                  Image URL
+                </label>
                 <input
                   type="url"
                   value={formImageUrl}
                   onChange={e => setFormImageUrl(e.target.value)}
                   placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre text-xs"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:ring-2 focus:ring-art-ochre text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Display Order</label>
+                  <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
+                    Display Order
+                  </label>
                   <input
                     type="number"
                     value={formDisplayOrder}
                     onChange={e => setFormDisplayOrder(parseInt(e.target.value, 10) || 0)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
                   />
                 </div>
 
@@ -408,29 +420,31 @@ export function AdminCategoriesPage(): ReactNode {
                       type="checkbox"
                       checked={formIsActive}
                       onChange={e => setFormIsActive(e.target.checked)}
-                      className="rounded border-stone-300 text-art-ochre focus:ring-art-ochre h-4 w-4"
+                      className="rounded border-stone-300 dark:border-art-darkborder text-art-ochre focus:ring-art-ochre h-4 w-4"
                     />
-                    <span className="font-semibold text-stone-700">Active</span>
+                    <span className="font-semibold text-stone-700 dark:text-stone-200">Active</span>
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">Description</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
+                  Description
+                </label>
                 <textarea
                   rows={3}
                   value={formDescription}
                   onChange={e => setFormDescription(e.target.value)}
                   placeholder="Heritage mud-relief and mirror wall art..."
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-stone-200">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-stone-200 dark:border-art-darkborder">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 font-medium hover:bg-stone-50"
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 font-medium hover:bg-stone-50 dark:hover:bg-art-darkstone"
                 >
                   Cancel
                 </button>

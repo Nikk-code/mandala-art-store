@@ -366,10 +366,10 @@ export function AdminProductsPage(): ReactNode {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal dark:text-stone-100">
             Product Management
           </h1>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1">
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1">
             Managing {totalItems} artworks in the sacred store catalog.
           </p>
         </div>
@@ -394,12 +394,12 @@ export function AdminProductsPage(): ReactNode {
 
       {/* Success Notification Banner */}
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-sm flex items-center justify-between">
           <span>{successMessage}</span>
           <button
             type="button"
             onClick={() => setSuccessMessage(null)}
-            className="text-emerald-600 hover:text-emerald-900 font-bold ml-4"
+            className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 font-bold ml-4"
           >
             ×
           </button>
@@ -408,12 +408,12 @@ export function AdminProductsPage(): ReactNode {
 
       {/* Global Error Alert */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-sm flex items-center justify-between">
           <span>{error}</span>
           <button
             type="button"
             onClick={() => setError(null)}
-            className="text-rose-600 hover:text-rose-900 font-bold ml-4"
+            className="text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-200 font-bold ml-4"
           >
             ×
           </button>
@@ -421,13 +421,13 @@ export function AdminProductsPage(): ReactNode {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder p-4 sm:p-5 shadow-sm space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
           {/* Search Box */}
           <div className="lg:col-span-2">
             <label
               htmlFor="search-input"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Search by Name or SKU
             </label>
@@ -440,7 +440,7 @@ export function AdminProductsPage(): ReactNode {
                 setPage(1);
               }}
               placeholder="e.g. Lotus, MND-001..."
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-art-ochre"
             />
           </div>
 
@@ -448,7 +448,7 @@ export function AdminProductsPage(): ReactNode {
           <div>
             <label
               htmlFor="category-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Category
             </label>
@@ -459,7 +459,7 @@ export function AdminProductsPage(): ReactNode {
                 setSelectedCategory(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
             >
               <option value="">All Categories</option>
               {categories.map(c => (
@@ -474,7 +474,7 @@ export function AdminProductsPage(): ReactNode {
           <div>
             <label
               htmlFor="availability-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Availability
             </label>
@@ -485,7 +485,7 @@ export function AdminProductsPage(): ReactNode {
                 setSelectedAvailability(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
             >
               <option value="">All Availability</option>
               <option value="IN_STOCK">In Stock</option>
@@ -498,7 +498,7 @@ export function AdminProductsPage(): ReactNode {
           <div>
             <label
               htmlFor="active-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Catalog Status
             </label>
@@ -509,7 +509,7 @@ export function AdminProductsPage(): ReactNode {
                 setSelectedActive(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
             >
               <option value="all">All (Active & Hidden)</option>
               <option value="true">Active Only</option>
@@ -521,7 +521,7 @@ export function AdminProductsPage(): ReactNode {
           <div>
             <label
               htmlFor="sort-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Sort
             </label>
@@ -532,7 +532,7 @@ export function AdminProductsPage(): ReactNode {
                 setSelectedSort(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
             >
               <option value="newest">Newest</option>
               <option value="price_asc">Price: Low to High</option>
@@ -558,10 +558,10 @@ export function AdminProductsPage(): ReactNode {
           onAction={handleOpenCreate}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-stone-50 border-b border-stone-200 text-stone-600 uppercase text-[11px] tracking-wider">
+              <thead className="bg-stone-50 dark:bg-art-darkstone border-b border-stone-200 dark:border-art-darkborder text-stone-600 dark:text-stone-300 uppercase text-[11px] tracking-wider">
                 <tr>
                   <th scope="col" className="px-4 py-3">
                     Product
@@ -586,42 +586,52 @@ export function AdminProductsPage(): ReactNode {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-stone-100 dark:divide-art-darkborder">
                 {products.map(p => {
                   const avail = getAvailabilityInfo(p.availability);
                   const primaryImg = p.images.find(img => img.isPrimary) || p.images[0];
 
                   return (
-                    <tr key={p.id} className="hover:bg-stone-50/70 transition-colors">
+                    <tr
+                      key={p.id}
+                      className="hover:bg-stone-50/70 dark:hover:bg-art-darkstone/50 transition-colors"
+                    >
                       <td className="px-4 py-3.5">
                         <div className="flex items-center space-x-3">
                           {primaryImg ? (
                             <img
                               src={primaryImg.url}
                               alt={primaryImg.altText || p.name}
-                              className="w-10 h-10 object-cover rounded-lg border border-stone-200 flex-shrink-0"
+                              className="w-10 h-10 object-cover rounded-lg border border-stone-200 dark:border-art-darkborder flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-[10px] text-stone-400 flex-shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-art-darkstone border border-stone-200 dark:border-art-darkborder flex items-center justify-center text-[10px] text-stone-400 flex-shrink-0">
                               No Art
                             </div>
                           )}
                           <div className="truncate max-w-[200px] sm:max-w-[260px]">
-                            <p className="font-semibold text-art-charcoal truncate" title={p.name}>
+                            <p
+                              className="font-semibold text-art-charcoal dark:text-stone-100 truncate"
+                              title={p.name}
+                            >
                               {p.name}
                             </p>
-                            <p className="text-[11px] text-stone-500 font-mono truncate">
+                            <p className="text-[11px] text-stone-500 dark:text-stone-400 font-mono truncate">
                               {p.slug}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-xs text-stone-600">{p.sku}</td>
+                      <td className="px-4 py-3.5 font-mono text-xs text-stone-600 dark:text-stone-300">
+                        {p.sku}
+                      </td>
 
-                      <td className="px-4 py-3.5 text-stone-600">{p.category.name}</td>
+                      <td className="px-4 py-3.5 text-stone-600 dark:text-stone-300">
+                        {p.category.name}
+                      </td>
 
-                      <td className="px-4 py-3.5 font-semibold text-art-charcoal">
+                      <td className="px-4 py-3.5 font-semibold text-art-charcoal dark:text-stone-100">
                         {formatPrice(p.price)}
                         {p.compareAtPrice && (
                           <span className="block text-[11px] text-stone-400 line-through font-normal">
@@ -633,7 +643,7 @@ export function AdminProductsPage(): ReactNode {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center space-x-2">
                           <Badge variant={avail.badgeVariant}>{avail.label}</Badge>
-                          <span className="text-xs text-stone-500 font-mono">
+                          <span className="text-xs text-stone-500 dark:text-stone-400 font-mono">
                             ({p.stockQuantity})
                           </span>
                         </div>
@@ -649,7 +659,7 @@ export function AdminProductsPage(): ReactNode {
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(p)}
-                          className="px-2.5 py-1 text-xs font-semibold rounded bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+                          className="px-2.5 py-1 text-xs font-semibold rounded bg-stone-100 dark:bg-art-darkstone hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 border border-transparent dark:border-art-darkborder transition-colors"
                         >
                           Edit
                         </button>
@@ -659,8 +669,8 @@ export function AdminProductsPage(): ReactNode {
                           onClick={() => handleToggleActive(p)}
                           className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
                             p.isActive
-                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-transparent dark:border-rose-900/50'
+                              : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-transparent dark:border-emerald-900/50'
                           }`}
                         >
                           {p.isActive ? 'Deactivate' : 'Activate'}
@@ -675,7 +685,7 @@ export function AdminProductsPage(): ReactNode {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-4 border-t border-stone-200">
+            <div className="p-4 border-t border-stone-200 dark:border-art-darkborder">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
@@ -688,23 +698,23 @@ export function AdminProductsPage(): ReactNode {
 
       {/* Create / Edit Product Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-3xl w-full p-6 my-8 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-              <h2 className="text-xl font-serif font-bold text-art-charcoal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder shadow-2xl max-w-3xl w-full p-6 my-8 space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-stone-200 dark:border-art-darkborder pb-4">
+              <h2 className="text-xl font-serif font-bold text-art-charcoal dark:text-stone-100">
                 {editingProduct ? 'Edit Artwork' : 'Create New Artwork'}
               </h2>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-700 text-2xl font-bold"
+                className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-2xl font-bold"
               >
                 ×
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 text-xs">
                 {formError}
               </div>
             )}
@@ -713,38 +723,44 @@ export function AdminProductsPage(): ReactNode {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Product Name */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Artwork Title *</label>
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                    Artwork Title *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formName}
                     onChange={e => setFormName(e.target.value)}
                     placeholder="e.g. Sacred Lotus Mandala"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
                 </div>
 
                 {/* SKU */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">SKU Code *</label>
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                    SKU Code *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formSku}
                     onChange={e => setFormSku(e.target.value)}
                     placeholder="e.g. MND-LOTUS-01"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre uppercase font-mono"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre uppercase font-mono"
                   />
                 </div>
 
                 {/* Category */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Category *</label>
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                    Category *
+                  </label>
                   <select
                     value={formCategoryId}
                     onChange={e => setFormCategoryId(e.target.value)}
                     required
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre bg-white"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:ring-2 focus:ring-art-ochre bg-white"
                   >
                     <option value="">Select Category</option>
                     {categories.map(c => (
@@ -757,7 +773,7 @@ export function AdminProductsPage(): ReactNode {
 
                 {/* Slug (Optional) */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     URL Slug (Optional)
                   </label>
                   <input
@@ -765,13 +781,13 @@ export function AdminProductsPage(): ReactNode {
                     value={formSlug}
                     onChange={e => setFormSlug(e.target.value)}
                     placeholder="Auto-generated if empty"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre font-mono text-xs"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre font-mono text-xs"
                   />
                 </div>
 
                 {/* Price (in Rupees) */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Selling Price (₹ INR) *
                   </label>
                   <input
@@ -782,16 +798,16 @@ export function AdminProductsPage(): ReactNode {
                     value={formPriceRupees}
                     onChange={e => setFormPriceRupees(e.target.value)}
                     placeholder="e.g. 1499.00"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
-                  <p className="text-[10px] text-stone-400 mt-0.5">
+                  <p className="text-[10px] text-stone-400 dark:text-stone-400 mt-0.5">
                     Authoritative stored in integer paise.
                   </p>
                 </div>
 
                 {/* Compare-At Price (MRP) */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Compare-at MRP (₹ INR, Optional)
                   </label>
                   <input
@@ -801,19 +817,19 @@ export function AdminProductsPage(): ReactNode {
                     value={formCompareAtPriceRupees}
                     onChange={e => setFormCompareAtPriceRupees(e.target.value)}
                     placeholder="e.g. 1999.00"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
                 </div>
 
                 {/* Availability */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Availability State *
                   </label>
                   <select
                     value={formAvailability}
                     onChange={e => setFormAvailability(e.target.value as ProductAvailability)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre bg-white"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:ring-2 focus:ring-art-ochre bg-white"
                   >
                     <option value="IN_STOCK">In Stock (Tracked inventory)</option>
                     <option value="MADE_TO_ORDER">Made to Order (Craft on demand)</option>
@@ -823,7 +839,7 @@ export function AdminProductsPage(): ReactNode {
 
                 {/* Stock Quantity */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Stock Quantity *
                   </label>
                   <input
@@ -832,26 +848,26 @@ export function AdminProductsPage(): ReactNode {
                     required
                     value={formStockQuantity}
                     onChange={e => setFormStockQuantity(parseInt(e.target.value, 10) || 0)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
                 </div>
 
                 {/* Dimensions */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Dimensions (e.g. 12 × 12 inches)
                   </label>
                   <input
                     type="text"
                     value={formDimensions}
                     onChange={e => setFormDimensions(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
                 </div>
 
                 {/* Material */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Material / Medium
                   </label>
                   <input
@@ -859,13 +875,13 @@ export function AdminProductsPage(): ReactNode {
                     value={formMaterial}
                     onChange={e => setFormMaterial(e.target.value)}
                     placeholder="e.g. Acrylic on stretched canvas"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
                 </div>
 
                 {/* Weight in Grams */}
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                     Shipping Weight (Grams)
                   </label>
                   <input
@@ -874,7 +890,7 @@ export function AdminProductsPage(): ReactNode {
                     value={formWeightGrams}
                     onChange={e => setFormWeightGrams(e.target.value)}
                     placeholder="e.g. 800"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                   />
                 </div>
 
@@ -887,7 +903,9 @@ export function AdminProductsPage(): ReactNode {
                       onChange={e => setFormIsHandmade(e.target.checked)}
                       className="rounded border-stone-300 text-art-ochre focus:ring-art-ochre h-4 w-4"
                     />
-                    <span className="font-semibold text-stone-700">Handmade</span>
+                    <span className="font-semibold text-stone-700 dark:text-stone-300">
+                      Handmade
+                    </span>
                   </label>
 
                   <label className="flex items-center space-x-2 cursor-pointer">
@@ -897,7 +915,9 @@ export function AdminProductsPage(): ReactNode {
                       onChange={e => setFormIsFeatured(e.target.checked)}
                       className="rounded border-stone-300 text-art-ochre focus:ring-art-ochre h-4 w-4"
                     />
-                    <span className="font-semibold text-stone-700">Featured</span>
+                    <span className="font-semibold text-stone-700 dark:text-stone-300">
+                      Featured
+                    </span>
                   </label>
 
                   <label className="flex items-center space-x-2 cursor-pointer">
@@ -907,14 +927,14 @@ export function AdminProductsPage(): ReactNode {
                       onChange={e => setFormIsActive(e.target.checked)}
                       className="rounded border-stone-300 text-art-ochre focus:ring-art-ochre h-4 w-4"
                     />
-                    <span className="font-semibold text-stone-700">Active</span>
+                    <span className="font-semibold text-stone-700 dark:text-stone-300">Active</span>
                   </label>
                 </div>
               </div>
 
               {/* Short Description */}
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">
+                <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                   Short Summary (Catalog snippet)
                 </label>
                 <input
@@ -922,13 +942,13 @@ export function AdminProductsPage(): ReactNode {
                   value={formShortDescription}
                   onChange={e => setFormShortDescription(e.target.value)}
                   placeholder="One sentence summary of the artwork"
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                 />
               </div>
 
               {/* Full Description */}
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">
+                <label className="block font-semibold text-stone-700 dark:text-stone-300 mb-1">
                   Full Artwork Description *
                 </label>
                 <textarea
@@ -937,33 +957,39 @@ export function AdminProductsPage(): ReactNode {
                   value={formDescription}
                   onChange={e => setFormDescription(e.target.value)}
                   placeholder="Detailed description of geometry, symbolism, materials, and care..."
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre"
                 />
               </div>
 
               {/* Initial Image Upload if Creating */}
               {!editingProduct && (
-                <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-3">
-                  <h3 className="font-semibold text-xs text-stone-700">Initial Primary Image</h3>
+                <div className="bg-stone-50 dark:bg-art-darkstone/60 p-4 rounded-xl border border-stone-200 dark:border-art-darkborder space-y-3">
+                  <h3 className="font-semibold text-xs text-stone-700 dark:text-stone-300">
+                    Initial Primary Image
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] text-stone-600 mb-1">Image URL</label>
+                      <label className="block text-[11px] text-stone-600 dark:text-stone-400 mb-1">
+                        Image URL
+                      </label>
                       <input
                         type="url"
                         value={formImageUrl}
                         onChange={e => setFormImageUrl(e.target.value)}
                         placeholder="https://images.unsplash.com/..."
-                        className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre text-xs"
+                        className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-stone-600 mb-1">Alt Text</label>
+                      <label className="block text-[11px] text-stone-600 dark:text-stone-400 mb-1">
+                        Alt Text
+                      </label>
                       <input
                         type="text"
                         value={formImageAlt}
                         onChange={e => setFormImageAlt(e.target.value)}
                         placeholder="Visual description for accessibility"
-                        className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre text-xs"
+                        className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 focus:ring-2 focus:ring-art-ochre text-xs"
                       />
                     </div>
                   </div>
@@ -972,22 +998,26 @@ export function AdminProductsPage(): ReactNode {
 
               {/* Existing Image Gallery Manager if Editing */}
               {editingProduct && (
-                <div className="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-4">
-                  <h3 className="font-semibold text-xs text-stone-700">Artwork Images & Gallery</h3>
+                <div className="bg-stone-50 dark:bg-art-darkstone/60 p-4 rounded-xl border border-stone-200 dark:border-art-darkborder space-y-4">
+                  <h3 className="font-semibold text-xs text-stone-700 dark:text-stone-300">
+                    Artwork Images & Gallery
+                  </h3>
 
                   {editingProduct.images.length === 0 ? (
-                    <p className="text-xs text-stone-500 italic">No images currently uploaded.</p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400 italic">
+                      No images currently uploaded.
+                    </p>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {editingProduct.images.map(img => (
                         <div
                           key={img.id}
-                          className="relative rounded-lg border border-stone-200 bg-white p-2 flex flex-col justify-between"
+                          className="relative rounded-lg border border-stone-200 dark:border-art-darkborder bg-white dark:bg-art-darkstone p-2 flex flex-col justify-between"
                         >
                           <img
                             src={img.url}
                             alt={img.altText || ''}
-                            className="w-full h-24 object-cover rounded mb-2 border border-stone-100"
+                            className="w-full h-24 object-cover rounded mb-2 border border-stone-100 dark:border-art-darkborder"
                           />
                           <div className="flex items-center justify-between text-[10px]">
                             {img.isPrimary ? (
@@ -998,7 +1028,7 @@ export function AdminProductsPage(): ReactNode {
                               <button
                                 type="button"
                                 onClick={() => handleSetPrimaryImage(img.id)}
-                                className="text-stone-600 hover:text-stone-900 underline"
+                                className="text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 underline"
                               >
                                 Set Primary
                               </button>
@@ -1006,7 +1036,7 @@ export function AdminProductsPage(): ReactNode {
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(img.id)}
-                              className="text-rose-600 hover:text-rose-900 font-semibold"
+                              className="text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-200 font-semibold"
                             >
                               Remove
                             </button>
@@ -1017,26 +1047,26 @@ export function AdminProductsPage(): ReactNode {
                   )}
 
                   {/* Add Image Input */}
-                  <div className="pt-2 border-t border-stone-200 flex flex-col sm:flex-row gap-2">
+                  <div className="pt-2 border-t border-stone-200 dark:border-art-darkborder flex flex-col sm:flex-row gap-2">
                     <input
                       type="url"
                       placeholder="Add image URL..."
                       value={newImageUrl}
                       onChange={e => setNewImageUrl(e.target.value)}
-                      className="flex-1 px-3 py-1.5 rounded-lg border border-stone-300 text-xs focus:ring-2 focus:ring-art-ochre"
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 text-xs focus:ring-2 focus:ring-art-ochre"
                     />
                     <input
                       type="text"
                       placeholder="Alt text"
                       value={newImageAlt}
                       onChange={e => setNewImageAlt(e.target.value)}
-                      className="sm:w-1/3 px-3 py-1.5 rounded-lg border border-stone-300 text-xs focus:ring-2 focus:ring-art-ochre"
+                      className="sm:w-1/3 px-3 py-1.5 rounded-lg border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 text-xs focus:ring-2 focus:ring-art-ochre"
                     />
                     <button
                       type="button"
                       disabled={addingImage || !newImageUrl.trim()}
                       onClick={handleAddImage}
-                      className="px-3 py-1.5 rounded-lg bg-stone-800 text-white font-medium text-xs hover:bg-stone-900 disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-lg bg-stone-800 dark:bg-art-stone text-white font-medium text-xs hover:bg-stone-900 dark:hover:bg-stone-700 disabled:opacity-50"
                     >
                       {addingImage ? 'Adding...' : 'Add Image'}
                     </button>
@@ -1045,18 +1075,18 @@ export function AdminProductsPage(): ReactNode {
               )}
 
               {/* Form Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-stone-200">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-stone-200 dark:border-art-darkborder">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 font-medium hover:bg-stone-50"
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 font-medium hover:bg-stone-50 dark:hover:bg-art-darkstone"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-art-ochre hover:bg-amber-600 text-art-charcoal font-semibold disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-art-ochre hover:bg-amber-600 text-art-charcoal font-semibold disabled:opacity-50 shadow-sm"
                 >
                   {saving ? 'Saving...' : editingProduct ? 'Update Product' : 'Create Product'}
                 </button>

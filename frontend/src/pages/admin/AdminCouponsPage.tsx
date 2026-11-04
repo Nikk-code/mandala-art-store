@@ -257,10 +257,10 @@ export function AdminCouponsPage(): ReactNode {
       {/* Top Banner & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-art-stone pb-5">
         <div>
-          <h1 className="font-serif text-2xl font-bold tracking-tight text-art-charcoal">
+          <h1 className="font-serif text-2xl font-bold tracking-tight text-art-charcoal dark:text-stone-100">
             Promotions & Coupons {totalCoupons > 0 ? `(${totalCoupons})` : ''}
           </h1>
-          <p className="mt-1 text-xs text-stone-600">
+          <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
             Create, configure, and monitor customer discount codes with authoritative usage limits.
           </p>
         </div>
@@ -314,12 +314,12 @@ export function AdminCouponsPage(): ReactNode {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="rounded-2xl border border-art-stone bg-white p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         {/* Search */}
         <div>
           <label
             htmlFor="couponSearch"
-            className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1"
+            className="block text-[11px] font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-1"
           >
             Search Code
           </label>
@@ -332,7 +332,7 @@ export function AdminCouponsPage(): ReactNode {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-xl border border-art-stone px-3 py-1.5 text-xs text-art-charcoal focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+            className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-1.5 text-xs text-art-charcoal dark:text-stone-100 bg-white dark:bg-art-darkstone placeholder-stone-400 dark:placeholder-stone-500 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
           />
         </div>
 
@@ -340,7 +340,7 @@ export function AdminCouponsPage(): ReactNode {
         <div>
           <label
             htmlFor="statusFilter"
-            className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1"
+            className="block text-[11px] font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-1"
           >
             Status
           </label>
@@ -351,7 +351,7 @@ export function AdminCouponsPage(): ReactNode {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-xl border border-art-stone px-3 py-1.5 text-xs text-art-charcoal bg-white focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+            className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-1.5 text-xs text-art-charcoal dark:text-stone-100 bg-white dark:bg-art-darkstone focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
           >
             <option value="">All Statuses</option>
             <option value="active">Active Only</option>
@@ -363,7 +363,7 @@ export function AdminCouponsPage(): ReactNode {
         <div>
           <label
             htmlFor="typeFilter"
-            className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1"
+            className="block text-[11px] font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-1"
           >
             Discount Type
           </label>
@@ -374,7 +374,7 @@ export function AdminCouponsPage(): ReactNode {
               setTypeFilter(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-xl border border-art-stone px-3 py-1.5 text-xs text-art-charcoal bg-white focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+            className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-1.5 text-xs text-art-charcoal dark:text-stone-100 bg-white dark:bg-art-darkstone focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
           >
             <option value="">All Types</option>
             <option value="PERCENTAGE">Percentage (%)</option>
@@ -386,7 +386,7 @@ export function AdminCouponsPage(): ReactNode {
         <div>
           <label
             htmlFor="sortFilter"
-            className="block text-[11px] font-bold text-stone-600 uppercase tracking-wider mb-1"
+            className="block text-[11px] font-bold text-stone-600 dark:text-stone-300 uppercase tracking-wider mb-1"
           >
             Sort Order
           </label>
@@ -397,7 +397,7 @@ export function AdminCouponsPage(): ReactNode {
               setSort(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-xl border border-art-stone px-3 py-1.5 text-xs text-art-charcoal bg-white focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+            className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-1.5 text-xs text-art-charcoal dark:text-stone-100 bg-white dark:bg-art-darkstone focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -409,11 +409,11 @@ export function AdminCouponsPage(): ReactNode {
 
       {/* Main Content Area */}
       {loading ? (
-        <div className="py-20 rounded-2xl bg-white border border-art-stone flex justify-center">
+        <div className="py-20 rounded-2xl bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder flex justify-center">
           <LoadingState message="Loading promotions and coupons..." />
         </div>
       ) : coupons.length === 0 ? (
-        <div className="rounded-2xl border border-art-stone bg-white p-8">
+        <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-8">
           <EmptyState
             title="No Coupons Found"
             description={
@@ -435,10 +435,10 @@ export function AdminCouponsPage(): ReactNode {
           />
         </div>
       ) : (
-        <div className="rounded-2xl border border-art-stone bg-white shadow-sm overflow-hidden">
+        <div className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-art-stone/60 text-xs text-left text-art-charcoal">
-              <thead className="bg-stone-50 font-bold uppercase tracking-wider text-[10px] text-stone-500">
+            <table className="min-w-full divide-y divide-art-stone/60 dark:divide-art-darkborder text-xs text-left text-art-charcoal dark:text-stone-100">
+              <thead className="bg-stone-50 dark:bg-art-darkstone font-bold uppercase tracking-wider text-[10px] text-stone-500 dark:text-stone-300">
                 <tr>
                   <th scope="col" className="px-4 py-3">
                     Code
@@ -463,17 +463,20 @@ export function AdminCouponsPage(): ReactNode {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-art-stone/50">
+              <tbody className="divide-y divide-art-stone/50 dark:divide-art-darkborder">
                 {coupons.map(coupon => {
                   const now = new Date();
                   const isExpired = new Date(coupon.validUntil) < now;
                   const isFuture = new Date(coupon.validFrom) > now;
 
                   return (
-                    <tr key={coupon.id} className="hover:bg-stone-50/70 transition-colors">
+                    <tr
+                      key={coupon.id}
+                      className="hover:bg-stone-50/70 dark:hover:bg-art-darkstone/50 transition-colors"
+                    >
                       {/* Code */}
                       <td className="px-4 py-3.5">
-                        <span className="font-mono font-bold text-xs bg-stone-100 px-2 py-1 rounded border border-stone-200 text-art-charcoal">
+                        <span className="font-mono font-bold text-xs bg-stone-100 dark:bg-art-darkstone px-2 py-1 rounded border border-stone-200 dark:border-art-darkborder text-art-charcoal dark:text-stone-100">
                           {coupon.code}
                         </span>
                       </td>
@@ -486,7 +489,7 @@ export function AdminCouponsPage(): ReactNode {
                               {coupon.discountValue}% Off
                             </span>
                             {coupon.maxDiscountAmount && (
-                              <p className="text-[10px] text-stone-500">
+                              <p className="text-[10px] text-stone-500 dark:text-stone-400">
                                 Max {formatPrice(coupon.maxDiscountAmount)}
                               </p>
                             )}
@@ -502,16 +505,16 @@ export function AdminCouponsPage(): ReactNode {
                       <td className="px-4 py-3.5">
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-art-charcoal">
+                            <span className="font-semibold text-art-charcoal dark:text-stone-100">
                               {coupon.timesUsed}
                             </span>
                             <span className="text-stone-400">/</span>
-                            <span className="text-stone-600">
+                            <span className="text-stone-600 dark:text-stone-300">
                               {coupon.usageLimit !== null ? coupon.usageLimit : '∞'} used
                             </span>
                           </div>
                           {coupon.ordersCount !== undefined && coupon.ordersCount > 0 && (
-                            <p className="text-[10px] text-stone-500">
+                            <p className="text-[10px] text-stone-500 dark:text-stone-400">
                               Linked to {coupon.ordersCount} order(s)
                             </p>
                           )}
@@ -521,18 +524,18 @@ export function AdminCouponsPage(): ReactNode {
                       {/* Min Order */}
                       <td className="px-4 py-3.5">
                         {coupon.minOrderAmount ? (
-                          <span className="text-stone-700">
+                          <span className="text-stone-700 dark:text-stone-300">
                             {formatPrice(coupon.minOrderAmount)}
                           </span>
                         ) : (
-                          <span className="text-stone-400 italic">None</span>
+                          <span className="text-stone-400 dark:text-stone-500 italic">None</span>
                         )}
                       </td>
 
                       {/* Validity Dates */}
                       <td className="px-4 py-3.5">
                         <div className="space-y-0.5 text-[11px]">
-                          <p className="text-stone-600">
+                          <p className="text-stone-600 dark:text-stone-300">
                             Until{' '}
                             {new Date(coupon.validUntil).toLocaleDateString('en-IN', {
                               day: 'numeric',
@@ -561,8 +564,8 @@ export function AdminCouponsPage(): ReactNode {
                           aria-label={`Toggle active status for coupon ${coupon.code}`}
                           className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${
                             coupon.isActive
-                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/60'
+                              : 'bg-stone-100 dark:bg-art-darkstone text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-art-darkcard'
                           }`}
                           title={`Click to ${coupon.isActive ? 'Deactivate' : 'Activate'}`}
                         >
@@ -585,7 +588,7 @@ export function AdminCouponsPage(): ReactNode {
                             setDeletingCoupon(coupon);
                             setDeleteError(null);
                           }}
-                          className="text-stone-400 hover:text-rose-600 font-semibold p-1"
+                          className="text-stone-400 dark:text-stone-500 hover:text-rose-600 font-semibold p-1"
                           title="Delete coupon"
                           aria-label={`Delete coupon ${coupon.code}`}
                         >
@@ -601,7 +604,7 @@ export function AdminCouponsPage(): ReactNode {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="border-t border-art-stone/60 p-4">
+            <div className="border-t border-art-stone/60 dark:border-art-darkborder p-4">
               <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
             </div>
           )}
@@ -610,15 +613,18 @@ export function AdminCouponsPage(): ReactNode {
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-art-charcoal/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-art-charcoal/60 dark:bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="couponModalTitle"
-            className="rounded-2xl border border-art-stone bg-white shadow-xl max-w-lg w-full p-6 space-y-5 animate-fadeIn"
+            className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard shadow-xl max-w-lg w-full p-6 space-y-5 animate-fadeIn"
           >
-            <div className="flex items-center justify-between border-b border-art-stone pb-3">
-              <h2 id="couponModalTitle" className="font-serif text-lg font-bold text-art-charcoal">
+            <div className="flex items-center justify-between border-b border-art-stone dark:border-art-darkborder pb-3">
+              <h2
+                id="couponModalTitle"
+                className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100"
+              >
                 {editingCoupon
                   ? `Edit Coupon: ${editingCoupon.code}`
                   : 'Create New Promotional Coupon'}
@@ -626,7 +632,7 @@ export function AdminCouponsPage(): ReactNode {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-art-charcoal font-bold p-1 text-sm"
+                className="text-stone-400 hover:text-art-charcoal dark:hover:text-stone-200 font-bold p-1 text-sm"
               >
                 ✕
               </button>
@@ -635,7 +641,7 @@ export function AdminCouponsPage(): ReactNode {
             {modalError && (
               <div
                 role="alert"
-                className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
+                className="rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/60 p-3 text-xs text-rose-800 dark:text-rose-200"
               >
                 {modalError}
               </div>
@@ -644,7 +650,10 @@ export function AdminCouponsPage(): ReactNode {
             <form onSubmit={handleSubmitForm} className="space-y-4 text-xs">
               {/* Code */}
               <div>
-                <label htmlFor="couponCodeInput" className="block font-bold text-stone-700 mb-1">
+                <label
+                  htmlFor="couponCodeInput"
+                  className="block font-bold text-stone-700 dark:text-stone-200 mb-1"
+                >
                   Coupon Code *
                 </label>
                 <input
@@ -656,9 +665,9 @@ export function AdminCouponsPage(): ReactNode {
                   onChange={e =>
                     setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))
                   }
-                  className="w-full rounded-xl border border-art-stone px-3 py-2 uppercase font-mono text-sm tracking-wider focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                  className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 uppercase font-mono text-sm tracking-wider bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                 />
-                <p className="text-[10px] text-stone-500 mt-1">
+                <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1">
                   Uppercase letters, numbers, and hyphens (3–50 chars).
                 </p>
               </div>
@@ -668,7 +677,7 @@ export function AdminCouponsPage(): ReactNode {
                 <div>
                   <label
                     htmlFor="discountTypeInput"
-                    className="block font-bold text-stone-700 mb-1"
+                    className="block font-bold text-stone-700 dark:text-stone-200 mb-1"
                   >
                     Discount Type *
                   </label>
@@ -681,7 +690,7 @@ export function AdminCouponsPage(): ReactNode {
                         discountType: e.target.value as 'PERCENTAGE' | 'FIXED_AMOUNT',
                       }))
                     }
-                    className="w-full rounded-xl border border-art-stone px-3 py-2 bg-white text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                    className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
                     <option value="FIXED_AMOUNT">Fixed Amount (₹)</option>
@@ -691,7 +700,7 @@ export function AdminCouponsPage(): ReactNode {
                 <div>
                   <label
                     htmlFor="discountValueInput"
-                    className="block font-bold text-stone-700 mb-1"
+                    className="block font-bold text-stone-700 dark:text-stone-200 mb-1"
                   >
                     {formData.discountType === 'PERCENTAGE'
                       ? 'Discount Percentage (%) *'
@@ -708,7 +717,7 @@ export function AdminCouponsPage(): ReactNode {
                     onChange={e =>
                       setFormData(prev => ({ ...prev, discountValue: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-art-stone px-3 py-2 text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                    className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                   />
                 </div>
               </div>
@@ -716,7 +725,7 @@ export function AdminCouponsPage(): ReactNode {
               {/* Optional Limits Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-stone-700 mb-1">
+                  <label className="block font-bold text-stone-700 dark:text-stone-200 mb-1">
                     Min Order Subtotal (₹)
                   </label>
                   <input
@@ -727,12 +736,12 @@ export function AdminCouponsPage(): ReactNode {
                     onChange={e =>
                       setFormData(prev => ({ ...prev, minOrderRupees: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-art-stone px-3 py-2 text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                    className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-stone-700 mb-1">
+                  <label className="block font-bold text-stone-700 dark:text-stone-200 mb-1">
                     Max Discount Cap (₹)
                   </label>
                   <input
@@ -744,45 +753,51 @@ export function AdminCouponsPage(): ReactNode {
                     onChange={e =>
                       setFormData(prev => ({ ...prev, maxDiscountRupees: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-art-stone px-3 py-2 text-xs disabled:bg-stone-100 disabled:text-stone-400 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                    className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 disabled:bg-stone-100 dark:disabled:bg-art-darkstone/50 disabled:text-stone-400 dark:disabled:text-stone-600 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                   />
                 </div>
               </div>
 
               {/* Usage Limit */}
               <div>
-                <label className="block font-bold text-stone-700 mb-1">Global Usage Limit</label>
+                <label className="block font-bold text-stone-700 dark:text-stone-200 mb-1">
+                  Global Usage Limit
+                </label>
                 <input
                   type="number"
                   min="1"
                   placeholder="Optional (leave empty for unlimited)"
                   value={formData.usageLimit}
                   onChange={e => setFormData(prev => ({ ...prev, usageLimit: e.target.value }))}
-                  className="w-full rounded-xl border border-art-stone px-3 py-2 text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                  className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                 />
               </div>
 
               {/* Validity Dates Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-stone-700 mb-1">Valid From *</label>
+                  <label className="block font-bold text-stone-700 dark:text-stone-200 mb-1">
+                    Valid From *
+                  </label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.validFrom}
                     onChange={e => setFormData(prev => ({ ...prev, validFrom: e.target.value }))}
-                    className="w-full rounded-xl border border-art-stone px-3 py-2 text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                    className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-stone-700 mb-1">Valid Until *</label>
+                  <label className="block font-bold text-stone-700 dark:text-stone-200 mb-1">
+                    Valid Until *
+                  </label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.validUntil}
                     onChange={e => setFormData(prev => ({ ...prev, validUntil: e.target.value }))}
-                    className="w-full rounded-xl border border-art-stone px-3 py-2 text-xs focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
+                    className="w-full rounded-xl border border-art-stone dark:border-art-darkborder px-3 py-2 text-xs bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 focus:border-art-ochre focus:outline-none focus:ring-1 focus:ring-art-ochre"
                   />
                 </div>
               </div>
@@ -794,23 +809,23 @@ export function AdminCouponsPage(): ReactNode {
                   id="couponActiveToggle"
                   checked={formData.isActive}
                   onChange={e => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="rounded border-art-stone text-art-ochre focus:ring-art-ochre h-4 w-4"
+                  className="rounded border-art-stone dark:border-art-darkborder text-art-ochre focus:ring-art-ochre h-4 w-4"
                 />
                 <label
                   htmlFor="couponActiveToggle"
-                  className="text-xs font-semibold text-stone-700 cursor-pointer"
+                  className="text-xs font-semibold text-stone-700 dark:text-stone-200 cursor-pointer"
                 >
                   Activate coupon immediately upon saving
                 </label>
               </div>
 
               {/* Modal Buttons */}
-              <div className="pt-3 border-t border-art-stone/60 flex justify-end gap-2">
+              <div className="pt-3 border-t border-art-stone/60 dark:border-art-darkborder flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium"
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-art-darkstone font-medium"
                 >
                   Cancel
                 </button>
@@ -829,16 +844,16 @@ export function AdminCouponsPage(): ReactNode {
 
       {/* Delete Confirmation Modal */}
       {deletingCoupon && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-art-charcoal/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-art-charcoal/60 dark:bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="deleteCouponModalTitle"
-            className="rounded-2xl border border-art-stone bg-white shadow-xl max-w-md w-full p-6 space-y-4 animate-fadeIn"
+            className="rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard shadow-xl max-w-md w-full p-6 space-y-4 animate-fadeIn"
           >
             <h2
               id="deleteCouponModalTitle"
-              className="font-serif text-lg font-bold text-art-charcoal"
+              className="font-serif text-lg font-bold text-art-charcoal dark:text-stone-100"
             >
               Delete Coupon: {deletingCoupon.code}
             </h2>
@@ -846,12 +861,12 @@ export function AdminCouponsPage(): ReactNode {
             {deleteError ? (
               <div
                 role="alert"
-                className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800"
+                className="rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/60 p-3 text-xs text-rose-800 dark:text-rose-200"
               >
                 {deleteError}
               </div>
             ) : deletingCoupon.ordersCount !== undefined && deletingCoupon.ordersCount > 0 ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 space-y-1">
+              <div className="rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/60 p-3 text-xs text-amber-800 dark:text-amber-200 space-y-1">
                 <p className="font-bold">Cannot Delete Linked Coupon</p>
                 <p>
                   This coupon has been redeemed in {deletingCoupon.ordersCount} historical order(s).
@@ -859,18 +874,18 @@ export function AdminCouponsPage(): ReactNode {
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-stone-600">
+              <p className="text-xs text-stone-600 dark:text-stone-300">
                 Are you sure you want to permanently delete coupon &quot;{deletingCoupon.code}
                 &quot;? This action cannot be undone.
               </p>
             )}
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-art-stone/60">
+            <div className="flex justify-end gap-2 pt-2 border-t border-art-stone/60 dark:border-art-darkborder">
               <button
                 type="button"
                 onClick={() => setDeletingCoupon(null)}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 hover:bg-stone-50 font-medium text-xs"
+                className="px-4 py-2 rounded-xl border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-art-darkstone font-medium text-xs"
               >
                 Close
               </button>

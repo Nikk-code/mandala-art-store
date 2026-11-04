@@ -65,7 +65,7 @@ export function Pagination({
         type="button"
         disabled={currentPage <= 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold text-art-charcoal bg-white border border-art-stone rounded-xl hover:bg-stone-50 hover:border-art-sand disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+        className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold text-art-charcoal dark:text-stone-200 bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder rounded-xl hover:bg-stone-50 dark:hover:bg-art-darkstone hover:border-art-sand disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
         aria-label="Go to previous page"
       >
         <span aria-hidden="true" className="mr-1">
@@ -81,7 +81,7 @@ export function Pagination({
             return (
               <span
                 key={`ellipsis-${index}`}
-                className="inline-flex items-center justify-center h-11 w-9 text-stone-600 font-medium select-none"
+                className="inline-flex items-center justify-center h-11 w-9 text-stone-600 dark:text-stone-400 font-medium select-none"
                 aria-hidden="true"
               >
                 …
@@ -99,8 +99,8 @@ export function Pagination({
               aria-label={`Go to page ${item}`}
               className={`inline-flex items-center justify-center min-h-[44px] min-w-[44px] h-11 w-11 text-xs font-bold rounded-xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre ${
                 isCurrent
-                  ? 'bg-art-charcoal text-white shadow-sm'
-                  : 'bg-white text-art-charcoal border border-art-stone hover:bg-stone-50 hover:border-art-sand'
+                  ? 'bg-art-charcoal text-white shadow-sm dark:bg-art-ochre dark:text-art-charcoal'
+                  : 'bg-white text-art-charcoal dark:bg-art-darkcard dark:text-stone-200 border border-art-stone dark:border-art-darkborder hover:bg-stone-50 dark:hover:bg-art-darkstone hover:border-art-sand'
               }`}
             >
               {item}
@@ -114,7 +114,7 @@ export function Pagination({
         type="button"
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold text-art-charcoal bg-white border border-art-stone rounded-xl hover:bg-stone-50 hover:border-art-sand disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+        className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs font-semibold text-art-charcoal dark:text-stone-200 bg-white dark:bg-art-darkcard border border-art-stone dark:border-art-darkborder rounded-xl hover:bg-stone-50 dark:hover:bg-art-darkstone hover:border-art-sand disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
         aria-label="Go to next page"
       >
         <span>Next</span>

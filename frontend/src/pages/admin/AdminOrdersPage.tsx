@@ -175,10 +175,10 @@ export function AdminOrdersPage(): ReactNode {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal dark:text-stone-100 tracking-tight">
               Order Fulfillment & Logistics
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 mt-1">
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1">
               Inspect patron orders, monitor payment evidence, update shipping carrier statuses, and
               track deliveries.
             </p>
@@ -187,10 +187,10 @@ export function AdminOrdersPage(): ReactNode {
             <button
               type="button"
               onClick={() => loadOrders()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-stone-300 bg-white hover:bg-stone-50 text-art-charcoal shadow-sm transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-stone-300 dark:border-art-darkborder bg-white dark:bg-art-darkcard hover:bg-stone-50 dark:hover:bg-art-darkstone text-art-charcoal dark:text-stone-100 shadow-sm transition-colors"
             >
               <svg
-                className="w-3.5 h-3.5 text-stone-500"
+                className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -208,14 +208,17 @@ export function AdminOrdersPage(): ReactNode {
         </div>
 
         {/* Filters Toolbar */}
-        <div className="bg-white rounded-xl border border-stone-200 p-4 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200 dark:border-art-darkborder p-4 shadow-sm space-y-4">
           <form
             onSubmit={handleSearchSubmit}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"
           >
             {/* Search Input */}
             <div className="lg:col-span-2">
-              <label htmlFor="search" className="block text-xs font-semibold text-stone-700 mb-1">
+              <label
+                htmlFor="search"
+                className="block text-xs font-semibold text-stone-700 dark:text-stone-200 mb-1"
+              >
                 Search Orders
               </label>
               <div className="flex gap-2">
@@ -225,7 +228,7 @@ export function AdminOrdersPage(): ReactNode {
                   value={searchInput}
                   onChange={e => setSearchInput(e.target.value)}
                   placeholder="Order #, email, phone, recipient name..."
-                  className="flex-1 px-3 py-1.5 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none"
+                  className="flex-1 px-3 py-1.5 text-xs border border-stone-300 dark:border-art-darkborder rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                 />
                 <button
                   type="submit"
@@ -240,7 +243,7 @@ export function AdminOrdersPage(): ReactNode {
             <div>
               <label
                 htmlFor="orderStatus"
-                className="block text-xs font-semibold text-stone-700 mb-1"
+                className="block text-xs font-semibold text-stone-700 dark:text-stone-200 mb-1"
               >
                 Order Status
               </label>
@@ -251,7 +254,7 @@ export function AdminOrdersPage(): ReactNode {
                   setSelectedStatus(e.target.value as OrderStatus | '');
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
+                className="w-full px-3 py-1.5 text-xs border border-stone-300 dark:border-art-darkborder rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
               >
                 <option value="">All Statuses</option>
                 <option value="CONFIRMED">Confirmed</option>
@@ -268,7 +271,7 @@ export function AdminOrdersPage(): ReactNode {
             <div>
               <label
                 htmlFor="paymentStatus"
-                className="block text-xs font-semibold text-stone-700 mb-1"
+                className="block text-xs font-semibold text-stone-700 dark:text-stone-200 mb-1"
               >
                 Payment Status
               </label>
@@ -279,7 +282,7 @@ export function AdminOrdersPage(): ReactNode {
                   setSelectedPaymentStatus(e.target.value as PaymentStatus | '');
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
+                className="w-full px-3 py-1.5 text-xs border border-stone-300 dark:border-art-darkborder rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
               >
                 <option value="">All Payments</option>
                 <option value="CAPTURED">Paid (Captured)</option>
@@ -293,7 +296,7 @@ export function AdminOrdersPage(): ReactNode {
             <div>
               <label
                 htmlFor="sortOrder"
-                className="block text-xs font-semibold text-stone-700 mb-1"
+                className="block text-xs font-semibold text-stone-700 dark:text-stone-200 mb-1"
               >
                 Sort Order
               </label>
@@ -306,7 +309,7 @@ export function AdminOrdersPage(): ReactNode {
                   );
                   setPage(1);
                 }}
-                className="w-full px-3 py-1.5 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
+                className="w-full px-3 py-1.5 text-xs border border-stone-300 dark:border-art-darkborder rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
               >
                 <option value="newest">Newest First</option>
                 <option value="oldest">Oldest First</option>
@@ -317,8 +320,8 @@ export function AdminOrdersPage(): ReactNode {
           </form>
 
           {/* Active filter count & Reset */}
-          <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-100">
-            <span className="text-stone-500 font-medium">
+          <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-100 dark:border-art-darkborder">
+            <span className="text-stone-500 dark:text-stone-400 font-medium">
               Showing <strong>{orders.length}</strong> of <strong>{totalItems}</strong> matching
               orders
             </span>
@@ -364,11 +367,11 @@ export function AdminOrdersPage(): ReactNode {
             onAction={hasActiveFilters ? handleResetFilters : undefined}
           />
         ) : (
-          <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200 dark:border-art-darkborder shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-stone-200 bg-stone-50 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
+                  <tr className="border-b border-stone-200 dark:border-art-darkborder bg-stone-50 dark:bg-art-darkstone text-stone-600 dark:text-stone-300 font-semibold uppercase tracking-wider text-[11px]">
                     <th className="px-4 py-3">Order #</th>
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Customer & Type</th>
@@ -379,16 +382,19 @@ export function AdminOrdersPage(): ReactNode {
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody className="divide-y divide-stone-100 dark:divide-art-darkborder">
                   {orders.map(order => (
-                    <tr key={order.id} className="hover:bg-stone-50/70 transition-colors">
+                    <tr
+                      key={order.id}
+                      className="hover:bg-stone-50/70 dark:hover:bg-art-darkstone/50 transition-colors"
+                    >
                       {/* Order Number */}
-                      <td className="px-4 py-3.5 font-mono font-bold text-art-charcoal">
+                      <td className="px-4 py-3.5 font-mono font-bold text-art-charcoal dark:text-stone-100">
                         {order.orderNumber}
                       </td>
 
                       {/* Date */}
-                      <td className="px-4 py-3.5 text-stone-600 font-mono whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-stone-600 dark:text-stone-400 font-mono whitespace-nowrap">
                         {new Date(order.createdAt).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
@@ -399,19 +405,19 @@ export function AdminOrdersPage(): ReactNode {
                       {/* Customer & Type */}
                       <td className="px-4 py-3.5">
                         <div className="flex flex-col">
-                          <span className="font-semibold text-art-charcoal truncate max-w-[180px]">
+                          <span className="font-semibold text-art-charcoal dark:text-stone-100 truncate max-w-[180px]">
                             {order.shippingRecipientName}
                           </span>
-                          <span className="text-[11px] text-stone-500 font-mono truncate max-w-[180px]">
+                          <span className="text-[11px] text-stone-500 dark:text-stone-400 font-mono truncate max-w-[180px]">
                             {order.customerEmail}
                           </span>
                           <div className="pt-0.5">
                             {order.isGuest ? (
-                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                 Guest
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-50 text-teal-700">
+                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300">
                                 Patron
                               </span>
                             )}
@@ -420,12 +426,12 @@ export function AdminOrdersPage(): ReactNode {
                       </td>
 
                       {/* Items */}
-                      <td className="px-4 py-3.5 text-center font-bold text-art-charcoal">
+                      <td className="px-4 py-3.5 text-center font-bold text-art-charcoal dark:text-stone-100">
                         {order.itemCount}
                       </td>
 
                       {/* Total */}
-                      <td className="px-4 py-3.5 text-right font-bold text-art-charcoal whitespace-nowrap">
+                      <td className="px-4 py-3.5 text-right font-bold text-art-charcoal dark:text-stone-100 whitespace-nowrap">
                         {formatPrice(order.total)}
                       </td>
 
@@ -457,7 +463,7 @@ export function AdminOrdersPage(): ReactNode {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="p-4 border-t border-stone-200">
+              <div className="p-4 border-t border-stone-200 dark:border-art-darkborder">
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}

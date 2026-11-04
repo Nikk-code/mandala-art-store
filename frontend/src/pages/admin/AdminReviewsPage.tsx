@@ -292,9 +292,9 @@ export function AdminReviewsPage(): ReactNode {
     switch (status) {
       case 'APPROVED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
             <svg
-              className="w-3.5 h-3.5 text-emerald-600 shrink-0"
+              className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -308,9 +308,9 @@ export function AdminReviewsPage(): ReactNode {
         );
       case 'REJECTED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
             <svg
-              className="w-3.5 h-3.5 text-rose-600 shrink-0"
+              className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -325,9 +325,9 @@ export function AdminReviewsPage(): ReactNode {
       case 'PENDING':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
             <svg
-              className="w-3.5 h-3.5 text-amber-600 shrink-0"
+              className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -351,10 +351,10 @@ export function AdminReviewsPage(): ReactNode {
       {/* Top Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-art-charcoal font-serif">
+          <h1 className="text-2xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 font-serif">
             Review Moderation
           </h1>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1">
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1">
             Moderate customer artwork reviews, approve genuine patron feedback, and protect gallery
             authenticity.
           </p>
@@ -364,10 +364,10 @@ export function AdminReviewsPage(): ReactNode {
             type="button"
             onClick={() => loadReviews()}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 text-xs font-semibold rounded-lg border border-stone-300 bg-white hover:bg-stone-50 text-art-charcoal shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 text-xs font-semibold rounded-lg border border-stone-300 dark:border-art-darkborder bg-white dark:bg-art-darkcard hover:bg-stone-50 dark:hover:bg-art-darkstone text-art-charcoal dark:text-stone-100 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre disabled:opacity-50"
           >
             <svg
-              className={`w-4 h-4 text-stone-500 ${loading ? 'animate-spin' : ''}`}
+              className={`w-4 h-4 text-stone-500 dark:text-stone-400 ${loading ? 'animate-spin' : ''}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -390,11 +390,11 @@ export function AdminReviewsPage(): ReactNode {
         <div
           role="status"
           aria-live="polite"
-          className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm flex items-center justify-between shadow-sm animate-in fade-in"
+          className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm flex items-center justify-between shadow-sm animate-in fade-in"
         >
           <div className="flex items-center gap-2">
             <svg
-              className="w-5 h-5 text-emerald-600 shrink-0"
+              className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -412,7 +412,7 @@ export function AdminReviewsPage(): ReactNode {
           <button
             type="button"
             onClick={() => setSuccessMessage(null)}
-            className="text-emerald-700 hover:text-emerald-900 p-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 p-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             aria-label="Dismiss notification"
           >
             ✕
@@ -425,11 +425,11 @@ export function AdminReviewsPage(): ReactNode {
         <div
           role="alert"
           aria-live="assertive"
-          className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+          className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-300 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
         >
           <div className="flex items-center gap-2">
             <svg
-              className="w-5 h-5 text-rose-600 shrink-0"
+              className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -455,7 +455,7 @@ export function AdminReviewsPage(): ReactNode {
       )}
 
       {/* Filters & Search Toolbar */}
-      <div className="bg-white rounded-xl border border-stone-200 p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200 dark:border-art-darkborder p-4 sm:p-5 shadow-sm space-y-4">
         <form
           onSubmit={handleSearchSubmit}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
@@ -464,7 +464,7 @@ export function AdminReviewsPage(): ReactNode {
           <div className="sm:col-span-2 lg:col-span-1">
             <label
               htmlFor="reviewSearch"
-              className="block text-xs font-semibold text-stone-700 mb-1"
+              className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1"
             >
               Search Reviews
             </label>
@@ -475,7 +475,7 @@ export function AdminReviewsPage(): ReactNode {
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
                 placeholder="Product, customer, title..."
-                className="flex-1 min-h-[44px] px-3 py-2 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none"
+                className="flex-1 min-h-[44px] px-3 py-2 text-xs border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 dark:placeholder-stone-500 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none"
               />
               <button
                 type="submit"
@@ -490,7 +490,7 @@ export function AdminReviewsPage(): ReactNode {
           <div>
             <label
               htmlFor="statusFilter"
-              className="block text-xs font-semibold text-stone-700 mb-1"
+              className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1"
             >
               Moderation Status
             </label>
@@ -501,7 +501,7 @@ export function AdminReviewsPage(): ReactNode {
                 setSelectedStatus(e.target.value as ReviewStatusType | '');
                 setPage(1);
               }}
-              className="w-full min-h-[44px] px-3 py-2 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
+              className="w-full min-h-[44px] px-3 py-2 text-xs border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
             >
               <option value="">All Statuses</option>
               <option value="PENDING">Pending Moderation</option>
@@ -514,7 +514,7 @@ export function AdminReviewsPage(): ReactNode {
           <div>
             <label
               htmlFor="productFilter"
-              className="block text-xs font-semibold text-stone-700 mb-1"
+              className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1"
             >
               Artwork / Product
             </label>
@@ -525,7 +525,7 @@ export function AdminReviewsPage(): ReactNode {
                 setSelectedProductId(e.target.value);
                 setPage(1);
               }}
-              className="w-full min-h-[44px] px-3 py-2 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white truncate"
+              className="w-full min-h-[44px] px-3 py-2 text-xs border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white truncate"
             >
               <option value="">All Artworks</option>
               {products.map(p => (
@@ -538,7 +538,10 @@ export function AdminReviewsPage(): ReactNode {
 
           {/* Sort Order */}
           <div>
-            <label htmlFor="sortFilter" className="block text-xs font-semibold text-stone-700 mb-1">
+            <label
+              htmlFor="sortFilter"
+              className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1"
+            >
               Sort Order
             </label>
             <select
@@ -548,7 +551,7 @@ export function AdminReviewsPage(): ReactNode {
                 setSelectedSort(e.target.value as AdminReviewSortOption);
                 setPage(1);
               }}
-              className="w-full min-h-[44px] px-3 py-2 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
+              className="w-full min-h-[44px] px-3 py-2 text-xs border border-stone-300 dark:border-art-darkborder dark:bg-art-darkstone dark:text-stone-100 focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -559,8 +562,8 @@ export function AdminReviewsPage(): ReactNode {
         </form>
 
         {/* Filter Summary & Clear Action */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs pt-3 border-t border-stone-100 gap-2">
-          <span className="text-stone-500 font-medium">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs pt-3 border-t border-stone-100 dark:border-art-darkborder gap-2">
+          <span className="text-stone-500 dark:text-stone-400 font-medium">
             Showing <strong>{reviews.length}</strong> of <strong>{totalItems}</strong> matching
             reviews
           </span>
@@ -568,7 +571,7 @@ export function AdminReviewsPage(): ReactNode {
             <button
               type="button"
               onClick={handleResetFilters}
-              className="min-h-[36px] inline-flex items-center text-art-ochre hover:text-amber-700 font-semibold transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre rounded px-1"
+              className="min-h-[36px] inline-flex items-center text-art-ochre hover:text-amber-700 dark:hover:text-amber-400 font-semibold transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-art-ochre rounded px-1"
             >
               Clear all filters
             </button>
@@ -601,34 +604,36 @@ export function AdminReviewsPage(): ReactNode {
               <article
                 key={review.id}
                 data-testid={`review-card-${review.id}`}
-                className="bg-white rounded-xl border border-stone-200 shadow-sm p-4 sm:p-6 transition-all hover:border-stone-300 space-y-4"
+                className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200 dark:border-art-darkborder shadow-sm p-4 sm:p-6 transition-all hover:border-stone-300 dark:hover:border-stone-600 space-y-4"
               >
                 {/* Header: Product, Customer, Date, Status */}
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-stone-100 pb-3">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-stone-100 dark:border-art-darkborder pb-3">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-sm sm:text-base font-bold text-art-charcoal font-serif">
+                      <h2 className="text-sm sm:text-base font-bold text-art-charcoal dark:text-stone-100 font-serif">
                         {review.product.name}
                       </h2>
-                      <span className="text-[11px] font-mono text-stone-500 bg-stone-100 px-2 py-0.5 rounded">
+                      <span className="text-[11px] font-mono text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-art-darkstone px-2 py-0.5 rounded">
                         SKU: {review.product.sku}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600 dark:text-stone-300">
                       <span>
                         By{' '}
-                        <strong className="text-art-charcoal">
+                        <strong className="text-art-charcoal dark:text-stone-100">
                           {review.customer.firstName} {review.customer.lastName}
                         </strong>
                       </span>
-                      <span className="text-stone-300">•</span>
-                      <span className="font-mono text-stone-500">{review.customer.email}</span>
+                      <span className="text-stone-300 dark:text-stone-600">•</span>
+                      <span className="font-mono text-stone-500 dark:text-stone-400">
+                        {review.customer.email}
+                      </span>
 
                       {review.isVerifiedPurchase && (
                         <>
-                          <span className="text-stone-300">•</span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                          <span className="text-stone-300 dark:text-stone-600">•</span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
                             Verified Purchase
                           </span>
                         </>
@@ -636,8 +641,8 @@ export function AdminReviewsPage(): ReactNode {
 
                       {review.orderId && (
                         <>
-                          <span className="text-stone-300">•</span>
-                          <span className="text-stone-500 text-[11px] font-mono">
+                          <span className="text-stone-300 dark:text-stone-600">•</span>
+                          <span className="text-stone-500 dark:text-stone-400 text-[11px] font-mono">
                             Order Ref: {review.orderId.slice(0, 8)}...
                           </span>
                         </>
@@ -649,7 +654,7 @@ export function AdminReviewsPage(): ReactNode {
                     {renderStatusBadge(review.status)}
                     <time
                       dateTime={review.createdAt}
-                      className="text-[11px] text-stone-500 font-mono"
+                      className="text-[11px] text-stone-500 dark:text-stone-400 font-mono"
                     >
                       {new Date(review.createdAt).toLocaleDateString('en-IN', {
                         day: 'numeric',
@@ -670,27 +675,34 @@ export function AdminReviewsPage(): ReactNode {
                       size="sm"
                       ariaLabel={`Rating: ${review.rating} out of 5 stars`}
                     />
-                    <span className="text-xs font-bold text-art-charcoal" aria-hidden="true">
+                    <span
+                      className="text-xs font-bold text-art-charcoal dark:text-stone-100"
+                      aria-hidden="true"
+                    >
                       {review.rating} / 5
                     </span>
                   </div>
 
                   {review.title && (
-                    <h3 className="text-sm font-semibold text-art-charcoal">{review.title}</h3>
+                    <h3 className="text-sm font-semibold text-art-charcoal dark:text-stone-100">
+                      {review.title}
+                    </h3>
                   )}
 
                   {review.body ? (
-                    <p className="text-xs sm:text-sm text-stone-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-200 leading-relaxed whitespace-pre-line">
                       {review.body}
                     </p>
                   ) : (
-                    <p className="text-xs text-stone-400 italic">No written comment provided.</p>
+                    <p className="text-xs text-stone-400 dark:text-stone-500 italic">
+                      No written comment provided.
+                    </p>
                   )}
                 </div>
 
                 {/* Footer: Action Buttons */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stone-100">
-                  <span className="text-[11px] font-mono text-stone-400">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stone-100 dark:border-art-darkborder">
+                  <span className="text-[11px] font-mono text-stone-400 dark:text-stone-500">
                     Review ID: {review.id}
                   </span>
 
@@ -724,11 +736,11 @@ export function AdminReviewsPage(): ReactNode {
                         type="button"
                         onClick={() => handleStatusChange(review, 'REJECTED')}
                         disabled={isRowBusy}
-                        className="inline-flex items-center justify-center min-h-[44px] px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center justify-center min-h-[44px] px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-stone-100 dark:bg-art-darkstone hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-art-darkborder transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label={`Reject review for ${review.product.name}`}
                       >
                         <svg
-                          className="w-3.5 h-3.5 mr-1 text-stone-600"
+                          className="w-3.5 h-3.5 mr-1 text-stone-600 dark:text-stone-400"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -750,7 +762,7 @@ export function AdminReviewsPage(): ReactNode {
                       type="button"
                       onClick={e => handleOpenDeleteModal(review, e.currentTarget)}
                       disabled={isRowBusy}
-                      className="inline-flex items-center justify-center min-h-[44px] px-3.5 py-1.5 text-xs font-semibold rounded-lg text-rose-700 hover:text-white hover:bg-rose-600 border border-rose-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center justify-center min-h-[44px] px-3.5 py-1.5 text-xs font-semibold rounded-lg text-rose-700 dark:text-rose-400 hover:text-white hover:bg-rose-600 border border-rose-300 dark:border-rose-800/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label={`Delete review for ${review.product.name}`}
                     >
                       <svg
@@ -787,7 +799,7 @@ export function AdminReviewsPage(): ReactNode {
       {/* Delete Confirmation Modal */}
       {reviewToDelete && (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={e => {
             if (e.target === e.currentTarget && !isDeleting) {
               handleCloseDeleteModal();
@@ -800,10 +812,10 @@ export function AdminReviewsPage(): ReactNode {
             aria-labelledby="deleteModalTitle"
             ref={modalRef}
             tabIndex={-1}
-            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-stone-200 space-y-4 animate-in fade-in zoom-in-95 outline-none"
+            className="bg-white dark:bg-art-darkcard rounded-2xl max-w-md w-full p-6 shadow-xl border border-stone-200 dark:border-art-darkborder space-y-4 animate-in fade-in zoom-in-95 outline-none"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600 shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 shrink-0">
                 <svg
                   className="h-6 w-6"
                   fill="none"
@@ -822,33 +834,41 @@ export function AdminReviewsPage(): ReactNode {
               <div>
                 <h3
                   id="deleteModalTitle"
-                  className="text-base font-bold text-art-charcoal font-serif"
+                  className="text-base font-bold text-art-charcoal dark:text-stone-100 font-serif"
                 >
                   Delete Customer Review
                 </h3>
-                <p className="text-xs text-stone-500">Authoritative administrative removal</p>
+                <p className="text-xs text-stone-500 dark:text-stone-400">
+                  Authoritative administrative removal
+                </p>
               </div>
             </div>
 
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
               Are you sure you want to permanently delete the review for{' '}
-              <strong className="text-art-charcoal">{reviewToDelete.product.name}</strong> submitted
-              by{' '}
-              <strong className="text-art-charcoal">
+              <strong className="text-art-charcoal dark:text-stone-100">
+                {reviewToDelete.product.name}
+              </strong>{' '}
+              submitted by{' '}
+              <strong className="text-art-charcoal dark:text-stone-100">
                 {reviewToDelete.customer.firstName} {reviewToDelete.customer.lastName}
               </strong>
               ? This action cannot be undone.
             </p>
 
-            <div className="bg-stone-50 p-3 rounded-lg border border-stone-200 text-xs space-y-1">
+            <div className="bg-stone-50 dark:bg-art-darkstone/60 p-3 rounded-lg border border-stone-200 dark:border-art-darkborder text-xs space-y-1">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-art-charcoal">Rating:</span>
-                <span>{reviewToDelete.rating} / 5 stars</span>
+                <span className="font-semibold text-art-charcoal dark:text-stone-100">Rating:</span>
+                <span className="dark:text-stone-300">{reviewToDelete.rating} / 5 stars</span>
               </div>
               {reviewToDelete.title && (
                 <div>
-                  <span className="font-semibold text-art-charcoal">Title:</span>{' '}
-                  <span className="italic font-medium">"{reviewToDelete.title}"</span>
+                  <span className="font-semibold text-art-charcoal dark:text-stone-100">
+                    Title:
+                  </span>{' '}
+                  <span className="italic font-medium dark:text-stone-300">
+                    "{reviewToDelete.title}"
+                  </span>
                 </div>
               )}
             </div>
@@ -856,7 +876,7 @@ export function AdminReviewsPage(): ReactNode {
             {deleteError && (
               <div
                 role="alert"
-                className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-800"
+                className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 rounded text-xs text-rose-800 dark:text-rose-300"
               >
                 {deleteError}
               </div>
@@ -868,7 +888,7 @@ export function AdminReviewsPage(): ReactNode {
                 ref={cancelBtnRef}
                 onClick={handleCloseDeleteModal}
                 disabled={isDeleting}
-                className="min-h-[44px] px-4 py-2 text-xs font-semibold rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:opacity-50"
+                className="min-h-[44px] px-4 py-2 text-xs font-semibold rounded-lg border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-art-darkstone transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 disabled:opacity-50"
               >
                 Cancel
               </button>

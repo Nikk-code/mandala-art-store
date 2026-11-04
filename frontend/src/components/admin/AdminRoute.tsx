@@ -30,9 +30,9 @@ export function AdminRoute({ children }: AdminRouteProps): ReactNode {
   // 3. Authenticated Non-Admin Customer -> Access Denied (403 Forbidden)
   if (user.role !== 'ADMIN') {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-stone-50">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-stone-200 p-8 text-center space-y-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-stone-50 dark:bg-art-midnight">
+        <div className="max-w-md w-full bg-white dark:bg-art-darkcard rounded-2xl shadow-sm border border-stone-200 dark:border-art-darkborder p-8 text-center space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
             <svg
               className="h-8 w-8"
               fill="none"
@@ -49,24 +49,24 @@ export function AdminRoute({ children }: AdminRouteProps): ReactNode {
             </svg>
           </div>
 
-          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">
+          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300">
             HTTP 403 • Forbidden
           </div>
 
-          <h1 className="text-xl font-bold tracking-tight text-art-charcoal font-serif">
+          <h1 className="text-xl font-bold tracking-tight text-art-charcoal dark:text-stone-100 font-serif">
             Administrator Access Required
           </h1>
 
-          <p className="text-xs text-stone-600 leading-relaxed">
+          <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
             Your account is authenticated as{' '}
-            <strong className="text-art-charcoal">{user.email}</strong>, but administrative
-            privileges are required to access this area.
+            <strong className="text-art-charcoal dark:text-stone-100">{user.email}</strong>, but
+            administrative privileges are required to access this area.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row gap-2 justify-center">
             <Link
               to="/"
-              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-art-charcoal text-white text-xs font-semibold hover:bg-stone-800 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-art-charcoal dark:bg-art-ochre text-white dark:text-art-charcoal text-xs font-semibold hover:bg-stone-800 dark:hover:bg-amber-600 transition-colors"
             >
               Return to Storefront
             </Link>
@@ -76,7 +76,7 @@ export function AdminRoute({ children }: AdminRouteProps): ReactNode {
                 await logout();
                 navigate('/login', { state: { from: '/admin' } });
               }}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-stone-300 text-stone-700 text-xs font-semibold hover:bg-stone-50 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 text-xs font-semibold hover:bg-stone-50 dark:hover:bg-art-darkstone transition-colors"
             >
               Sign In as Admin
             </button>

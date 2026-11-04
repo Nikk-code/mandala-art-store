@@ -188,19 +188,22 @@ export function OrderDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-900/60 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-order-number"
     >
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-stone-50/80">
+        <div className="flex items-center justify-between border-b border-stone-200 dark:border-art-darkborder px-6 py-4 bg-stone-50/80 dark:bg-art-darkstone/80">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs uppercase font-mono font-bold tracking-wider text-stone-500">
+            <span className="text-xs uppercase font-mono font-bold tracking-wider text-stone-500 dark:text-stone-400">
               Order Details
             </span>
-            <h2 id="modal-order-number" className="text-xl font-mono font-bold text-art-charcoal">
+            <h2
+              id="modal-order-number"
+              className="text-xl font-mono font-bold text-art-charcoal dark:text-stone-100"
+            >
               {order ? order.orderNumber : orderId}
             </h2>
             {order && (
@@ -208,11 +211,11 @@ export function OrderDetailModal({
                 {getStatusBadge(order.status)}
                 {getPaymentBadge(order.paymentStatus)}
                 {order.customer.isGuest ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                     Guest Checkout
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
                     Registered Patron
                   </span>
                 )}
@@ -222,7 +225,7 @@ export function OrderDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-stone-400 hover:text-stone-700 text-2xl font-bold p-1 rounded-lg hover:bg-stone-200/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+            className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-2xl font-bold p-1 rounded-lg hover:bg-stone-200/50 dark:hover:bg-art-darkstone transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
             aria-label="Close dialog"
           >
             ×
@@ -254,10 +257,12 @@ export function OrderDetailModal({
           {order && !loading && (
             <>
               {/* Order Meta & Timestamps */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs bg-stone-50 p-4 rounded-xl border border-stone-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs bg-stone-50 dark:bg-art-darkstone/60 p-4 rounded-xl border border-stone-200 dark:border-art-darkborder">
                 <div>
-                  <span className="text-stone-500 font-medium block">Placed Date</span>
-                  <span className="font-mono font-semibold text-art-charcoal">
+                  <span className="text-stone-500 dark:text-stone-400 font-medium block">
+                    Placed Date
+                  </span>
+                  <span className="font-mono font-semibold text-art-charcoal dark:text-stone-100">
                     {new Date(order.createdAt).toLocaleString('en-IN', {
                       dateStyle: 'medium',
                       timeStyle: 'short',
@@ -265,18 +270,26 @@ export function OrderDetailModal({
                   </span>
                 </div>
                 <div>
-                  <span className="text-stone-500 font-medium block">Total Items</span>
-                  <span className="font-bold text-art-charcoal">
+                  <span className="text-stone-500 dark:text-stone-400 font-medium block">
+                    Total Items
+                  </span>
+                  <span className="font-bold text-art-charcoal dark:text-stone-100">
                     {order.items.reduce((sum, item) => sum + item.quantity, 0)} artworks
                   </span>
                 </div>
                 <div>
-                  <span className="text-stone-500 font-medium block">Payment Status</span>
-                  <span className="font-bold text-art-charcoal">{order.paymentStatus}</span>
+                  <span className="text-stone-500 dark:text-stone-400 font-medium block">
+                    Payment Status
+                  </span>
+                  <span className="font-bold text-art-charcoal dark:text-stone-100">
+                    {order.paymentStatus}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-stone-500 font-medium block">Grand Total</span>
-                  <span className="text-sm font-bold text-art-charcoal">
+                  <span className="text-stone-500 dark:text-stone-400 font-medium block">
+                    Grand Total
+                  </span>
+                  <span className="text-sm font-bold text-art-charcoal dark:text-stone-100">
                     {formatPrice(order.total)}
                   </span>
                 </div>
@@ -285,14 +298,16 @@ export function OrderDetailModal({
               {/* Customer & Shipping Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Information */}
-                <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-2 text-xs">
-                  <h3 className="font-serif font-bold text-art-charcoal text-sm border-b border-stone-100 pb-2">
+                <div className="bg-white dark:bg-art-darkstone/40 rounded-xl border border-stone-200 dark:border-art-darkborder p-4 space-y-2 text-xs">
+                  <h3 className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-sm border-b border-stone-100 dark:border-art-darkborder pb-2">
                     Customer Information
                   </h3>
                   <div className="space-y-1.5">
                     <div>
-                      <span className="text-stone-500 block">Contact Name:</span>
-                      <span className="font-semibold text-art-charcoal">
+                      <span className="text-stone-500 dark:text-stone-400 block">
+                        Contact Name:
+                      </span>
+                      <span className="font-semibold text-art-charcoal dark:text-stone-100">
                         {order.shippingAddress.recipientName}
                         {order.customer.registeredName && (
                           <span className="text-stone-400 font-normal ml-1">
@@ -302,16 +317,26 @@ export function OrderDetailModal({
                       </span>
                     </div>
                     <div>
-                      <span className="text-stone-500 block">Email Address:</span>
-                      <span className="font-mono text-art-charcoal">{order.customer.email}</span>
+                      <span className="text-stone-500 dark:text-stone-400 block">
+                        Email Address:
+                      </span>
+                      <span className="font-mono text-art-charcoal dark:text-stone-200">
+                        {order.customer.email}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-stone-500 block">Phone Number:</span>
-                      <span className="font-mono text-art-charcoal">{order.customer.phone}</span>
+                      <span className="text-stone-500 dark:text-stone-400 block">
+                        Phone Number:
+                      </span>
+                      <span className="font-mono text-art-charcoal dark:text-stone-200">
+                        {order.customer.phone}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-stone-500 block">Account Status:</span>
-                      <span className="font-medium text-stone-700">
+                      <span className="text-stone-500 dark:text-stone-400 block">
+                        Account Status:
+                      </span>
+                      <span className="font-medium text-stone-700 dark:text-stone-300">
                         {order.customer.isGuest
                           ? 'Guest Checkout (No registered account)'
                           : `Registered Patron (ID: ${order.customer.userId})`}
@@ -321,12 +346,12 @@ export function OrderDetailModal({
                 </div>
 
                 {/* Shipping Address Snapshot */}
-                <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-2 text-xs">
-                  <h3 className="font-serif font-bold text-art-charcoal text-sm border-b border-stone-100 pb-2">
+                <div className="bg-white dark:bg-art-darkstone/40 rounded-xl border border-stone-200 dark:border-art-darkborder p-4 space-y-2 text-xs">
+                  <h3 className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-sm border-b border-stone-100 dark:border-art-darkborder pb-2">
                     Shipping Address Snapshot
                   </h3>
-                  <div className="space-y-1 text-stone-700">
-                    <p className="font-bold text-art-charcoal">
+                  <div className="space-y-1 text-stone-700 dark:text-stone-300">
+                    <p className="font-bold text-art-charcoal dark:text-stone-100">
                       {order.shippingAddress.recipientName}
                     </p>
                     <p>{order.shippingAddress.addressLine1}</p>
@@ -339,8 +364,10 @@ export function OrderDetailModal({
                         {order.shippingAddress.postalCode}
                       </span>
                     </p>
-                    <p className="font-medium text-stone-600">{order.shippingAddress.country}</p>
-                    <p className="font-mono text-stone-500 pt-1">
+                    <p className="font-medium text-stone-600 dark:text-stone-400">
+                      {order.shippingAddress.country}
+                    </p>
+                    <p className="font-mono text-stone-500 dark:text-stone-400 pt-1">
                       Recipient Phone: {order.shippingAddress.phone}
                     </p>
                   </div>
@@ -348,16 +375,16 @@ export function OrderDetailModal({
               </div>
 
               {/* Order Items Table */}
-              <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
-                <div className="p-4 border-b border-stone-200 bg-stone-50/50">
-                  <h3 className="font-serif font-bold text-art-charcoal text-sm">
+              <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200 dark:border-art-darkborder overflow-hidden">
+                <div className="p-4 border-b border-stone-200 dark:border-art-darkborder bg-stone-50/50 dark:bg-art-darkstone/50">
+                  <h3 className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-sm">
                     Purchased Artworks Snapshot
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-stone-200 bg-stone-50 text-stone-600 font-semibold uppercase tracking-wider text-[11px]">
+                      <tr className="border-b border-stone-200 dark:border-art-darkborder bg-stone-50 dark:bg-art-darkstone text-stone-600 dark:text-stone-300 font-semibold uppercase tracking-wider text-[11px]">
                         <th className="px-4 py-2.5">Item / Artwork</th>
                         <th className="px-4 py-2.5">SKU</th>
                         <th className="px-4 py-2.5 text-right">Unit Price</th>
@@ -365,40 +392,48 @@ export function OrderDetailModal({
                         <th className="px-4 py-2.5 text-right">Line Total</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-100">
+                    <tbody className="divide-y divide-stone-100 dark:divide-art-darkborder">
                       {order.items.map(item => (
-                        <tr key={item.id} className="hover:bg-stone-50/50 transition-colors">
-                          <td className="px-4 py-3 font-semibold text-art-charcoal">
+                        <tr
+                          key={item.id}
+                          className="hover:bg-stone-50/50 dark:hover:bg-art-darkstone/50 transition-colors"
+                        >
+                          <td className="px-4 py-3 font-semibold text-art-charcoal dark:text-stone-100">
                             {item.productName}
                           </td>
-                          <td className="px-4 py-3 font-mono text-stone-500">{item.productSku}</td>
-                          <td className="px-4 py-3 text-right font-medium text-stone-700">
+                          <td className="px-4 py-3 font-mono text-stone-500 dark:text-stone-400">
+                            {item.productSku}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-stone-700 dark:text-stone-300">
                             {formatPrice(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-3 text-center font-bold text-art-charcoal">
+                          <td className="px-4 py-3 text-center font-bold text-art-charcoal dark:text-stone-100">
                             {item.quantity}
                           </td>
-                          <td className="px-4 py-3 text-right font-bold text-art-charcoal">
+                          <td className="px-4 py-3 text-right font-bold text-art-charcoal dark:text-stone-100">
                             {formatPrice(item.total)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="bg-stone-50/80 border-t border-stone-200 text-stone-700 font-medium">
+                    <tfoot className="bg-stone-50/80 dark:bg-art-darkstone/80 border-t border-stone-200 dark:border-art-darkborder text-stone-700 dark:text-stone-300 font-medium">
                       <tr>
                         <td colSpan={4} className="px-4 py-2 text-right">
                           Subtotal:
                         </td>
-                        <td className="px-4 py-2 text-right font-semibold text-art-charcoal">
+                        <td className="px-4 py-2 text-right font-semibold text-art-charcoal dark:text-stone-100">
                           {formatPrice(order.subtotal)}
                         </td>
                       </tr>
                       {order.discountAmount > 0 && (
                         <tr>
-                          <td colSpan={4} className="px-4 py-2 text-right text-emerald-700">
+                          <td
+                            colSpan={4}
+                            className="px-4 py-2 text-right text-emerald-700 dark:text-emerald-400"
+                          >
                             Discount ({order.couponCode || 'Coupon'}):
                           </td>
-                          <td className="px-4 py-2 text-right font-semibold text-emerald-700">
+                          <td className="px-4 py-2 text-right font-semibold text-emerald-700 dark:text-emerald-400">
                             -{formatPrice(order.discountAmount)}
                           </td>
                         </tr>
@@ -407,7 +442,7 @@ export function OrderDetailModal({
                         <td colSpan={4} className="px-4 py-2 text-right">
                           Shipping Fee:
                         </td>
-                        <td className="px-4 py-2 text-right font-semibold text-art-charcoal">
+                        <td className="px-4 py-2 text-right font-semibold text-art-charcoal dark:text-stone-100">
                           {order.shippingFee === 0 ? 'Free' : formatPrice(order.shippingFee)}
                         </td>
                       </tr>
@@ -416,16 +451,16 @@ export function OrderDetailModal({
                           <td colSpan={4} className="px-4 py-2 text-right">
                             GST Tax:
                           </td>
-                          <td className="px-4 py-2 text-right font-semibold text-art-charcoal">
+                          <td className="px-4 py-2 text-right font-semibold text-art-charcoal dark:text-stone-100">
                             {formatPrice(order.taxAmount)}
                           </td>
                         </tr>
                       )}
-                      <tr className="border-t border-stone-300 text-sm font-bold text-art-charcoal">
+                      <tr className="border-t border-stone-300 dark:border-art-darkborder text-sm font-bold text-art-charcoal dark:text-stone-100">
                         <td colSpan={4} className="px-4 py-3 text-right">
                           Grand Total:
                         </td>
-                        <td className="px-4 py-3 text-right font-serif text-base text-art-charcoal">
+                        <td className="px-4 py-3 text-right font-serif text-base text-art-charcoal dark:text-stone-100">
                           {formatPrice(order.total)}
                         </td>
                       </tr>
@@ -435,8 +470,8 @@ export function OrderDetailModal({
               </div>
 
               {/* Payment Evidence Details */}
-              <div className="bg-stone-50 rounded-xl border border-stone-200 p-4 space-y-3 text-xs">
-                <h3 className="font-serif font-bold text-art-charcoal text-sm border-b border-stone-200 pb-2">
+              <div className="bg-stone-50 dark:bg-art-darkstone/60 rounded-xl border border-stone-200 dark:border-art-darkborder p-4 space-y-3 text-xs">
+                <h3 className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-sm border-b border-stone-200 dark:border-art-darkborder pb-2">
                   Payment Gateway Evidence
                 </h3>
                 {order.payments && order.payments.length > 0 ? (
@@ -444,15 +479,15 @@ export function OrderDetailModal({
                     {order.payments.map((p, idx) => (
                       <div
                         key={p.id}
-                        className="bg-white p-3 rounded-lg border border-stone-200 space-y-1.5"
+                        className="bg-white dark:bg-art-darkcard p-3 rounded-lg border border-stone-200 dark:border-art-darkborder space-y-1.5"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-art-charcoal">
+                          <span className="font-semibold text-art-charcoal dark:text-stone-100">
                             Attempt #{idx + 1} — Provider: {p.provider.toUpperCase()}
                           </span>
                           {getPaymentBadge(p.status)}
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-stone-600 font-mono text-[11px] pt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-stone-600 dark:text-stone-300 font-mono text-[11px] pt-1">
                           <div>
                             <span className="text-stone-400 block font-sans">Payment Amount:</span>
                             {formatPrice(p.amount)} {p.currency}
@@ -495,40 +530,40 @@ export function OrderDetailModal({
               )}
 
               {/* Fulfillment Actions & Lifecycle Transitions */}
-              <div className="bg-white rounded-xl border border-stone-200 p-5 space-y-4">
-                <div className="border-b border-stone-200 pb-2">
-                  <h3 className="font-serif font-bold text-art-charcoal text-base">
+              <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200 dark:border-art-darkborder p-5 space-y-4">
+                <div className="border-b border-stone-200 dark:border-art-darkborder pb-2">
+                  <h3 className="font-serif font-bold text-art-charcoal dark:text-stone-100 text-base">
                     Fulfillment Lifecycle Management
                   </h3>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
                     Authoritatively advance order status and enter courier tracking details.
                   </p>
                 </div>
 
                 {transitionError && (
-                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                  <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs">
                     {transitionError}
                   </div>
                 )}
 
                 {transitionSuccess && (
-                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                  <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-200 text-xs">
                     {transitionSuccess}
                   </div>
                 )}
 
                 {/* Display Current Tracking if exists */}
                 {(order.fulfillment.courierName || order.fulfillment.trackingNumber) && (
-                  <div className="p-3 bg-stone-50 rounded-lg border border-stone-200 text-xs font-mono flex flex-wrap gap-4">
+                  <div className="p-3 bg-stone-50 dark:bg-art-darkstone rounded-lg border border-stone-200 dark:border-art-darkborder text-xs font-mono flex flex-wrap gap-4">
                     <div>
                       <span className="text-stone-400 block font-sans">Courier Partner:</span>
-                      <span className="font-bold text-art-charcoal">
+                      <span className="font-bold text-art-charcoal dark:text-stone-100">
                         {order.fulfillment.courierName || '—'}
                       </span>
                     </div>
                     <div>
                       <span className="text-stone-400 block font-sans">Tracking Number:</span>
-                      <span className="font-bold text-art-charcoal">
+                      <span className="font-bold text-art-charcoal dark:text-stone-100">
                         {order.fulfillment.trackingNumber || '—'}
                       </span>
                     </div>
@@ -537,24 +572,24 @@ export function OrderDetailModal({
 
                 {/* Status-Specific Action Forms */}
                 {order.status === 'DELIVERED' ? (
-                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-xs">
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-200 text-xs">
                     <p className="font-bold">Order Delivered</p>
-                    <p className="text-emerald-700">
+                    <p className="text-emerald-700 dark:text-emerald-300">
                       This order has successfully reached its terminal delivery state. No further
                       fulfillment transitions are permitted.
                     </p>
                   </div>
                 ) : order.status === 'CANCELLED' ? (
-                  <div className="p-4 bg-rose-50 rounded-xl border border-rose-200 text-rose-900 text-xs">
+                  <div className="p-4 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200 text-xs">
                     <p className="font-bold">Order Cancelled</p>
-                    <p className="text-rose-700">
+                    <p className="text-rose-700 dark:text-rose-300">
                       This order is cancelled and cannot be fulfilled.
                     </p>
                   </div>
                 ) : order.status === 'PENDING_PAYMENT' || order.status === 'PAYMENT_FAILED' ? (
-                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs space-y-1">
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-200 text-xs space-y-1">
                     <p className="font-bold">Payment Unverified</p>
-                    <p className="text-amber-800">
+                    <p className="text-amber-800 dark:text-amber-300">
                       Orders cannot be advanced to fulfillment until Razorpay cryptographically
                       verifies payment. Manual payment overrides are strictly prohibited.
                     </p>
@@ -563,7 +598,7 @@ export function OrderDetailModal({
                   <form onSubmit={handleStatusSubmit} className="space-y-4 text-xs sm:text-sm">
                     {order.status === 'CONFIRMED' && (
                       <div className="space-y-3">
-                        <p className="text-xs text-stone-600">
+                        <p className="text-xs text-stone-600 dark:text-stone-300">
                           Payment has been confirmed. Mark this order as <strong>Processing</strong>{' '}
                           to indicate that framing, crafting, or packaging is underway.
                         </p>
@@ -579,7 +614,7 @@ export function OrderDetailModal({
 
                     {order.status === 'PROCESSING' && (
                       <div className="space-y-4">
-                        <p className="text-xs text-stone-600">
+                        <p className="text-xs text-stone-600 dark:text-stone-300">
                           Package is ready for dispatch. Enter courier partner and tracking details
                           to mark as <strong>Shipped</strong>.
                         </p>
@@ -587,7 +622,7 @@ export function OrderDetailModal({
                           <div>
                             <label
                               htmlFor="courierName"
-                              className="block text-xs font-semibold text-stone-700 mb-1"
+                              className="block text-xs font-semibold text-stone-700 dark:text-stone-200 mb-1"
                             >
                               Courier / Carrier Partner <span className="text-rose-600">*</span>
                             </label>
@@ -598,13 +633,13 @@ export function OrderDetailModal({
                               value={courierName}
                               onChange={e => setCourierName(e.target.value)}
                               placeholder="e.g. Delhivery, BlueDart, India Post"
-                              className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none"
+                              className="w-full px-3 py-2 text-xs border border-stone-300 dark:border-art-darkborder rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                             />
                           </div>
                           <div>
                             <label
                               htmlFor="trackingNumber"
-                              className="block text-xs font-semibold text-stone-700 mb-1"
+                              className="block text-xs font-semibold text-stone-700 dark:text-stone-200 mb-1"
                             >
                               Tracking / Waybill Number <span className="text-rose-600">*</span>
                             </label>
@@ -615,7 +650,7 @@ export function OrderDetailModal({
                               value={trackingNumber}
                               onChange={e => setTrackingNumber(e.target.value)}
                               placeholder="e.g. DEL-987654321"
-                              className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none font-mono"
+                              className="w-full px-3 py-2 text-xs border border-stone-300 dark:border-art-darkborder rounded-lg focus:ring-2 focus:ring-art-ochre focus:border-art-ochre outline-none font-mono bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                             />
                           </div>
                         </div>
@@ -631,7 +666,7 @@ export function OrderDetailModal({
 
                     {order.status === 'SHIPPED' && (
                       <div className="space-y-3">
-                        <p className="text-xs text-stone-600">
+                        <p className="text-xs text-stone-600 dark:text-stone-300">
                           Shipment is in transit. Once carrier confirms delivery to patron, mark
                           this order as <strong>Delivered</strong>.
                         </p>
@@ -652,11 +687,11 @@ export function OrderDetailModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="border-t border-stone-200 px-6 py-3 bg-stone-50/80 flex items-center justify-end">
+        <div className="border-t border-stone-200 dark:border-art-darkborder px-6 py-3 bg-stone-50/80 dark:bg-art-darkstone/80 flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold rounded-lg bg-stone-200 hover:bg-stone-300 text-stone-800 transition-colors"
+            className="px-4 py-2 text-xs font-semibold rounded-lg bg-stone-200 dark:bg-art-darkstone hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 transition-colors"
           >
             Close
           </button>

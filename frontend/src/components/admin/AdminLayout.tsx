@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context';
+import { ThemeToggle } from '@/components/ui';
 
 export interface AdminLayoutProps {
   children: ReactNode;
@@ -46,6 +47,7 @@ export function AdminLayout({ children }: AdminLayoutProps): ReactNode {
 
             {/* Right: Quick actions, admin identity & storefront link */}
             <div className="flex items-center space-x-3 sm:space-x-4 text-xs">
+              <ThemeToggle />
               <Link
                 to="/"
                 className="inline-flex items-center space-x-1 text-stone-300 hover:text-white px-2.5 py-1.5 rounded border border-stone-700 hover:border-stone-500 transition-colors"

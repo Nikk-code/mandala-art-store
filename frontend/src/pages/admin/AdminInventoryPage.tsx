@@ -171,10 +171,10 @@ export function AdminInventoryPage(): ReactNode {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal">
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-art-charcoal dark:text-stone-100">
           Inventory & Stock Management
         </h1>
-        <p className="text-xs sm:text-sm text-stone-600 mt-1">
+        <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1">
           Monitor stock across {totalItems} catalog artworks, prevent stock depletion, and update
           availability states.
         </p>
@@ -182,39 +182,47 @@ export function AdminInventoryPage(): ReactNode {
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-stone-200/80 p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200/80 dark:border-art-darkborder p-4 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
             Healthy In Stock
           </p>
-          <p className="text-2xl font-bold font-mono text-emerald-700 mt-1">{inStockCount}</p>
+          <p className="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-1">
+            {inStockCount}
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-amber-200 bg-amber-50/20 p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+        <div className="bg-white dark:bg-art-darkcard rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/20 dark:bg-amber-950/20 p-4 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             Low Stock Alerts
           </p>
           <div className="flex items-center space-x-2 mt-1">
-            <p className="text-2xl font-bold font-mono text-amber-700">{lowStockCount}</p>
+            <p className="text-2xl font-bold font-mono text-amber-700 dark:text-amber-400">
+              {lowStockCount}
+            </p>
             {lowStockCount > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
                 Action Needed
               </span>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-stone-200/80 p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200/80 dark:border-art-darkborder p-4 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
             Sold Out Pieces
           </p>
-          <p className="text-2xl font-bold font-mono text-stone-600 mt-1">{soldOutCount}</p>
+          <p className="text-2xl font-bold font-mono text-stone-600 dark:text-stone-300 mt-1">
+            {soldOutCount}
+          </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-stone-200/80 p-4 shadow-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500">
+        <div className="bg-white dark:bg-art-darkcard rounded-xl border border-stone-200/80 dark:border-art-darkborder p-4 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
             Made to Order
           </p>
-          <p className="text-2xl font-bold font-mono text-art-charcoal mt-1">{madeToOrderCount}</p>
+          <p className="text-2xl font-bold font-mono text-art-charcoal dark:text-stone-100 mt-1">
+            {madeToOrderCount}
+          </p>
         </div>
       </div>
 
@@ -247,13 +255,13 @@ export function AdminInventoryPage(): ReactNode {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder p-4 sm:p-5 shadow-sm space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Search */}
           <div>
             <label
               htmlFor="inventory-search"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Search Artwork / SKU
             </label>
@@ -266,7 +274,7 @@ export function AdminInventoryPage(): ReactNode {
                 setPage(1);
               }}
               placeholder="e.g. Lotus, MND-001..."
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
             />
           </div>
 
@@ -274,7 +282,7 @@ export function AdminInventoryPage(): ReactNode {
           <div>
             <label
               htmlFor="inv-category-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Category
             </label>
@@ -285,7 +293,7 @@ export function AdminInventoryPage(): ReactNode {
                 setSelectedCategory(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
             >
               <option value="">All Categories</option>
               {categories.map(c => (
@@ -300,7 +308,7 @@ export function AdminInventoryPage(): ReactNode {
           <div>
             <label
               htmlFor="inv-availability-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Availability
             </label>
@@ -311,7 +319,7 @@ export function AdminInventoryPage(): ReactNode {
                 setSelectedAvailability(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
             >
               <option value="">All Availability</option>
               <option value="IN_STOCK">In Stock</option>
@@ -324,7 +332,7 @@ export function AdminInventoryPage(): ReactNode {
           <div>
             <label
               htmlFor="inv-sort-select"
-              className="block text-xs font-semibold text-stone-600 mb-1"
+              className="block text-xs font-semibold text-stone-600 dark:text-stone-300 mb-1"
             >
               Sort By
             </label>
@@ -335,7 +343,7 @@ export function AdminInventoryPage(): ReactNode {
                 setSelectedSort(e.target.value);
                 setPage(1);
               }}
-              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white"
+              className="w-full text-xs sm:text-sm px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:outline-none focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
             >
               <option value="stock_asc">Lowest Stock First</option>
               <option value="stock_desc">Highest Stock First</option>
@@ -357,10 +365,10 @@ export function AdminInventoryPage(): ReactNode {
           description="No products match the selected inventory filter criteria."
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-stone-50 border-b border-stone-200 text-stone-600 uppercase text-[11px] tracking-wider">
+              <thead className="bg-stone-50 dark:bg-art-darkstone border-b border-stone-200 dark:border-art-darkborder text-stone-600 dark:text-stone-300 uppercase text-[11px] tracking-wider">
                 <tr>
                   <th scope="col" className="px-4 py-3">
                     Product
@@ -385,67 +393,74 @@ export function AdminInventoryPage(): ReactNode {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-stone-100 dark:divide-art-darkborder">
                 {items.map(item => {
                   const avail = getAvailabilityInfo(item.availability);
                   const primaryImg = item.images.find(img => img.isPrimary) || item.images[0];
 
                   return (
-                    <tr key={item.id} className="hover:bg-stone-50/70 transition-colors">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-stone-50/70 dark:hover:bg-art-darkstone/50 transition-colors"
+                    >
                       <td className="px-4 py-3.5">
                         <div className="flex items-center space-x-3">
                           {primaryImg ? (
                             <img
                               src={primaryImg.url}
                               alt={primaryImg.altText || item.name}
-                              className="w-10 h-10 object-cover rounded-lg border border-stone-200 flex-shrink-0"
+                              className="w-10 h-10 object-cover rounded-lg border border-stone-200 dark:border-art-darkborder flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-[10px] text-stone-400 flex-shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-art-darkstone border border-stone-200 dark:border-art-darkborder flex items-center justify-center text-[10px] text-stone-400 dark:text-stone-500 flex-shrink-0">
                               No Art
                             </div>
                           )}
                           <div className="truncate max-w-[200px] sm:max-w-[280px]">
                             <p
-                              className="font-semibold text-art-charcoal truncate"
+                              className="font-semibold text-art-charcoal dark:text-stone-100 truncate"
                               title={item.name}
                             >
                               {item.name}
                             </p>
-                            <span className="text-[11px] text-stone-500 font-mono truncate block">
+                            <span className="text-[11px] text-stone-500 dark:text-stone-400 font-mono truncate block">
                               /{item.slug}
                             </span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-xs text-stone-600">{item.sku}</td>
+                      <td className="px-4 py-3.5 font-mono text-xs text-stone-600 dark:text-stone-300">
+                        {item.sku}
+                      </td>
 
-                      <td className="px-4 py-3.5 text-stone-600">{item.category.name}</td>
+                      <td className="px-4 py-3.5 text-stone-600 dark:text-stone-300">
+                        {item.category.name}
+                      </td>
 
                       <td className="px-4 py-3.5">
                         <Badge variant={avail.badgeVariant}>{avail.label}</Badge>
                       </td>
 
-                      <td className="px-4 py-3.5 text-center font-mono font-bold text-sm text-art-charcoal">
+                      <td className="px-4 py-3.5 text-center font-mono font-bold text-sm text-art-charcoal dark:text-stone-100">
                         {item.stockQuantity}
                       </td>
 
                       <td className="px-4 py-3.5">
                         {item.isLowStock ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300">
                             Low Stock (≤ 3)
                           </span>
                         ) : item.availability === 'SOLD_OUT' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-stone-100 text-stone-600">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-stone-100 dark:bg-art-darkstone text-stone-600 dark:text-stone-300">
                             Out of Stock
                           </span>
                         ) : item.availability === 'MADE_TO_ORDER' ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
                             On-Demand Crafting
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
                             Healthy Stock
                           </span>
                         )}
@@ -469,7 +484,7 @@ export function AdminInventoryPage(): ReactNode {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="p-4 border-t border-stone-200">
+            <div className="p-4 border-t border-stone-200 dark:border-art-darkborder">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
@@ -482,32 +497,34 @@ export function AdminInventoryPage(): ReactNode {
 
       {/* Adjust Stock Modal */}
       {adjustingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl max-w-md w-full p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
-              <h2 className="text-lg font-serif font-bold text-art-charcoal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm">
+          <div className="bg-white dark:bg-art-darkcard rounded-2xl border border-stone-200 dark:border-art-darkborder shadow-2xl max-w-md w-full p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-stone-200 dark:border-art-darkborder pb-3">
+              <h2 className="text-lg font-serif font-bold text-art-charcoal dark:text-stone-100">
                 Adjust Inventory Stock
               </h2>
               <button
                 type="button"
                 onClick={() => setAdjustingItem(null)}
-                className="text-stone-400 hover:text-stone-700 text-2xl font-bold"
+                className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 text-2xl font-bold"
               >
                 ×
               </button>
             </div>
 
             {/* Item Summary */}
-            <div className="bg-stone-50 rounded-xl p-3 border border-stone-200 text-xs space-y-1">
-              <p className="font-semibold text-art-charcoal truncate">{adjustingItem.name}</p>
-              <div className="flex items-center justify-between text-stone-500 font-mono">
+            <div className="bg-stone-50 dark:bg-art-darkstone rounded-xl p-3 border border-stone-200 dark:border-art-darkborder text-xs space-y-1">
+              <p className="font-semibold text-art-charcoal dark:text-stone-100 truncate">
+                {adjustingItem.name}
+              </p>
+              <div className="flex items-center justify-between text-stone-500 dark:text-stone-400 font-mono">
                 <span>SKU: {adjustingItem.sku}</span>
                 <span>Current Stock: {adjustingItem.stockQuantity}</span>
               </div>
             </div>
 
             {modalError && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+              <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs">
                 {modalError}
               </div>
             )}
@@ -515,15 +532,17 @@ export function AdminInventoryPage(): ReactNode {
             <form onSubmit={handleSubmitAdjust} className="space-y-4 text-xs sm:text-sm">
               {/* Mode Toggle */}
               <div>
-                <label className="block font-semibold text-stone-700 mb-1.5">Adjustment Mode</label>
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1.5">
+                  Adjustment Mode
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setAdjustMode('set')}
                     className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-colors ${
                       adjustMode === 'set'
-                        ? 'bg-art-ochre/20 border-art-ochre text-art-charcoal'
-                        : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
+                        ? 'bg-art-ochre/20 border-art-ochre text-art-charcoal dark:text-stone-100'
+                        : 'bg-white dark:bg-art-darkstone border-stone-200 dark:border-art-darkborder text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-art-darkcard'
                     }`}
                   >
                     Set Exact Quantity
@@ -533,8 +552,8 @@ export function AdminInventoryPage(): ReactNode {
                     onClick={() => setAdjustMode('delta')}
                     className={`py-2 px-3 rounded-lg text-xs font-semibold border transition-colors ${
                       adjustMode === 'delta'
-                        ? 'bg-art-ochre/20 border-art-ochre text-art-charcoal'
-                        : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
+                        ? 'bg-art-ochre/20 border-art-ochre text-art-charcoal dark:text-stone-100'
+                        : 'bg-white dark:bg-art-darkstone border-stone-200 dark:border-art-darkborder text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-art-darkcard'
                     }`}
                   >
                     Relative Increment (+ / -)
@@ -545,7 +564,7 @@ export function AdminInventoryPage(): ReactNode {
               {/* Mode Inputs */}
               {adjustMode === 'set' ? (
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
                     New Stock Quantity *
                   </label>
                   <input
@@ -554,22 +573,22 @@ export function AdminInventoryPage(): ReactNode {
                     required
                     value={setQuantity}
                     onChange={e => setSetQuantity(parseInt(e.target.value, 10) || 0)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-base focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder font-mono text-base focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
                   />
-                  <p className="text-[10px] text-stone-500 mt-1">
+                  <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1">
                     Directly updates the inventory total for this artwork piece.
                   </p>
-                  <div className="mt-2.5 flex items-center space-x-2 bg-stone-50 p-2.5 rounded-lg border border-stone-200">
+                  <div className="mt-2.5 flex items-center space-x-2 bg-stone-50 dark:bg-art-darkstone p-2.5 rounded-lg border border-stone-200 dark:border-art-darkborder">
                     <input
                       id="forceRecount"
                       type="checkbox"
                       checked={forceRecount}
                       onChange={e => setForceRecount(e.target.checked)}
-                      className="h-4 w-4 rounded border-stone-300 text-art-ochre focus:ring-art-ochre cursor-pointer"
+                      className="h-4 w-4 rounded border-stone-300 dark:border-art-darkborder text-art-ochre focus:ring-art-ochre cursor-pointer"
                     />
                     <label
                       htmlFor="forceRecount"
-                      className="text-[11px] text-stone-700 font-medium cursor-pointer"
+                      className="text-[11px] text-stone-700 dark:text-stone-300 font-medium cursor-pointer"
                     >
                       Authoritative physical recount (override concurrent checkouts/changes)
                     </label>
@@ -577,7 +596,7 @@ export function AdminInventoryPage(): ReactNode {
                 </div>
               ) : (
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">
+                  <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
                     Quantity Delta (+ / -) *
                   </label>
                   <input
@@ -586,9 +605,9 @@ export function AdminInventoryPage(): ReactNode {
                     value={deltaQuantity}
                     onChange={e => setDeltaQuantity(parseInt(e.target.value, 10) || 0)}
                     placeholder="e.g. +5 or -2"
-                    className="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-base focus:ring-2 focus:ring-art-ochre"
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder font-mono text-base focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500"
                   />
-                  <p className="text-[10px] text-stone-500 mt-1">
+                  <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-1">
                     Resulting stock:{' '}
                     <span className="font-bold">
                       {Math.max(0, adjustingItem.stockQuantity + deltaQuantity)}
@@ -599,13 +618,13 @@ export function AdminInventoryPage(): ReactNode {
 
               {/* Availability Selection */}
               <div>
-                <label className="block font-semibold text-stone-700 mb-1">
+                <label className="block font-semibold text-stone-700 dark:text-stone-200 mb-1">
                   Availability Status
                 </label>
                 <select
                   value={targetAvailability}
                   onChange={e => setTargetAvailability(e.target.value as ProductAvailability)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-art-ochre bg-white"
+                  className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-art-darkborder focus:ring-2 focus:ring-art-ochre bg-white dark:bg-art-darkstone text-art-charcoal dark:text-stone-100"
                 >
                   <option value="IN_STOCK">IN_STOCK (Available for immediate dispatch)</option>
                   <option value="MADE_TO_ORDER">MADE_TO_ORDER (Crafted on demand)</option>
@@ -614,11 +633,11 @@ export function AdminInventoryPage(): ReactNode {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-stone-200">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-stone-200 dark:border-art-darkborder">
                 <button
                   type="button"
                   onClick={() => setAdjustingItem(null)}
-                  className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 font-medium hover:bg-stone-50"
+                  className="px-4 py-2 rounded-xl border border-stone-300 dark:border-art-darkborder text-stone-700 dark:text-stone-300 font-medium hover:bg-stone-50 dark:hover:bg-art-darkstone"
                 >
                   Cancel
                 </button>
