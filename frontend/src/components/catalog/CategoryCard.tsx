@@ -68,7 +68,7 @@ export function CategoryCard({ category, className = '', onClick }: CategoryCard
         tabIndex={0}
         onClick={onClick}
         onKeyDown={e => e.key === 'Enter' && onClick()}
-        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art cursor-pointer ${className}`}
+        className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 transition-all duration-300 hover:-translate-y-1 hover:border-art-terracotta/50 hover:shadow-glow cursor-pointer ${className}`}
       >
         {content}
       </div>
@@ -78,7 +78,7 @@ export function CategoryCard({ category, className = '', onClick }: CategoryCard
   return (
     <Link
       to={`/products?category=${category.slug}`}
-      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 transition-all duration-200 hover:border-art-ochre hover:shadow-art ${className}`}
+      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-art-stone dark:border-art-darkborder bg-white dark:bg-art-darkcard p-6 transition-all duration-300 hover:-translate-y-1 hover:border-art-terracotta/50 hover:shadow-glow ${className}`}
     >
       {content}
     </Link>

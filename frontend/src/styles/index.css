@@ -2,10 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Theme tokens - Light Mode */
+  --bg-main: #fff9f2;
+  --bg-card: #ffffff;
+  --text-primary: #2b1d18;
+  --text-secondary: #6e5a52;
+  --text-muted: #927a6e;
+  --border-color: #e8d8c7;
+  --accent-terracotta: #c65d3b;
+  --accent-gold: #d99a3d;
+  --bg-badge: #f5e9dc;
+  --shadow-glow: 0 10px 25px -5px rgba(198, 93, 59, 0.18);
+  --shadow-card: 0 4px 20px -2px rgba(43, 29, 24, 0.06);
+  --shadow-card-hover: 0 12px 30px -4px rgba(198, 93, 59, 0.18);
+}
+
+.dark {
+  /* Theme tokens - Dark Mode */
+  --bg-main: #1c1715;
+  --bg-card: #2a211e;
+  --text-primary: #fff9f2;
+  --text-secondary: #cbb9aa;
+  --text-muted: #9a8175;
+  --border-color: #493a34;
+  --accent-terracotta: #c65d3b;
+  --accent-gold: #d99a3d;
+  --bg-badge: #382b26;
+  --shadow-glow: 0 10px 25px -5px rgba(198, 93, 59, 0.25);
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 12px 30px -4px rgba(198, 93, 59, 0.25);
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
   }
 
   /* Accessible focus indicators */

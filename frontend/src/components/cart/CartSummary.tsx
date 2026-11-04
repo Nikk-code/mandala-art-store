@@ -56,9 +56,9 @@ export function CartSummary({
           to={itemCount > 0 ? '/checkout' : '#'}
           aria-disabled={itemCount === 0}
           tabIndex={itemCount === 0 ? -1 : undefined}
-          className={`w-full inline-flex items-center justify-center min-h-[50px] px-7 py-3 text-base font-semibold rounded-xl tracking-wide transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-art-ochre ${
+          className={`w-full inline-flex items-center justify-center min-h-[50px] px-7 py-3 text-base font-semibold rounded-xl tracking-wide transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-art-terracotta ${
             itemCount > 0
-              ? 'bg-art-charcoal dark:bg-art-terracotta text-white hover:bg-stone-800 dark:hover:bg-[#8F3F21] active:bg-black'
+              ? 'bg-art-terracotta text-white hover:bg-[#b04f30] active:bg-[#9a4327] hover:shadow-glow shadow-sm'
               : 'bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-600 cursor-not-allowed pointer-events-none'
           }`}
           aria-label="Proceed to Checkout"

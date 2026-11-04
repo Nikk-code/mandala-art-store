@@ -330,7 +330,7 @@ export function ProductDetailPage(): ReactNode {
                         </Button>
                         <Link
                           to="/cart"
-                          className="flex-1 inline-flex items-center justify-center rounded-xl bg-art-charcoal dark:bg-art-terracotta px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-stone-800 dark:hover:bg-[#8F3F21] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre"
+                          className="flex-1 inline-flex items-center justify-center rounded-xl bg-art-terracotta px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-[#b04f30] hover:shadow-glow transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-art-terracotta"
                         >
                           View Cart →
                         </Link>

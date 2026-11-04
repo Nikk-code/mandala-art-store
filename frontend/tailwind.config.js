@@ -5,17 +5,28 @@ export default {
   theme: {
     extend: {
       colors: {
+        theme: {
+          bg: 'var(--bg-main)',
+          card: 'var(--bg-card)',
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+          border: 'var(--border-color)',
+          terracotta: 'var(--accent-terracotta)',
+          gold: 'var(--accent-gold)',
+          badge: 'var(--bg-badge)',
+        },
         art: {
-          charcoal: '#1A1817',
-          ochre: '#C88D42',
-          terracotta: '#A84B29',
-          cream: '#FDFBF7',
-          stone: '#EAE6DF',
-          sand: '#D9D0C1',
-          midnight: '#141210',
-          darkcard: '#1F1C1A',
-          darkborder: '#2E2A27',
-          darkstone: '#262320',
+          charcoal: '#2B1D18',
+          ochre: '#D99A3D',
+          terracotta: '#C65D3B',
+          cream: '#FFF9F2',
+          stone: '#E8D8C7',
+          sand: '#E8D8C7',
+          midnight: '#1C1715',
+          darkcard: '#2A211E',
+          darkborder: '#493A34',
+          darkstone: '#382B26',
         },
       },
       fontFamily: {
@@ -23,8 +34,10 @@ export default {
         serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       boxShadow: {
-        art: '0 4px 20px -2px rgba(26, 24, 23, 0.05)',
-        'art-hover': '0 12px 30px -4px rgba(26, 24, 23, 0.12)',
+        glow: 'var(--shadow-glow)',
+        'art-card': 'var(--shadow-card)',
+        'art-hover': 'var(--shadow-card-hover)',
+        art: '0 4px 20px -2px rgba(43, 29, 24, 0.06)',
       },
       borderRadius: {
         art: '1rem',

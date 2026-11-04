@@ -25,7 +25,7 @@ export function ProductCard({ product, className = '', onClick }: ProductCardPro
       className={`group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-art-ochre rounded-2xl ${className}`}
       onClick={onClick}
     >
-      <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-art-stone/80 dark:border-art-darkborder bg-white dark:bg-art-darkcard transition-all duration-200 hover:border-art-ochre/40 hover:shadow-art">
+      <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-art-stone/80 dark:border-art-darkborder bg-white dark:bg-art-darkcard transition-all duration-300 hover:-translate-y-1 hover:border-art-terracotta/50 hover:shadow-glow">
         {/* Image Area with Aspect Ratio */}
         <div className="relative aspect-square w-full overflow-hidden bg-stone-100 dark:bg-stone-900">
           {primaryImage?.url && !imageError ? (
